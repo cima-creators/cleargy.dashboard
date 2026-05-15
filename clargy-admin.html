@@ -696,11 +696,17 @@ function avgScore(vids){const sc=vids.filter(v=>v.score!=null);return sc.length?
 function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
 
 function renderAll(){
-  const day=getCampaignDay();
-  document.getElementById("h-day").textContent=`Día ${day} de ${CAMPAIGN_DAYS}`;
-  renderOverview();
-  const pending=data.videos.filter(v=>v.status==="pending").length;
-  document.getElementById("nb-pending").textContent=pending;
+  try{
+    const day=getCampaignDay();
+    const el=document.getElementById("h-day");
+    if(el) el.textContent=`Día ${day} de ${CAMPAIGN_DAYS}`;
+    renderOverview();
+    const pending=data.videos.filter(v=>v.status==="pending").length;
+    const nbp=document.getElementById("nb-pending");
+    if(nbp) nbp.textContent=pending;
+    const nbm=document.getElementById("nb-msgs");
+    if(nbm) nbm.textContent=(data.notifs||[]).length;
+  }catch(e){console.error("renderAll error:",e);}
 }
 
 let activePeriod = 1;
