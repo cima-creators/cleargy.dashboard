@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -279,14 +280,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 
       <!-- OVERVIEW -->
       <div id="view-overview" class="view active">
-        <!-- Period filter -->
-        <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;" id="period-pills">
-          <button class="ppill active" onclick="setPeriod(1,this)">Hoy</button>
-          <button class="ppill" onclick="setPeriod(3,this)">Últ. 3 días</button>
-          <button class="ppill" onclick="setPeriod(7,this)">Últ. 7 días</button>
-          <button class="ppill" onclick="setPeriod(15,this)">Últ. 15 días</button>
-          <button class="ppill" onclick="setPeriod(30,this)">Últ. 30 días</button>
-        </div>
         <div class="stats-row" id="admin-stats"></div>
         <div class="sec-label">Creadoras</div>
         <div class="creator-grid" id="creator-grid"></div>
@@ -722,7 +715,28 @@ function doAdminLogin(){
   if(document.getElementById("a-pass").value===ADMIN_PASS){
     document.getElementById("login-screen").style.display="none";
     document.getElementById("admin-app").style.display="flex";
-    loadData();renderAll();
+    loadData().then(()=>renderAll());
+    function startAdminListen(){
+      window._fbListen((newData)=>{
+        data = newData;
+        renderAll();
+        // Re-render active view
+        const activeView = document.querySelector('.view.active');
+        if(activeView){
+          const id = activeView.id;
+          if(id==='view-videos') renderVideos();
+          if(id==='view-ventas') renderVentas();
+          if(id==='view-bonos') renderBonos();
+          if(id==='view-viral') renderViral();
+          if(id==='view-ideas') renderIdeas();
+          if(id==='view-mensajes') renderMensajes();
+          if(id==='view-finanzas') renderFinanzas();
+          if(id==='view-comprobantes') renderComprobantes();
+        }
+      });
+    }
+    if(window._fbListen) startAdminListen();
+    else window.addEventListener('firebase-ready', startAdminListen, {once:true});
   }else{document.getElementById("a-err").classList.add("show");}
 }
 
@@ -763,6 +777,7 @@ function renderAll(){
     const nbm=document.getElementById("nb-msgs");
     if(nbm) nbm.textContent=(data.notifs||[]).length;
   }catch(e){console.error("renderAll error:",e);}
+
 }
 
 let activePeriod = 1;
@@ -786,24 +801,20 @@ function getVideosInPeriod(creator, days){
 
 function renderOverview(){
   const day=getCampaignDay();
-  const nowDate=new Date();
-  const fromDate=new Date(nowDate-activePeriod*24*60*60*1000);
-  const periodVideos=data.videos.filter(v=>{
-    if(v.date) return new Date(v.date)>=fromDate;
-    return true; // Include videos without date
-  });
-  const totalVids=periodVideos.length;
+  const today=new Date().toISOString().split('T')[0];
+  const videosHoy=data.videos.filter(v=>v.date&&v.date.startsWith(today));
+  const totalVids=data.videos.length;
   const totalVentas=CREATORS.reduce((a,c)=>a+(data.ventas[c]||0),0);
   const pending=data.videos.filter(v=>v.status==="pending").length;
-  const viral=periodVideos.filter(v=>v.views>=10000).length;
-  const topSeller=CREATORS.reduce((a,c)=>(data.ventas[c]||0)>(data.ventas[a]||0)?c:a);
+  const viral=data.videos.filter(v=>v.views>=10000).length;
 
   document.getElementById("admin-stats").innerHTML=`
-    <div class="scard"><div class="sc-label">Día</div><div class="sc-val" style="color:var(--accent)">${day}</div><div class="sc-sub">de ${CAMPAIGN_DAYS}</div></div>
-    <div class="scard"><div class="sc-label">Videos subidos</div><div class="sc-val">${totalVids}</div><div class="sc-sub">en período seleccionado</div></div>
+    <div class="scard"><div class="sc-label">Día campaña</div><div class="sc-val" style="color:var(--accent)">${day}</div><div class="sc-sub">de ${CAMPAIGN_DAYS}</div></div>
+    <div class="scard"><div class="sc-label">Videos hoy</div><div class="sc-val" style="color:var(--blue)">${videosHoy.length}</div><div class="sc-sub">subidos hoy</div></div>
+    <div class="scard"><div class="sc-label">Videos totales</div><div class="sc-val">${totalVids}</div><div class="sc-sub">en toda la campaña</div></div>
     <div class="scard"><div class="sc-label">Ventas totales</div><div class="sc-val" style="color:var(--gold)">${totalVentas}</div><div class="sc-sub">todas las creadoras</div></div>
     <div class="scard"><div class="sc-label">Pendientes</div><div class="sc-val" style="color:var(--accent2)">${pending}</div><div class="sc-sub">sin score/aprobar</div></div>
-    <div class="scard"><div class="sc-label">Videos virales</div><div class="sc-val" style="color:var(--accent3)">${viral}</div><div class="sc-sub">+10K views</div></div>
+    <div class="scard"><div class="sc-label">Virales</div><div class="sc-val" style="color:var(--accent3)">${viral}</div><div class="sc-sub">+10K views</div></div>
   `;
 
   document.getElementById("creator-grid").innerHTML=CREATORS.map(c=>{
@@ -845,6 +856,7 @@ function videoRow(v, compact=false){
       <button class="abtn abtn-reject" onclick="setStatus('${v.id}','rejected')">✗</button>
       <button class="abtn abtn-score" onclick="openScore('${v.id}')">Score</button>
       <button class="abtn" style="border-color:rgba(74,143,255,.3);color:var(--accent3);background:rgba(74,143,255,.05);" onclick="openEditVideo('${v.id}')">Editar</button>
+      <button class="abtn" style="border-color:rgba(232,93,38,.3);color:var(--accent2);background:rgba(232,93,38,.05);" onclick="adminDeleteVideo('${v.id}')">🗑</button>
     </div></td>
   </tr>`;
 }
@@ -893,6 +905,12 @@ function submitScore(){
   }
 }
 
+function adminDeleteVideo(id){
+  if(!confirm("⚠️ Vas a perder este archivo permanentemente. ¿Eliminarlo?"))return;
+  data.videos=data.videos.filter(v=>v.id!=id);
+  saveData();renderAll();renderVideos();showToast("Video eliminado");
+}
+
 function renderVentas(){
   // Mobile: show only cards, hide table
   const isMobile = window.innerWidth <= 430;
@@ -904,6 +922,14 @@ function renderVentas(){
       </div>
       <div class="vc-current" style="color:${COLORS[c]}">${data.ventas[c]||0}</div>
       <div style="font-size:9px;font-family:'DM Mono';color:var(--muted);margin-bottom:10px;">ventas acumuladas</div>
+      <div style="margin-bottom:6px;">
+        <select id="vs-${c}" style="width:100%;padding:6px 8px;border-radius:var(--radius-xs);border:1px solid var(--border);font-size:11px;font-family:'DM Mono';color:var(--text);background:var(--surface2);">
+          <option value="1">Semana 1</option>
+          <option value="2">Semana 2</option>
+          <option value="3">Semana 3</option>
+          <option value="4">Semana 4</option>
+        </select>
+      </div>
       <div class="vc-input-row" style="margin-bottom:6px;">
         <input class="vc-input" type="number" id="v-${c}" placeholder="cantidad" min="1">
         <button class="vc-btn" onclick="addVentas('${c}')" style="background:var(--blue);">+</button>
@@ -936,22 +962,24 @@ function addVentas(c){
   const n=parseInt(document.getElementById("v-"+c).value)||0;
   if(n<=0){showToast("Ingresá una cantidad válida");return;}
   const fecha=document.getElementById("vd-"+c)?.value||new Date().toISOString().split("T")[0];
+  const semana=parseInt(document.getElementById("vs-"+c)?.value)||1;
   data.ventas[c]=(data.ventas[c]||0)+n;
   if(!data.ventasLog) data.ventasLog=[];
-  data.ventasLog.push({creator:c,tipo:"suma",cantidad:n,fecha,comision:n*COMISION_POR_VENTA});
+  data.ventasLog.push({creator:c,tipo:"suma",cantidad:n,fecha,semana,comision:n*COMISION_POR_VENTA});
   saveData();renderVentas();
-  showToast(`+${n} ventas · +$${(n*COMISION_POR_VENTA).toLocaleString("es-AR")} para ${NAMES[c]}`);
+  showToast(`+${n} ventas (sem ${semana}) · +$${(n*COMISION_POR_VENTA).toLocaleString("es-AR")} para ${NAMES[c]}`);
 }
 
 function subVentas(c){
   const n=parseInt(document.getElementById("v-"+c).value)||0;
   if(n<=0){showToast("Ingresá una cantidad válida");return;}
   const fecha=document.getElementById("vd-"+c)?.value||new Date().toISOString().split("T")[0];
+  const semana=parseInt(document.getElementById("vs-"+c)?.value)||1;
   data.ventas[c]=Math.max(0,(data.ventas[c]||0)-n);
   if(!data.ventasLog) data.ventasLog=[];
-  data.ventasLog.push({creator:c,tipo:"resta",cantidad:n,fecha,comision:-(n*COMISION_POR_VENTA)});
+  data.ventasLog.push({creator:c,tipo:"resta",cantidad:n,fecha,semana,comision:-(n*COMISION_POR_VENTA)});
   saveData();renderVentas();
-  showToast(`−${n} ventas de ${NAMES[c]}`);
+  showToast(`−${n} ventas (sem ${semana}) de ${NAMES[c]}`);
 }
 
 function resetVentas(c){
@@ -992,7 +1020,7 @@ function renderBonos(){
           ${CREATORS.map(c=>{
             const amount = b.calcAmount ? b.calcAmount(c) : b.amount;
             const currentBonos = data.bonos[c]||0;
-            return `<button onclick="assignBono('${c}',${amount})" 
+            return `<button onclick="assignBono('${c}','${b.key}',${amount})"
               style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;font-size:12px;font-family:'Nunito';font-weight:700;cursor:pointer;background:${COLORS[c]}12;border:2px solid ${COLORS[c]}40;color:${COLORS[c]};transition:all .12s;"
               onmouseover="this.style.background='${COLORS[c]}25';this.style.borderColor='${COLORS[c]}'"
               onmouseout="this.style.background='${COLORS[c]}12';this.style.borderColor='${COLORS[c]}40'">
@@ -1019,7 +1047,7 @@ function renderBonos(){
 
 
 function renderViral(){
-  const vids=[...data.videos].filter(v=>v.views>0).sort((a,b)=>b.views-a.views).slice(0,20);
+  const vids=[...data.videos].filter(v=>v.views>=10000).sort((a,b)=>b.views-a.views).slice(0,20);
   document.getElementById("viral-list").innerHTML=vids.length?vids.map((v,i)=>`
     <div class="viral-card">
       <div class="viral-rank">${i+1}</div>
@@ -1244,11 +1272,11 @@ function renderFinanzas(){
             <div style="width:36px;height:36px;border-radius:50%;background:${COLORS[r.c]}22;border:2px solid ${COLORS[r.c]};display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:11px;font-weight:500;color:${COLORS[r.c]}">${AVATARS[r.c]}</div>
             <div style="font-size:12px;font-weight:800;color:var(--text);">${NAMES[r.c]}</div>
           </div>
-          <div style="font-family:'Nunito';font-size:11px;color:var(--muted);margin-bottom:2px;">Total a pagar</div>
-          <div style="font-family:'Nunito';font-size:22px;font-weight:900;color:var(--accent);letter-spacing:-1px;">$${r.total.toLocaleString("es-AR")}</div>
-          <div style="font-size:10px;color:var(--muted);margin:4px 0 10px;font-weight:600;">Pagado: $${r.pagado.toLocaleString("es-AR")}</div>
+          <div style="font-family:'Nunito';font-size:11px;color:var(--muted);margin-bottom:2px;">Restante a pagar</div>
+          <div style="font-family:'Nunito';font-size:28px;font-weight:900;color:${r.deuda>0?"var(--accent2)":"var(--blue)"};letter-spacing:-1px;">$${r.deuda.toLocaleString("es-AR")}</div>
+          <div style="font-size:10px;color:var(--muted);margin:4px 0 10px;font-weight:600;">Total ganado: $${r.total.toLocaleString("es-AR")} · Pagado: $${r.pagado.toLocaleString("es-AR")}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-xs);background:${r.deuda>0?"rgba(232,93,38,.06)":"rgba(26,58,143,.06)"};">
-            <span style="font-size:11px;font-weight:700;color:${r.deuda>0?"var(--accent2)":"var(--accent)"};">${r.deuda>0?"Debe: $"+r.deuda.toLocaleString("es-AR"):"✓ Al día"}</span>
+            <span style="font-size:11px;font-weight:700;color:${r.deuda>0?"var(--accent2)":"var(--blue)"};">${r.deuda>0?"⚠️ Pendiente":"✓ Al día"}</span>
           </div>
           <button onclick="openPago('${r.c}',${r.deuda})" style="width:100%;margin-top:8px;padding:8px;background:var(--accent);color:white;border:none;border-radius:var(--radius-xs);font-family:'Nunito';font-size:12px;font-weight:700;cursor:pointer;">+ Registrar pago</button>
         </div>`).join("")}
@@ -1309,14 +1337,19 @@ function submitPago(){
 // ═══════════════════════════════════
 // BONOS — ASIGNAR / RESETEAR
 // ═══════════════════════════════════
-function assignBono(creator, amount){
+function assignBono(creator, key, amount){
   data.bonos[creator]=(data.bonos[creator]||0)+amount;
+  if(!data.bonosGanados) data.bonosGanados={};
+  if(!data.bonosGanados[creator]) data.bonosGanados[creator]={};
+  data.bonosGanados[creator][key]=true;
   saveData();renderBonos();
   showToast("✓ Bono asignado a "+NAMES[creator].split(' ')[0]);
 }
 function resetCreadoraBonos(creator){
   if(!confirm("¿Resetear bonos de "+NAMES[creator]+"?"))return;
-  data.bonos[creator]=0;saveData();renderBonos();
+  data.bonos[creator]=0;
+  if(data.bonosGanados) data.bonosGanados[creator]={};
+  saveData();renderBonos();
   showToast("Bonos de "+NAMES[creator].split(' ')[0]+" reseteados");
 }
 
