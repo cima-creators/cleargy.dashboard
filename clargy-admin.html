@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1433,9 +1434,10 @@ function submitComprobante(){
   else guardar(null);
 }
 function deleteComprobante(id){
-  if(!confirm("¿Eliminar este comprobante?"))return;
+  if(!confirm("¿Eliminar este comprobante? También se descuenta de los pagos."))return;
   data.comprobantes=data.comprobantes.filter(c=>c.id!==id);
-  saveData();renderComprobantes();showToast("Comprobante eliminado");
+  if(data.pagos) data.pagos=data.pagos.filter(p=>p.id!==id);
+  saveData();renderComprobantes();renderFinanzas();showToast("Comprobante y pago eliminados");
 }
 function verArchivo(id){
   const c=data.comprobantes.find(x=>x.id===id);
