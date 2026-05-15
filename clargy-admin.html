@@ -681,6 +681,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 })();
 
 const ADMIN_PASS = "clargy-admin-2025";
+const ADMIN_PASS2 = "avellaneda-2025";
 const COLORS = {creadora1:"#1a3a8f",creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora5:"#7c3aed",creadora6:"#db2777"};
 const NAMES = {creadora1:"Luca Solucci",creadora2:"Vane Contreras",creadora3:"María Leal",creadora4:"Daniela Baldassin",creadora5:"Lucila Ailin",creadora6:"Creadora 6"};
 const AVATARS = {creadora1:"LS",creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora5:"LA",creadora6:"C6"};
@@ -739,7 +740,8 @@ function enterAdmin(){
 }
 
 function doAdminLogin(){
-  if(document.getElementById("a-pass").value===ADMIN_PASS){
+  const inputPass=document.getElementById("a-pass").value;
+  if(inputPass===ADMIN_PASS||inputPass===ADMIN_PASS2){
     enterAdmin();
   }else{document.getElementById("a-err").classList.add("show");}
 }
@@ -774,8 +776,23 @@ function getWeek(day){return Math.ceil(day/7);}
 function avgScore(vids){const sc=vids.filter(v=>v.score!=null);return sc.length?Math.round(sc.reduce((a,v)=>a+v.score,0)/sc.length*10)/10:null;}
 function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
 
+function mergeExtraCreators(){
+  if(!(data.extraCreators||[]).length) return;
+  data.extraCreators.forEach(c=>{
+    if(!CREATORS.includes(c.key)) CREATORS.push(c.key);
+    NAMES[c.key] = c.name;
+    COLORS[c.key] = c.color || '#6366f1';
+    AVATARS[c.key] = c.avatar || c.name.substring(0,2).toUpperCase();
+    if(!data.ventas) data.ventas={};
+    if(data.ventas[c.key]===undefined) data.ventas[c.key]=0;
+    if(!data.bonos) data.bonos={};
+    if(data.bonos[c.key]===undefined) data.bonos[c.key]=0;
+  });
+}
+
 function renderAll(){
   try{
+    mergeExtraCreators();
     const day=getCampaignDay();
     const el=document.getElementById("h-day");
     if(el) el.textContent=`Día ${day} de ${CAMPAIGN_DAYS}`;
@@ -786,7 +803,6 @@ function renderAll(){
     const nbm=document.getElementById("nb-msgs");
     if(nbm) nbm.textContent=(data.notifs||[]).length;
   }catch(e){console.error("renderAll error:",e);}
-
 }
 
 let activePeriod = 1;
@@ -912,6 +928,24 @@ function submitScore(){
     document.getElementById("score-overlay").classList.remove("open");
     showToast(`Score ${v.score}/10 guardado`);
   }
+}
+
+function setAdminNote(id, note){
+  const v=data.videos.find(x=>x.id==id);
+  if(!v) return;
+  const prev=v.adminNote||"";
+  v.adminNote=note.trim();
+  // Notificación al creador solo si hay texto nuevo y cambió
+  if(v.adminNote && v.adminNote!==prev){
+    if(!data.notifs) data.notifs=[];
+    data.notifs.push({
+      id:Date.now(),tipo:"info",to:v.creator,
+      msg:`📝 <strong>Nota sobre tu video (Día ${v.day}):</strong><br>${v.adminNote}`,
+      date:new Date().toISOString(),read:[]
+    });
+  }
+  saveData();
+  showToast("Nota guardada");
 }
 
 function adminDeleteVideo(id){
@@ -1085,14 +1119,21 @@ function submitIdea(){
   const titulo=document.getElementById("idea-titulo").value.trim();
   const desc=document.getElementById("idea-desc").value.trim();
   if(!titulo||!desc)return;
-  data.ideas.push({
-    id:Date.now(),tag:document.getElementById("idea-tag").value,
-    title:titulo,desc,link:document.getElementById("idea-link").value,
-    date:new Date().toISOString()
+  const tag=document.getElementById("idea-tag").value;
+  const link=document.getElementById("idea-link").value;
+  const date=new Date().toISOString();
+  const id=Date.now();
+  data.ideas.push({id,tag,title:titulo,desc,link,date});
+  // Auto-notificación a todas las creadoras
+  if(!data.notifs) data.notifs=[];
+  data.notifs.push({
+    id:id+1,tipo:"idea",to:"ALL",
+    msg:`💡 <strong>${titulo}</strong><br><span style="color:var(--muted)">${desc}</span>${link?`<br><a href="${link}" target="_blank" style="color:var(--accent3);font-size:11px;">Ver referencia ↗</a>`:""}`,
+    date,read:[]
   });
   saveData();
-  ["idea-titulo","idea-desc","idea-link"].forEach(id=>document.getElementById(id).value="");
-  renderIdeas();showToast("✓ Idea publicada para las creadoras");
+  ["idea-titulo","idea-desc","idea-link"].forEach(i=>document.getElementById(i).value="");
+  renderIdeas();showToast("✓ Idea publicada — notificación enviada a todas");
 }
 
 function renderIdeas(){
@@ -1487,8 +1528,24 @@ function submitNewCreadora(){
   const nombre=document.getElementById('nc-nombre').value.trim();
   const pass=document.getElementById('nc-pass').value.trim();
   if(!nombre||!pass){showToast("Completá nombre y contraseña");return;}
-  showToast("Para agregar creadoras editá el HTML directamente (CREATORS, NAMES, PASSWORDS).");
+  if(!data.extraCreators) data.extraCreators=[];
+  // Evitar duplicados por nombre
+  if(data.extraCreators.find(c=>c.name.toLowerCase()===nombre.toLowerCase())){
+    showToast("Ya existe una creadora con ese nombre");return;
+  }
+  const palette=['#f59e0b','#10b981','#8b5cf6','#f43f5e','#06b6d4','#84cc16','#ec4899','#14b8a6'];
+  const idx=CREATORS.length+data.extraCreators.length;
+  const key='creadora'+(idx+1);
+  const color=palette[data.extraCreators.length%palette.length];
+  const avatar=nombre.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  data.extraCreators.push({key,name:nombre,pass,color,avatar});
+  mergeExtraCreators();
+  saveData();
+  renderConfigCreadoras();
   document.getElementById('nc-overlay').classList.remove('open');
+  document.getElementById('nc-nombre').value='';
+  document.getElementById('nc-pass').value='';
+  showToast("✓ "+nombre+" agregada — contraseña: "+pass);
 }
 
 loadData();
