@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -170,16 +169,15 @@ td{padding:11px 14px;font-size:12px;vertical-align:middle;}
 .fsel{background:var(--surface);border:2px solid var(--border);color:var(--muted);padding:8px 12px;border-radius:var(--radius-sm);font-size:12px;font-family:'Nunito';font-weight:600;cursor:pointer;outline:none;}
 
 /* VENTAS */
-.ventas-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
-@media(max-width:900px){.ventas-grid{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:600px){.ventas-grid{grid-template-columns:1fr 1fr;}}
-@media(max-width:430px){.ventas-grid{grid-template-columns:1fr;}}
-.vcard{background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);}
-.vc-creator{font-size:12px;font-weight:800;margin-bottom:2px;}
-.vc-current{font-family:'Nunito';font-size:30px;font-weight:900;letter-spacing:-1px;margin-bottom:8px;color:var(--blue);}
-.vc-input-row{display:flex;gap:6px;}
-.vc-input{background:var(--surface2);border:2px solid var(--border);color:var(--text);padding:8px 10px;border-radius:var(--radius-sm);font-size:13px;font-family:'Nunito';font-weight:600;outline:none;flex:1;min-width:0;}
-.vc-btn{padding:8px 12px;background:var(--blue);color:white;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;}
+.ventas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+@media(max-width:700px){.ventas-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:430px){.ventas-grid{grid-template-columns:1fr 1fr;}}
+.vcard{background:var(--surface);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow);}
+.vc-creator{font-size:11px;font-weight:800;line-height:1.2;}
+.vc-current{font-family:'Nunito';font-size:22px;font-weight:900;letter-spacing:-0.5px;color:var(--blue);}
+.vc-input-row{display:flex;gap:4px;}
+.vc-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:var(--radius-xs);font-size:12px;font-family:'Nunito';font-weight:600;outline:none;flex:1;min-width:0;width:0;}
+.vc-btn{padding:6px 10px;background:var(--blue);color:white;border:none;border-radius:var(--radius-xs);font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 
 /* MODAL */
 .overlay{display:none;position:fixed;inset:0;background:rgba(13,31,79,.45);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);padding:20px;}
@@ -960,26 +958,25 @@ function renderVentas(){
   const isMobile = window.innerWidth <= 430;
   document.getElementById("ventas-grid").innerHTML=CREATORS.map(c=>`
     <div class="vcard">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-        <div style="width:32px;height:32px;border-radius:50%;background:${COLORS[c]}18;border:2px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:10px;font-weight:600;color:${COLORS[c]};flex-shrink:0;">${AVATARS[c]}</div>
-        <div class="vc-creator">${NAMES[c]}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:${COLORS[c]}18;border:2px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:9px;font-weight:600;color:${COLORS[c]};flex-shrink:0;">${AVATARS[c]}</div>
+        <div>
+          <div class="vc-creator">${NAMES[c].split(' ')[0]}</div>
+          <div class="vc-current" style="color:${COLORS[c]};line-height:1;">${data.ventas[c]||0} <span style="font-size:10px;font-family:'DM Mono';font-weight:500;opacity:.6;">ventas</span></div>
+        </div>
       </div>
-      <div class="vc-current" style="color:${COLORS[c]}">${data.ventas[c]||0}</div>
-      <div style="font-size:9px;font-family:'DM Mono';color:var(--muted);margin-bottom:10px;">ventas acumuladas</div>
-      <div style="margin-bottom:6px;">
-        <select id="vs-${c}" style="width:100%;padding:6px 8px;border-radius:var(--radius-xs);border:1px solid var(--border);font-size:11px;font-family:'DM Mono';color:var(--text);background:var(--surface2);">
-          <option value="1">Semana 1</option>
-          <option value="2">Semana 2</option>
-          <option value="3">Semana 3</option>
-          <option value="4">Semana 4</option>
-        </select>
-      </div>
-      <div class="vc-input-row" style="margin-bottom:6px;">
-        <input class="vc-input" type="number" id="v-${c}" placeholder="cantidad" min="1">
+      <select id="vs-${c}" style="width:100%;padding:5px 6px;border-radius:var(--radius-xs);border:1px solid var(--border);font-size:10px;font-family:'DM Mono';color:var(--text);background:var(--surface2);margin-bottom:5px;">
+        <option value="1">Semana 1</option>
+        <option value="2">Semana 2</option>
+        <option value="3">Semana 3</option>
+        <option value="4">Semana 4</option>
+      </select>
+      <div class="vc-input-row" style="margin-bottom:5px;">
+        <input class="vc-input" type="number" id="v-${c}" placeholder="cant." min="1">
         <button class="vc-btn" onclick="addVentas('${c}')" style="background:var(--blue);">+</button>
         <button class="vc-btn" onclick="subVentas('${c}')" style="background:var(--accent2);">−</button>
       </div>
-      <button onclick="resetVentas('${c}')" style="width:100%;padding:5px;background:none;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:10px;font-family:'DM Mono';color:var(--muted);cursor:pointer;">Resetear a 0</button>
+      <button onclick="resetVentas('${c}')" style="width:100%;padding:4px;background:none;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:9px;font-family:'DM Mono';color:var(--muted);cursor:pointer;">↺ Resetear</button>
     </div>`).join("");
 
   const vtCreator = document.getElementById("vt-creator")?.value||"ALL";
@@ -1030,6 +1027,7 @@ function subVentas(c){
 function resetVentas(c){
   if(!confirm("¿Resetear ventas de "+NAMES[c]+" a 0?"))return;
   data.ventas[c]=0;
+  if(data.ventasLog) data.ventasLog=data.ventasLog.filter(e=>e.creator!==c);
   saveData();renderVentas();showToast("Ventas reseteadas");
 }
 
@@ -1331,6 +1329,7 @@ function renderFinanzas(){
             <span style="font-size:11px;font-weight:700;color:${r.deuda>0?"var(--accent2)":"var(--blue)"};">${r.deuda>0?"⚠️ Pendiente":"✓ Al día"}</span>
           </div>
           <button onclick="openPago('${r.c}',${r.deuda})" style="width:100%;margin-top:8px;padding:8px;background:var(--accent);color:white;border:none;border-radius:var(--radius-xs);font-family:'Nunito';font-size:12px;font-weight:700;cursor:pointer;">+ Registrar pago</button>
+          <button onclick="resetPagosCreadora('${r.c}')" style="width:100%;margin-top:6px;padding:6px;background:none;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:'DM Mono';font-size:10px;color:var(--muted);cursor:pointer;">↺ Resetear pagos</button>
         </div>`).join("")}
     </div>
   `;
@@ -1433,6 +1432,14 @@ function submitComprobante(){
   if(file){const r=new FileReader();r.onload=e=>guardar(e.target.result);r.readAsDataURL(file);}
   else guardar(null);
 }
+function resetPagosCreadora(c){
+  if(!confirm("¿Resetear todos los pagos de "+NAMES[c]+"? Esto borra pagos y comprobantes de esta creadora."))return;
+  data.pagos=(data.pagos||[]).filter(p=>p.creator!==c);
+  data.comprobantes=(data.comprobantes||[]).filter(x=>x.creator!==c);
+  saveData();renderFinanzas();renderComprobantes();
+  showToast("Pagos de "+NAMES[c].split(' ')[0]+" reseteados");
+}
+
 function deleteComprobante(id){
   if(!confirm("¿Eliminar este comprobante? También se descuenta de los pagos."))return;
   data.comprobantes=data.comprobantes.filter(c=>c.id!==id);
