@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,6 +10,7 @@
   --bg:#e8f4fc;--surface:#fff;--surface2:#f0f8ff;--surface3:#dbeeff;
   --border:#c5dff0;--border2:#a8cee5;
   --blue:#1a3a8f;--blue-light:#2a52c9;--blue-mid:#3b82c4;
+  --accent:#1a3a8f;--accent-light:#2a52c9;--accent3:#2a52c9;
   --accent2:#e85d26;--gold:#f59e0b;
   --text:#0d1f4f;--muted:#6080a0;--muted2:#c5dff0;
   --radius:16px;--radius-sm:12px;--radius-xs:8px;
@@ -50,7 +50,7 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
 
 /* HEADER */
 .header{
-  height:56px;background:var(--surface);border-bottom:1px solid var(--border);
+  height:56px;background:var(--blue);border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;padding:0 16px;
   position:sticky;top:0;z-index:100;flex-shrink:0;
   box-shadow:0 1px 0 var(--border);
@@ -590,6 +590,10 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div><div class="flabel" style="margin-bottom:6px;">Fecha</div>
         <input class="fi" type="date" id="pago-fecha">
       </div>
+      <div><div class="flabel" style="margin-bottom:6px;">Comprobante (foto/PDF)</div>
+        <input class="fi" type="file" id="pago-archivo" accept="image/*,application/pdf" style="padding:8px;cursor:pointer;">
+        <div id="pago-archivo-preview" style="margin-top:6px;display:none;"></div>
+      </div>
       <button class="hbtn primary" style="width:100%;padding:13px;font-size:14px;" onclick="submitPago()">Confirmar pago ✓</button>
     </div>
   </div>
@@ -632,6 +636,9 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <input type="checkbox" id="comp-pagado" style="width:16px;height:16px;accent-color:var(--blue);" checked>
         <label style="font-size:13px;font-weight:700;color:var(--text);">Marcar como pagado</label>
       </div>
+      <div><div class="flabel" style="margin-bottom:6px;">Comprobante adjunto (foto/PDF)</div>
+        <input class="fi" type="file" id="comp-archivo" accept="image/*,application/pdf" style="padding:8px;cursor:pointer;">
+      </div>
       <button class="hbtn primary" style="width:100%;padding:13px;" onclick="submitComprobante()">Guardar comprobante</button>
     </div>
   </div>
@@ -663,6 +670,22 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 <div class="toast" id="toast"></div>
 
 <script>
+// Strip black background from logo PNGs that lost their alpha channel
+(function(){
+  function stripBlack(img){
+    var c=document.createElement('canvas');
+    c.width=img.naturalWidth;c.height=img.naturalHeight;
+    var ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+    var d=ctx.getImageData(0,0,c.width,c.height),px=d.data;
+    for(var i=0;i<px.length;i+=4){if(px[i]<40&&px[i+1]<40&&px[i+2]<40)px[i+3]=0;}
+    ctx.putImageData(d,0,0);img.src=c.toDataURL('image/png');
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('img[alt="Cleargy"]').forEach(function(img){
+      if(img.complete&&img.naturalWidth>0)stripBlack(img);else img.onload=function(){stripBlack(img);};
+    });
+  });
+})();
 
 const ADMIN_PASS = "clargy-admin-2025";
 const COLORS = {creadora1:"#1a3a8f",creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora5:"#7c3aed",creadora6:"#db2777"};
@@ -904,7 +927,7 @@ function renderVentas(){
       <td style="font-family:'DM Mono';font-size:11px;">${fmtP(base)}</td>
       <td style="font-family:'DM Mono';font-size:11px;color:#0d9488;font-weight:700;">${fmtP(comVentas)}</td>
       <td style="font-family:'DM Mono';font-size:11px;color:var(--gold);">${fmtP(bonos)}</td>
-      <td style="font-family:'Nunito';font-size:16px;font-weight:700;">${fmtP(base+bonos)}</td>
+      <td style="font-family:'Nunito';font-size:16px;font-weight:700;">${fmtP(base+comVentas+bonos)}</td>
     </tr>`;
   }).join("");
 }
@@ -1259,11 +1282,155 @@ function submitPago(){
   const concepto = document.getElementById("pago-concepto").value || "Pago campaña";
   const fecha = document.getElementById("pago-fecha").value;
   if(!monto || monto <= 0){ showToast("Ingresá un monto válido"); return; }
-  if(!data.pagos) data.pagos=[];
-  data.pagos.push({ creator: pagoCreator, monto, concepto, fecha });
-  saveData(); renderFinanzas();
-  document.getElementById("pago-overlay").classList.remove("open");
-  showToast(`✓ Pago de $${monto.toLocaleString("es-AR")} registrado para ${NAMES[pagoCreator]}`);
+  const fileInput = document.getElementById("pago-archivo");
+  const file = fileInput && fileInput.files[0];
+  function finalizarPago(archivoDataUrl){
+    if(!data.pagos) data.pagos=[];
+    const id = Date.now();
+    data.pagos.push({ id, creator: pagoCreator, monto, concepto, fecha, archivo: archivoDataUrl||null });
+    if(!data.comprobantes) data.comprobantes=[];
+    data.comprobantes.push({ id, creator: pagoCreator, tipo:"sueldo", monto, concepto, fecha, pagado:true, archivo: archivoDataUrl||null });
+    saveData(); renderFinanzas();
+    if(document.getElementById("comp-tbody")) renderComprobantes();
+    document.getElementById("pago-overlay").classList.remove("open");
+    if(fileInput) fileInput.value="";
+    document.getElementById("pago-archivo-preview").style.display="none";
+    showToast(`✓ Pago de $${monto.toLocaleString("es-AR")} registrado para ${NAMES[pagoCreator]}`);
+  }
+  if(file){
+    const reader = new FileReader();
+    reader.onload = e => finalizarPago(e.target.result);
+    reader.readAsDataURL(file);
+  } else {
+    finalizarPago(null);
+  }
+}
+
+// ═══════════════════════════════════
+// BONOS — ASIGNAR / RESETEAR
+// ═══════════════════════════════════
+function assignBono(creator, amount){
+  data.bonos[creator]=(data.bonos[creator]||0)+amount;
+  saveData();renderBonos();
+  showToast("✓ Bono asignado a "+NAMES[creator].split(' ')[0]);
+}
+function resetCreadoraBonos(creator){
+  if(!confirm("¿Resetear bonos de "+NAMES[creator]+"?"))return;
+  data.bonos[creator]=0;saveData();renderBonos();
+  showToast("Bonos de "+NAMES[creator].split(' ')[0]+" reseteados");
+}
+
+// ═══════════════════════════════════
+// COMPROBANTES
+// ═══════════════════════════════════
+function openComprobante(){
+  document.getElementById('comp-f').value=new Date().toISOString().split('T')[0];
+  document.getElementById('comp-overlay').classList.add('open');
+}
+function submitComprobante(){
+  const creator=document.getElementById('comp-c').value;
+  const tipo=document.getElementById('comp-t').value;
+  const monto=parseInt(document.getElementById('comp-m').value)||0;
+  const concepto=document.getElementById('comp-con').value.trim();
+  const fecha=document.getElementById('comp-f').value;
+  const pagado=document.getElementById('comp-pagado').checked;
+  if(!monto||monto<=0){showToast("Ingresá un monto válido");return;}
+  const fileInput=document.getElementById('comp-archivo');
+  const file=fileInput&&fileInput.files[0];
+  function guardar(archivoDataUrl){
+    if(!data.comprobantes)data.comprobantes=[];
+    data.comprobantes.push({id:Date.now(),creator,tipo,monto,concepto,fecha,pagado,archivo:archivoDataUrl||null});
+    saveData();renderComprobantes();
+    document.getElementById('comp-overlay').classList.remove('open');
+    if(fileInput)fileInput.value="";
+    showToast("✓ Comprobante guardado");
+  }
+  if(file){const r=new FileReader();r.onload=e=>guardar(e.target.result);r.readAsDataURL(file);}
+  else guardar(null);
+}
+function deleteComprobante(id){
+  if(!confirm("¿Eliminar este comprobante?"))return;
+  data.comprobantes=data.comprobantes.filter(c=>c.id!==id);
+  saveData();renderComprobantes();showToast("Comprobante eliminado");
+}
+function verArchivo(id){
+  const c=data.comprobantes.find(x=>x.id===id);
+  if(!c||!c.archivo)return;
+  const w=window.open();
+  if(c.archivo.startsWith('data:image')){
+    w.document.write(`<img src="${c.archivo}" style="max-width:100%;height:auto;">`);
+  } else {
+    w.document.write(`<iframe src="${c.archivo}" style="width:100%;height:100vh;border:none;"></iframe>`);
+  }
+}
+function renderComprobantes(){
+  if(!data.comprobantes)data.comprobantes=[];
+  const filterC=document.getElementById('comp-creator').value;
+  const filterT=document.getElementById('comp-tipo').value;
+  const comps=[...data.comprobantes].filter(c=>{
+    if(filterC!=='ALL'&&c.creator!==filterC)return false;
+    if(filterT!=='ALL'&&c.tipo!==filterT)return false;
+    return true;
+  }).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const total=comps.reduce((s,c)=>s+c.monto,0);
+  const pagados=comps.filter(c=>c.pagado).reduce((s,c)=>s+c.monto,0);
+  const pendientes=comps.filter(c=>!c.pagado).reduce((s,c)=>s+c.monto,0);
+  document.getElementById('comp-stats').innerHTML=`
+    <div style="background:white;border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow);text-align:center;">
+      <div style="font-size:10px;font-family:'DM Mono';color:var(--muted);letter-spacing:1px;">TOTAL</div>
+      <div style="font-family:'Nunito';font-size:20px;font-weight:900;color:var(--text);">${fmtP(total)}</div>
+    </div>
+    <div style="background:white;border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow);text-align:center;">
+      <div style="font-size:10px;font-family:'DM Mono';color:var(--muted);letter-spacing:1px;">PAGADO</div>
+      <div style="font-family:'Nunito';font-size:20px;font-weight:900;color:var(--blue);">${fmtP(pagados)}</div>
+    </div>
+    <div style="background:white;border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow);text-align:center;">
+      <div style="font-size:10px;font-family:'DM Mono';color:var(--muted);letter-spacing:1px;">PENDIENTE</div>
+      <div style="font-family:'Nunito';font-size:20px;font-weight:900;color:var(--accent2);">${fmtP(pendientes)}</div>
+    </div>`;
+  const tipoLabel={sueldo:"Sueldo",ventas:"Comisión",bono:"Bono",otro:"Otro"};
+  document.getElementById('comp-tbody').innerHTML=comps.length?comps.map(c=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:28px;height:28px;border-radius:50%;background:${COLORS[c.creator]}22;border:1px solid ${COLORS[c.creator]};display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:10px;color:${COLORS[c.creator]}">${AVATARS[c.creator]}</div>
+        ${NAMES[c.creator]}
+      </div></td>
+      <td><span style="background:rgba(26,58,143,.08);color:var(--blue);padding:2px 8px;border-radius:20px;font-size:10px;font-family:'DM Mono';">${tipoLabel[c.tipo]||c.tipo}</span></td>
+      <td style="font-family:'Nunito';font-size:15px;font-weight:800;color:var(--accent);">${fmtP(c.monto)}</td>
+      <td style="font-size:12px;color:var(--muted);">${c.concepto||"—"}</td>
+      <td style="font-family:'DM Mono';font-size:10px;color:var(--muted);">${c.fecha}</td>
+      <td><span style="padding:3px 10px;border-radius:20px;font-size:9px;font-family:'DM Mono';background:${c.pagado?"rgba(26,58,143,.1)":"rgba(232,93,38,.1)"};color:${c.pagado?"var(--blue)":"var(--accent2)"};">${c.pagado?"✓ Pagado":"⏳ Pendiente"}</span></td>
+      <td style="display:flex;gap:6px;align-items:center;">
+        ${c.archivo?`<button onclick="verArchivo(${c.id})" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:13px;padding:4px;" title="Ver comprobante">📎</button>`:''}
+        <button onclick="deleteComprobante(${c.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;" onmouseover="this.style.color='var(--accent2)'" onmouseout="this.style.color='var(--muted)'">✕</button>
+      </td>
+    </tr>`).join(""):`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">Sin comprobantes</td></tr>`;
+}
+
+// ═══════════════════════════════════
+// CONFIG CREADORAS
+// ═══════════════════════════════════
+function renderConfigCreadoras(){
+  const wrap=document.getElementById('config-creadoras');
+  if(!wrap)return;
+  wrap.innerHTML=CREATORS.map(c=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;">
+      <div style="width:36px;height:36px;border-radius:50%;background:${COLORS[c]}22;border:2px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:11px;color:${COLORS[c]};flex-shrink:0;">${AVATARS[c]}</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:800;">${NAMES[c]}</div>
+        <div style="font-size:10px;font-family:'DM Mono';color:var(--muted);">Videos: ${data.videos.filter(v=>v.creator===c).length} · Ventas: ${data.ventas[c]||0} · Bonos: ${fmtP(data.bonos[c]||0)}</div>
+      </div>
+    </div>`).join('');
+}
+function openAddCreadora(){
+  document.getElementById('nc-overlay').classList.add('open');
+}
+function submitNewCreadora(){
+  const nombre=document.getElementById('nc-nombre').value.trim();
+  const pass=document.getElementById('nc-pass').value.trim();
+  if(!nombre||!pass){showToast("Completá nombre y contraseña");return;}
+  showToast("Para agregar creadoras editá el HTML directamente (CREATORS, NAMES, PASSWORDS).");
+  document.getElementById('nc-overlay').classList.remove('open');
 }
 
 loadData();
