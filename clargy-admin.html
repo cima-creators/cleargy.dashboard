@@ -291,7 +291,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="creator-grid" id="creator-grid"></div>
         <div class="sec-label">Últimos Videos</div>
         <div class="twrap"><div class="twrap-scroll"><table>
-          <thead><tr><th>Creadora</th><th>Día</th><th>Views</th><th>Score</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Creadora</th><th>Día</th><th>Views</th><th>Estado</th><th>Acciones</th></tr></thead>
           <tbody id="overview-videos"></tbody>
         </table></div></div>
       </div>
@@ -326,7 +326,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
           </select>
         </div>
         <div class="twrap"><div class="twrap-scroll"><table>
-          <thead><tr><th>Creadora</th><th>Día</th><th>Plat.</th><th>Categoría</th><th>Links</th><th>Views</th><th>Score</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Creadora</th><th>Día</th><th>Plat.</th><th>Categoría</th><th>Links</th><th>Views</th><th>Estado</th><th>Nota admin</th><th>Acciones</th></tr></thead>
           <tbody id="videos-tbody"></tbody>
         </table></div></div>
       </div>
@@ -496,6 +496,7 @@ const NAMES = {creadora1:"Luca Solucci",creadora2:"Vane Contreras",creadora3:"Ma
 const AVATARS = {creadora1:"LS",creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora5:"LA",creadora6:"C6"};
 const CREATORS = ["creadora1","creadora2","creadora3","creadora4","creadora5","creadora6"];
 const SALARY = 650000;
+const COMISION_POR_VENTA = 2500;
 const MIN_VIDEOS = 150;
 const CAMPAIGN_DAYS = 30;
 
@@ -615,8 +616,8 @@ function videoRow(v, compact=false){
     </td>
     <td style="font-family:'DM Mono';font-size:11px;">${fmtV(v.views)}</td>
     ${!compact?`<td style="font-family:'DM Mono';font-size:11px;">${fmtV(v.likes)}</td>`:""}
-    <td>${sc}</td>
     <td><span class="badge badge-${v.status}">${v.status==="approved"?"✓ Aprobado":v.status==="rejected"?"✗ Rechazado":"⏳ Pendiente"}</span></td>
+    <td><input type="text" value="${v.adminNote||''}" placeholder="Agregar nota..." onchange="setAdminNote('${v.id}',this.value)" style="background:var(--surface2);border:1px solid var(--border);padding:5px 8px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:140px;color:var(--text);outline:none;"></td>
     <td><div class="action-row">
       <button class="abtn abtn-approve" onclick="setStatus('${v.id}','approved')">✓</button>
       <button class="abtn abtn-reject" onclick="setStatus('${v.id}','rejected')">✗</button>
@@ -687,7 +688,9 @@ function renderVentas(){
   document.getElementById("ventas-tabla").innerHTML=CREATORS.map(c=>{
     
     const v=data.ventas[c]||0;
-    const base=Math.round(SALARY*(data.videos.filter(x=>x.creator===c).length/MIN_VIDEOS));
+    const vids_count=data.videos.filter(x=>x.creator===c).length;
+    const base=Math.round(SALARY*(vids_count/MIN_VIDEOS));
+    const comVentas=(data.ventas[c]||0)*COMISION_POR_VENTA;
     const bonos=data.bonos[c]||0;
     return`<tr>
       <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:${COLORS[c]}22;border:1px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'Nunito';font-size:10px;font-weight:800;color:${COLORS[c]}">${AVATARS[c]}</div>${NAMES[c]}</div></td>
@@ -951,7 +954,7 @@ function renderFinanzas(){
     const vids = data.videos.filter(v=>v.creator===c).length;
     const base = Math.round(SALARY * (vids / MIN_VIDEOS));
     const bonos = data.bonos[c]||0;
-    const total = base + bonos;
+    const total = base + comVentas + bonos;
     const pagado = data.pagos.filter(p=>p.creator===c).reduce((a,p)=>a+p.monto,0);
     const deuda = Math.max(0, total - pagado);
     return {c, vids, base, bonos, total, pagado, deuda};
