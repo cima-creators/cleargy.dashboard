@@ -751,16 +751,24 @@ function setPeriod(days, el){
 }
 
 function getVideosInPeriod(creator, days){
-  const day = getCampaignDay();
-  const fromDay = Math.max(1, day - days + 1);
-  return data.videos.filter(v=>v.creator===creator && v.day>=fromDay && v.day<=day);
+  // Filter by real date if available, otherwise show all
+  const now = new Date();
+  const from = new Date(now - days*24*60*60*1000);
+  return data.videos.filter(v=>{
+    if(!v.creator || v.creator!==creator) return false;
+    if(v.date) return new Date(v.date) >= from;
+    return true; // If no date, include it
+  });
 }
 
 function renderOverview(){
   const day=getCampaignDay();
-  const dayNow=getCampaignDay();
-  const fromDay=Math.max(1,dayNow-activePeriod+1);
-  const periodVideos=data.videos.filter(v=>v.day>=fromDay&&v.day<=dayNow);
+  const nowDate=new Date();
+  const fromDate=new Date(nowDate-activePeriod*24*60*60*1000);
+  const periodVideos=data.videos.filter(v=>{
+    if(v.date) return new Date(v.date)>=fromDate;
+    return true; // Include videos without date
+  });
   const totalVids=periodVideos.length;
   const totalVentas=CREATORS.reduce((a,c)=>a+(data.ventas[c]||0),0);
   const pending=data.videos.filter(v=>v.status==="pending").length;
