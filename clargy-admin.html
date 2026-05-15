@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -674,7 +676,7 @@ function nav(el){
   if(v==="mensajes")renderMensajes();
   if(v==="finanzas")renderFinanzas();
   if(v==="config"){loadConfig();}
-  if(v==="comprobantes")renderComprobantes();
+  if(v==="comprobantes"){renderComprobantes();}
 }
 
 function getCampaignDay(){const start=data.campaignStart?new Date(data.campaignStart):new Date("2025-06-01");const now=new Date();const d=Math.floor((now-start)/(1000*60*60*24))+1;return Math.min(Math.max(d,1),30);}
@@ -844,6 +846,7 @@ function renderVentas(){
       <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:${COLORS[c]}22;border:1px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'Nunito';font-size:10px;font-weight:800;color:${COLORS[c]}">${AVATARS[c]}</div>${NAMES[c]}</div></td>
       <td style="font-family:'Nunito';font-size:18px;font-weight:700;color:var(--accent)">${v}</td>
       <td style="font-family:'DM Mono';font-size:11px;">${fmtP(base)}</td>
+      <td style="font-family:'DM Mono';font-size:11px;color:#0d9488;font-weight:700;">${fmtP(comVentas)}</td>
       <td style="font-family:'DM Mono';font-size:11px;color:var(--gold);">${fmtP(bonos)}</td>
       <td style="font-family:'Nunito';font-size:16px;font-weight:700;">${fmtP(base+bonos)}</td>
     </tr>`;
@@ -880,36 +883,61 @@ function resetVentas(c){
 
 function renderBonos(){
   const bonoTypes=[
-    {key:"b-semana-ventas",label:"🏆 Más ventas semana (+20% semanal)",amount:0,custom:true},
-    {key:"b-semana-viral",label:"🔥 Video más viral semana",amount:40000},
-    {key:"b-semana-racha",label:"📅 Racha completa semana",amount:30000},
-    {key:"b-10k",label:"⚡ Video +10K views",amount:10000},
-    {key:"b-100k",label:"🚀 Primer video 100K",amount:75000},
-    {key:"b-top30",label:"🏅 Top ventas día 30",amount:200000},
+    {key:"ventas",label:"🏆 Más ventas semana",desc:"Ganadora: la que más vendió esta semana. Premio: +20% de su total semanal.",calcAmount:(c)=>{const v=data.ventas[c]||0;const vids=data.videos.filter(x=>x.creator===c).length;const base=Math.round(650000*(vids/150));return Math.round((base+v*2500)*0.20);}},
+    {key:"viral",label:"🔥 Video más viral",desc:"El video con más views de la semana. Premio: $40.000.",amount:40000},
+    {key:"racha",label:"📅 Racha completa",desc:"Subió los 5 videos todos los días de la semana. Premio: $30.000.",amount:30000},
+    {key:"10k",label:"⚡ Video +10K views",desc:"Cada video que supere 10.000 views. Premio: $10.000 por video.",amount:10000},
+    {key:"100k",label:"🚀 Primer video 100K",desc:"Primer video en superar 100.000 views en la campaña. Premio: $75.000.",amount:75000},
+    {key:"top30",label:"🏅 Top ventas día 30",desc:"Más ventas totales al finalizar la campaña. Premio: $200.000.",amount:200000},
   ];
-  document.getElementById("bonos-admin-body").innerHTML=`
-    <div style="font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);">
-      Asigná bonos manualmente. El monto se suma al total a pagar de cada creadora.
+
+  const resetRow=`<div style="background:white;border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <span style="font-size:12px;font-weight:800;color:var(--muted);">Resetear bonos:</span>
+    ${CREATORS.map(c=>`<button onclick="resetCreadoraBonos('${c}')" style="padding:5px 12px;border-radius:20px;font-size:10px;font-family:'Nunito';font-weight:700;cursor:pointer;background:rgba(232,93,38,.06);border:1px solid rgba(232,93,38,.2);color:var(--accent2);">↺ ${NAMES[c].split(' ')[0]}</button>`).join('')}
+  </div>`;
+
+  const bonoCards=bonoTypes.map(b=>`
+    <div style="background:white;border-radius:var(--radius);padding:20px;margin-bottom:12px;box-shadow:var(--shadow);">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:15px;font-weight:800;margin-bottom:4px;">${b.label}</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.5;">${b.desc}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-family:'Nunito';font-size:18px;font-weight:900;color:var(--blue);">${b.amount?fmtP(b.amount):"Variable"}</div>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--surface2);padding-top:14px;">
+        <div style="font-size:10px;font-family:'DM Mono';letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Asignar bono a:</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${CREATORS.map(c=>{
+            const amount = b.calcAmount ? b.calcAmount(c) : b.amount;
+            const currentBonos = data.bonos[c]||0;
+            return `<button onclick="assignBono('${c}',${amount})" 
+              style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;font-size:12px;font-family:'Nunito';font-weight:700;cursor:pointer;background:${COLORS[c]}12;border:2px solid ${COLORS[c]}40;color:${COLORS[c]};transition:all .12s;"
+              onmouseover="this.style.background='${COLORS[c]}25';this.style.borderColor='${COLORS[c]}'"
+              onmouseout="this.style.background='${COLORS[c]}12';this.style.borderColor='${COLORS[c]}40'">
+              <div style="width:24px;height:24px;border-radius:50%;background:${COLORS[c]}25;display:flex;align-items:center;justify-content:center;font-size:9px;">${AVATARS[c]}</div>
+              ${NAMES[c].split(' ')[0]}
+              <span style="font-size:10px;opacity:.7;">${fmtP(amount)}</span>
+            </button>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById("bonos-admin-body").innerHTML = resetRow + bonoCards + `
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:20px 0 12px;">Bonos acumulados por creadora</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+      ${CREATORS.map(c=>`<div style="background:white;border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:${COLORS[c]}12;border:2px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${COLORS[c]};flex-shrink:0;">${AVATARS[c]}</div>
+        <div><div style="font-size:12px;font-weight:800;">${NAMES[c].split(' ')[0]}</div>
+        <div style="font-family:'Nunito';font-size:18px;font-weight:900;color:var(--gold);">${fmtP(data.bonos[c]||0)}</div></div>
+      </div>`).join('')}
     </div>
-    ${bonoTypes.map(b=>`
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <div><div style="font-family:'Nunito';font-size:14px;font-weight:700;">${b.label}</div><div style="font-size:10px;color:var(--muted);font-family:'DM Mono';">${fmtP(b.amount)}</div></div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        ${CREATORS.map(c=>`<button onclick="assignBono('${c}',${b.amount})" style="padding:7px 14px;border-radius:20px;font-size:11px;font-family:'DM Sans';font-weight:600;cursor:pointer;background:${COLORS[c]}15;border:1px solid ${COLORS[c]}40;color:${COLORS[c]};transition:all .12s;" onmouseover="this.style.background='${COLORS[c]}25'" onmouseout="this.style.background='${COLORS[c]}15'">+ ${NAMES[c]}</button>`).join("")}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;">${CREATORS.map(c=>`<button onclick="restarBono('${c}',${b.amount})" style="padding:7px 14px;border-radius:20px;font-size:11px;font-family:'DM Sans';font-weight:600;cursor:pointer;background:rgba(255,74,107,.05);border:1px solid rgba(255,74,107,.25);color:var(--accent2);transition:all .12s;">− ${NAMES[c]}</button>`).join("")}
-      </div>
-    </div>`).join("")}
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin:20px 0 12px;">BONOS ASIGNADOS</div>
-    <div class="twrap"><table><thead><tr><th>Creadora</th><th>Bonos acumulados</th></tr></thead>
-    <tbody>${CREATORS.map(c=>`<tr><td>${NAMES[c]}</td><td style="font-family:'Nunito';font-size:16px;font-weight:700;color:var(--gold);">${fmtP(data.bonos[c]||0)}</td></tr>`).join("")}</tbody></table></div>
   `;
 }
 
-function assignBono(creator,amount){
-  data.bonos[creator]=(data.bonos[creator]||0)+amount;
-  saveData();renderBonos();showToast(`${fmtP(amount)} asignado a ${NAMES[creator]}`);
-}
 
 function renderViral(){
   const vids=[...data.videos].filter(v=>v.views>0).sort((a,b)=>b.views-a.views).slice(0,20);
