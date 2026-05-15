@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -252,6 +251,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
     <div class="header-actions">
       <button class="hbtn" onclick="openNotif()">✉ Mensaje</button>
       <button class="hbtn" onclick="openAddIdea()">+ Idea</button>
+      <button class="hbtn" onclick="adminLogout()" title="Cerrar sesión" style="opacity:.7;">⏏ Salir</button>
     </div>
   </div>
 
@@ -711,33 +711,42 @@ function saveData(){
 
 let scoreVideoId=null;
 
+function enterAdmin(){
+  localStorage.setItem("clargy_admin_session","1");
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("admin-app").style.display="flex";
+  loadData().then(()=>renderAll());
+  function startAdminListen(){
+    window._fbListen((newData)=>{
+      data = newData;
+      renderAll();
+      const activeView = document.querySelector('.view.active');
+      if(activeView){
+        const id = activeView.id;
+        if(id==='view-videos') renderVideos();
+        if(id==='view-ventas') renderVentas();
+        if(id==='view-bonos') renderBonos();
+        if(id==='view-viral') renderViral();
+        if(id==='view-ideas') renderIdeas();
+        if(id==='view-mensajes') renderMensajes();
+        if(id==='view-finanzas') renderFinanzas();
+        if(id==='view-comprobantes') renderComprobantes();
+      }
+    });
+  }
+  if(window._fbListen) startAdminListen();
+  else window.addEventListener('firebase-ready', startAdminListen, {once:true});
+}
+
 function doAdminLogin(){
   if(document.getElementById("a-pass").value===ADMIN_PASS){
-    document.getElementById("login-screen").style.display="none";
-    document.getElementById("admin-app").style.display="flex";
-    loadData().then(()=>renderAll());
-    function startAdminListen(){
-      window._fbListen((newData)=>{
-        data = newData;
-        renderAll();
-        // Re-render active view
-        const activeView = document.querySelector('.view.active');
-        if(activeView){
-          const id = activeView.id;
-          if(id==='view-videos') renderVideos();
-          if(id==='view-ventas') renderVentas();
-          if(id==='view-bonos') renderBonos();
-          if(id==='view-viral') renderViral();
-          if(id==='view-ideas') renderIdeas();
-          if(id==='view-mensajes') renderMensajes();
-          if(id==='view-finanzas') renderFinanzas();
-          if(id==='view-comprobantes') renderComprobantes();
-        }
-      });
-    }
-    if(window._fbListen) startAdminListen();
-    else window.addEventListener('firebase-ready', startAdminListen, {once:true});
+    enterAdmin();
   }else{document.getElementById("a-err").classList.add("show");}
+}
+
+function adminLogout(){
+  localStorage.removeItem("clargy_admin_session");
+  location.reload();
 }
 
 function nav(el){
@@ -945,15 +954,16 @@ function renderVentas(){
     const v=data.ventas[c]||0;
     const vids_count=data.videos.filter(x=>x.creator===c).length;
     const base=Math.round(SALARY*(vids_count/MIN_VIDEOS));
-    const comVentas=(data.ventas[c]||0)*COMISION_POR_VENTA;
-    const bonos=data.bonos[c]||0;
-    return`<tr>
-      <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:${COLORS[c]}22;border:1px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'Nunito';font-size:10px;font-weight:800;color:${COLORS[c]}">${AVATARS[c]}</div>${NAMES[c]}</div></td>
+    const comVentas=vids_count>0?(data.ventas[c]||0)*COMISION_POR_VENTA:0;
+    const bonos=vids_count>0?(data.bonos[c]||0):0;
+    const noVids=vids_count===0;
+    return`<tr ${noVids?'style="opacity:.5;"':''}>
+      <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:${COLORS[c]}22;border:1px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'Nunito';font-size:10px;font-weight:800;color:${COLORS[c]}">${AVATARS[c]}</div>${NAMES[c]}${noVids?'<span style="font-size:9px;font-family:\'DM Mono\';color:var(--accent2);margin-left:4px;">sin videos</span>':''}</div></td>
       <td style="font-family:'Nunito';font-size:18px;font-weight:700;color:var(--accent)">${v}</td>
       <td style="font-family:'DM Mono';font-size:11px;">${fmtP(base)}</td>
       <td style="font-family:'DM Mono';font-size:11px;color:#0d9488;font-weight:700;">${fmtP(comVentas)}</td>
       <td style="font-family:'DM Mono';font-size:11px;color:var(--gold);">${fmtP(bonos)}</td>
-      <td style="font-family:'Nunito';font-size:16px;font-weight:700;">${fmtP(base+comVentas+bonos)}</td>
+      <td style="font-family:'Nunito';font-size:16px;font-weight:700;">${noVids?'$0':fmtP(base+comVentas+bonos)}</td>
     </tr>`;
   }).join("");
 }
@@ -1256,8 +1266,8 @@ function renderFinanzas(){
   const rows = CREATORS.map(c => {
     const vids = data.videos.filter(v=>v.creator===c).length;
     const base = Math.round(SALARY * (vids / MIN_VIDEOS));
-    const comVentas = (data.ventas[c]||0) * COMISION_POR_VENTA;
-    const bonos = data.bonos[c]||0;
+    const comVentas = vids>0?(data.ventas[c]||0)*COMISION_POR_VENTA:0;
+    const bonos = vids>0?(data.bonos[c]||0):0;
     const total = base + comVentas + bonos;
     const pagado = data.pagos.filter(p=>p.creator===c).reduce((a,p)=>a+p.monto,0);
     const deuda = Math.max(0, total - pagado);
@@ -1446,14 +1456,29 @@ function renderComprobantes(){
 function renderConfigCreadoras(){
   const wrap=document.getElementById('config-creadoras');
   if(!wrap)return;
+  if(!data.startDates) data.startDates={};
   wrap.innerHTML=CREATORS.map(c=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;">
-      <div style="width:36px;height:36px;border-radius:50%;background:${COLORS[c]}22;border:2px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:11px;color:${COLORS[c]};flex-shrink:0;">${AVATARS[c]}</div>
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:800;">${NAMES[c]}</div>
-        <div style="font-size:10px;font-family:'DM Mono';color:var(--muted);">Videos: ${data.videos.filter(v=>v.creator===c).length} · Ventas: ${data.ventas[c]||0} · Bonos: ${fmtP(data.bonos[c]||0)}</div>
+    <div style="padding:14px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:${COLORS[c]}22;border:2px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:11px;color:${COLORS[c]};flex-shrink:0;">${AVATARS[c]}</div>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:800;">${NAMES[c]}</div>
+          <div style="font-size:10px;font-family:'DM Mono';color:var(--muted);">Videos: ${data.videos.filter(v=>v.creator===c).length} · Ventas: ${data.ventas[c]||0} · Bonos: ${fmtP(data.bonos[c]||0)}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;font-family:'DM Mono';color:var(--muted);white-space:nowrap;">Inicio campaña:</span>
+        <input type="date" value="${data.startDates[c]||''}" onchange="saveStartDate('${c}',this.value)"
+          style="flex:1;padding:5px 8px;border-radius:var(--radius-xs);border:1px solid var(--border);font-size:11px;font-family:'DM Mono';color:var(--text);background:white;">
       </div>
     </div>`).join('');
+}
+
+function saveStartDate(c, date){
+  if(!data.startDates) data.startDates={};
+  data.startDates[c]=date;
+  saveData();
+  showToast("Fecha de inicio guardada para "+NAMES[c].split(' ')[0]);
 }
 function openAddCreadora(){
   document.getElementById('nc-overlay').classList.add('open');
@@ -1469,6 +1494,14 @@ function submitNewCreadora(){
 loadData();
 loadConfig();
 
+// Auto-login admin si hay sesión guardada
+(function(){
+  if(localStorage.getItem("clargy_admin_session")==="1"){
+    document.addEventListener("DOMContentLoaded", function(){
+      enterAdmin();
+    });
+  }
+})();
 </script>
 
   <!-- Firebase -->
