@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -44,7 +45,7 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
 .le.show{display:block;}
 
 /* LAYOUT */
-#admin-app{display:none;height:100vh;display:none;flex-direction:column;}
+#admin-app{display:none;height:100vh;flex-direction:column;}
 #admin-app.show{display:flex;}
 
 /* HEADER */
@@ -664,7 +665,7 @@ let scoreVideoId=null;
 function doAdminLogin(){
   if(document.getElementById("a-pass").value===ADMIN_PASS){
     document.getElementById("login-screen").style.display="none";
-    document.getElementById("admin-app").style.display="block";
+    document.getElementById("admin-app").style.display="flex";
     loadData();renderAll();
   }else{document.getElementById("a-err").classList.add("show");}
 }
