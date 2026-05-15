@@ -529,6 +529,30 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
   </div>
 </div>
 
+
+<!-- PAGO MODAL -->
+<div class="overlay" id="pago-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:400px;">
+    <div class="mhead">
+      <div class="mtitle">Registrar Pago</div>
+      <button class="xbtn" onclick="document.getElementById('pago-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px;font-weight:600;" id="pago-creator-name">—</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div><div class="flabel" style="margin-bottom:6px;">Monto ($)</div>
+        <input class="fi" type="number" id="pago-monto" placeholder="ej: 650000">
+      </div>
+      <div><div class="flabel" style="margin-bottom:6px;">Concepto</div>
+        <input class="fi" type="text" id="pago-concepto" placeholder="ej: Semana 1, Saldo final...">
+      </div>
+      <div><div class="flabel" style="margin-bottom:6px;">Fecha</div>
+        <input class="fi" type="date" id="pago-fecha">
+      </div>
+      <button class="hbtn primary" style="width:100%;padding:13px;font-size:14px;" onclick="submitPago()">Confirmar pago ✓</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -754,9 +778,30 @@ function renderVentas(){
 
 function addVentas(c){
   const n=parseInt(document.getElementById("v-"+c).value)||0;
-  if(n<=0)return;
+  if(n<=0){showToast("Ingresá una cantidad válida");return;}
+  const fecha=document.getElementById("vd-"+c)?.value||new Date().toISOString().split("T")[0];
   data.ventas[c]=(data.ventas[c]||0)+n;
-  saveData();renderVentas();showToast(`+${n} ventas para ${NAMES[c]}`);
+  if(!data.ventasLog) data.ventasLog=[];
+  data.ventasLog.push({creator:c,tipo:"suma",cantidad:n,fecha,comision:n*COMISION_POR_VENTA});
+  saveData();renderVentas();
+  showToast(`+${n} ventas · +$${(n*COMISION_POR_VENTA).toLocaleString("es-AR")} para ${NAMES[c]}`);
+}
+
+function subVentas(c){
+  const n=parseInt(document.getElementById("v-"+c).value)||0;
+  if(n<=0){showToast("Ingresá una cantidad válida");return;}
+  const fecha=document.getElementById("vd-"+c)?.value||new Date().toISOString().split("T")[0];
+  data.ventas[c]=Math.max(0,(data.ventas[c]||0)-n);
+  if(!data.ventasLog) data.ventasLog=[];
+  data.ventasLog.push({creator:c,tipo:"resta",cantidad:n,fecha,comision:-(n*COMISION_POR_VENTA)});
+  saveData();renderVentas();
+  showToast(`−${n} ventas de ${NAMES[c]}`);
+}
+
+function resetVentas(c){
+  if(!confirm("¿Resetear ventas de "+NAMES[c]+" a 0?"))return;
+  data.ventas[c]=0;
+  saveData();renderVentas();showToast("Ventas reseteadas");
 }
 
 function renderBonos(){
@@ -1003,15 +1048,16 @@ function renderFinanzas(){
   const rows = CREATORS.map(c => {
     const vids = data.videos.filter(v=>v.creator===c).length;
     const base = Math.round(SALARY * (vids / MIN_VIDEOS));
+    const comVentas = (data.ventas[c]||0) * COMISION_POR_VENTA;
     const bonos = data.bonos[c]||0;
     const total = base + comVentas + bonos;
     const pagado = data.pagos.filter(p=>p.creator===c).reduce((a,p)=>a+p.monto,0);
     const deuda = Math.max(0, total - pagado);
-    return {c, vids, base, bonos, total, pagado, deuda};
+    return {c, vids, base, comVentas, bonos, total, pagado, deuda};
   });
 
   document.getElementById("finanzas-resumen").innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;" class="fin-grid">
       ${rows.map(r=>`
         <div style="background:white;border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -1045,16 +1091,22 @@ function renderFinanzas(){
 let pagoCreator = null;
 function openPago(creator, deuda){
   pagoCreator = creator;
-  const monto = prompt(`Monto a pagar a ${NAMES[creator]} (deuda: $${deuda.toLocaleString("es-AR")}):`);
-  if(!monto) return;
-  const concepto = prompt("Concepto (ej: Semana 1, Saldo final):", "Pago campaña") || "Pago campaña";
+  document.getElementById("pago-creator-name").textContent = NAMES[creator] + " — Deuda: $" + deuda.toLocaleString("es-AR");
+  document.getElementById("pago-monto").value = deuda > 0 ? deuda : "";
+  document.getElementById("pago-concepto").value = "Pago campaña";
+  document.getElementById("pago-fecha").value = new Date().toISOString().split("T")[0];
+  document.getElementById("pago-overlay").classList.add("open");
+}
+function submitPago(){
+  const monto = parseInt(document.getElementById("pago-monto").value)||0;
+  const concepto = document.getElementById("pago-concepto").value || "Pago campaña";
+  const fecha = document.getElementById("pago-fecha").value;
+  if(!monto || monto <= 0){ showToast("Ingresá un monto válido"); return; }
   if(!data.pagos) data.pagos=[];
-  data.pagos.push({
-    creator, monto:parseInt(monto)||0, concepto,
-    fecha: new Date().toISOString().split("T")[0]
-  });
+  data.pagos.push({ creator: pagoCreator, monto, concepto, fecha });
   saveData(); renderFinanzas();
-  showToast(`✓ Pago registrado para ${NAMES[creator]}`);
+  document.getElementById("pago-overlay").classList.remove("open");
+  showToast(`✓ Pago de $${monto.toLocaleString("es-AR")} registrado para ${NAMES[pagoCreator]}`);
 }
 
 loadData();
