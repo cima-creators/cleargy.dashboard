@@ -336,9 +336,21 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="view-title">Cargar Ventas</div>
         <div class="view-sub">Actualizá las ventas diariamente</div>
         <div class="ventas-grid" id="ventas-grid"></div>
+        <div class="sec-label" style="margin-top:8px;">Resumen filtrado</div>
+        <div class="filters">
+          <select class="fsel" id="vt-creator" onchange="renderVentas()">
+            <option value="ALL">Todas las creadoras</option>
+            <option value="creadora1">Luca Solucci</option>
+            <option value="creadora2">Vane Contreras</option>
+            <option value="creadora3">María Leal</option>
+            <option value="creadora4">Daniela Baldassin</option>
+            <option value="creadora5">Lucila Ailin</option>
+            <option value="creadora6">Creadora 6</option>
+          </select>
+        </div>
         <div class="sec-label">Resumen</div>
         <div class="twrap"><div class="twrap-scroll"><table>
-          <thead><tr><th>Creadora</th><th>Ventas</th><th>Comisión base</th><th>Bonos</th><th>Total a pagar</th></tr></thead>
+          <thead><tr><th>Creadora</th><th>Ventas</th><th>Sueldo base</th><th>Com. ventas</th><th>Bonos</th><th>Total a pagar</th></tr></thead>
           <tbody id="ventas-tabla"></tbody>
         </table></div></div>
       </div>
@@ -353,7 +365,38 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <!-- VIRAL -->
       <div id="view-viral" class="view">
         <div class="view-title">Videos Virales</div>
-        <div class="view-sub">Top por views de toda la campaña</div>
+        <div class="view-sub">Top videos de la campaña</div>
+        <div class="filters">
+          <select class="fsel" id="vir-creator" onchange="renderViral()">
+            <option value="ALL">Todas las creadoras</option>
+            <option value="creadora1">Luca Solucci</option>
+            <option value="creadora2">Vane Contreras</option>
+            <option value="creadora3">María Leal</option>
+            <option value="creadora4">Daniela Baldassin</option>
+            <option value="creadora5">Lucila Ailin</option>
+            <option value="creadora6">Creadora 6</option>
+          </select>
+          <select class="fsel" id="vir-minviews" onchange="renderViral()">
+            <option value="0">Todos los videos</option>
+            <option value="1000">+1K views</option>
+            <option value="5000">+5K views</option>
+            <option value="10000">+10K views</option>
+            <option value="50000">+50K views</option>
+            <option value="100000">+100K views</option>
+          </select>
+          <select class="fsel" id="vir-plat" onchange="renderViral()">
+            <option value="ALL">Todas las plataformas</option>
+            <option value="ig">Instagram</option>
+            <option value="tt">TikTok</option>
+            <option value="both">Ambas</option>
+          </select>
+          <select class="fsel" id="vir-sort" onchange="renderViral()">
+            <option value="views_desc">↓ Más views</option>
+            <option value="views_asc">↑ Menos views</option>
+            <option value="day_desc">↓ Más recientes</option>
+          </select>
+        </div>
+        <div id="viral-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;"></div>
         <div id="viral-list"></div>
       </div>
 
@@ -676,16 +719,23 @@ function renderVentas(){
   const isMobile = window.innerWidth <= 430;
   document.getElementById("ventas-grid").innerHTML=CREATORS.map(c=>`
     <div class="vcard">
-      <div class="vc-creator">${NAMES[c]}</div>
-      <div class="vc-current" style="color:${COLORS[c]}">${data.ventas[c]||0}</div>
-      <div style="font-size:9px;font-family:'DM Mono';color:var(--muted);margin-bottom:8px;">ventas acumuladas</div>
-      <div class="vc-input-row">
-        <input class="vc-input" type="number" id="v-${c}" placeholder="+ventas hoy" min="0">
-        <button class="vc-btn" onclick="addVentas('${c}')">+</button>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:${COLORS[c]}18;border:2px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:10px;font-weight:600;color:${COLORS[c]};flex-shrink:0;">${AVATARS[c]}</div>
+        <div class="vc-creator">${NAMES[c]}</div>
       </div>
+      <div class="vc-current" style="color:${COLORS[c]}">${data.ventas[c]||0}</div>
+      <div style="font-size:9px;font-family:'DM Mono';color:var(--muted);margin-bottom:10px;">ventas acumuladas</div>
+      <div class="vc-input-row" style="margin-bottom:6px;">
+        <input class="vc-input" type="number" id="v-${c}" placeholder="cantidad" min="1">
+        <button class="vc-btn" onclick="addVentas('${c}')" style="background:var(--blue);">+</button>
+        <button class="vc-btn" onclick="subVentas('${c}')" style="background:var(--accent2);">−</button>
+      </div>
+      <button onclick="resetVentas('${c}')" style="width:100%;padding:5px;background:none;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:10px;font-family:'DM Mono';color:var(--muted);cursor:pointer;">Resetear a 0</button>
     </div>`).join("");
 
-  document.getElementById("ventas-tabla").innerHTML=CREATORS.map(c=>{
+  const vtCreator = document.getElementById("vt-creator")?.value||"ALL";
+  const creatorsToShow = vtCreator==="ALL" ? CREATORS : [vtCreator];
+  document.getElementById("ventas-tabla").innerHTML=creatorsToShow.map(c=>{
     
     const v=data.ventas[c]||0;
     const vids_count=data.videos.filter(x=>x.creator===c).length;
@@ -716,7 +766,7 @@ function renderBonos(){
     {key:"b-semana-viral",label:"🔥 Video más viral semana",amount:40000},
     {key:"b-semana-racha",label:"📅 Racha completa",amount:35000},
     {key:"b-10k",label:"⚡ Video +10K views",amount:20000},
-    {key:"b-100k",label:"🚀 Primer video 100K",amount:150000},
+    {key:"b-100k",label:"🚀 Primer video 100K",amount:75000},
     {key:"b-top30",label:"🏅 Top ventas día 30",amount:200000},
   ];
   document.getElementById("bonos-admin-body").innerHTML=`
