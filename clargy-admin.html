@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -293,6 +294,9 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div id="view-videos" class="view">
         <div class="view-title">Videos</div>
         <div class="view-sub">Revisá, puntuá y aprobá el contenido</div>
+        <div style="margin-bottom:12px;">
+          <button id="windsor-sync-btn" class="hbtn" onclick="syncWindsor()" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;border:none;padding:10px 20px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(131,58,180,.3);">🔄 Sync Instagram (Windsor)</button>
+        </div>
         <div class="filters">
           <select class="fsel" id="vf-creator" onchange="renderVideos()">
             <option value="ALL">Todas</option>
@@ -681,6 +685,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 
 const ADMIN_PASS = "clargy-admin-2025";
 const ADMIN_PASS2 = "avellaneda-2025";
+const WINDSOR_API_KEY = "cc381c4b1fc37045302a32c3cbe050cdf9da";
 const COLORS = {creadora1:"#1a3a8f",creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora5:"#7c3aed",creadora6:"#db2777"};
 const NAMES = {creadora1:"Luca Solucci",creadora2:"Vane Contreras",creadora3:"María Leal",creadora4:"Daniela Baldassin",creadora5:"Lucila Ailin",creadora6:"Creadora 6"};
 const AVATARS = {creadora1:"LS",creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora5:"LA",creadora6:"C6"};
@@ -880,6 +885,7 @@ function videoRow(v, compact=false){
       <button class="abtn abtn-reject" onclick="setStatus('${v.id}','rejected')">✗</button>
       <button class="abtn abtn-score" onclick="openScore('${v.id}')">Score</button>
       <button class="abtn" style="border-color:rgba(74,143,255,.3);color:var(--accent3);background:rgba(74,143,255,.05);" onclick="openEditVideo('${v.id}')">Editar</button>
+      ${v.driveLink?`<a href="${v.driveLink}" target="_blank" class="abtn" style="border-color:rgba(13,148,136,.3);color:#0d9488;background:rgba(13,148,136,.05);text-decoration:none;">🎬 Drive</a>`:`<span class="abtn" style="opacity:.3;cursor:default;border-color:var(--border);">🎬</span>`}
       <button class="abtn" style="border-color:rgba(232,93,38,.3);color:var(--accent2);background:rgba(232,93,38,.05);" onclick="adminDeleteVideo('${v.id}')">🗑</button>
     </div></td>
   </tr>`;
@@ -951,6 +957,41 @@ function adminDeleteVideo(id){
   if(!confirm("⚠️ Vas a perder este archivo permanentemente. ¿Eliminarlo?"))return;
   data.videos=data.videos.filter(v=>v.id!=id);
   saveData();renderAll();renderVideos();showToast("Video eliminado");
+}
+
+async function syncWindsor(){
+  const btn=document.getElementById("windsor-sync-btn");
+  btn.textContent="Sincronizando...";btn.disabled=true;
+  try{
+    const url=`https://connectors.windsor.ai/instagram?api_key=${WINDSOR_API_KEY}&fields=media_permalink,views,likes,shares,saves,comments&date_preset=last_30d&_renderer=json`;
+    const res=await fetch(url);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json=await res.json();
+    const posts=Array.isArray(json)?json:(json.data||json.results||[]);
+    let updated=0;
+    posts.forEach(post=>{
+      if(!post.media_permalink) return;
+      const wp=post.media_permalink.replace(/\/$/, "").toLowerCase();
+      const vid=data.videos.find(v=>{
+        const ig=(v.linkIg||"").replace(/\/$/, "").toLowerCase();
+        if(!ig) return false;
+        return ig===wp || ig.includes(wp) || wp.includes(ig);
+      });
+      if(vid){
+        if(post.views!=null && post.views>0) vid.views=post.views;
+        if(post.likes!=null && post.likes>0) vid.likes=post.likes;
+        if(post.shares!=null && post.shares>0) vid.shares=post.shares;
+        if(post.saves!=null && post.saves>0) vid.saves=post.saves;
+        updated++;
+      }
+    });
+    if(updated>0){saveData();renderAll();renderVideos();}
+    showToast(updated>0?`✓ Windsor: ${updated} videos actualizados`:`Windsor: no se encontraron coincidencias (${posts.length} posts recibidos)`);
+  }catch(e){
+    showToast("Error al conectar con Windsor: "+e.message);
+    console.error("Windsor error:",e);
+  }
+  btn.textContent="🔄 Sync Instagram (Windsor)";btn.disabled=false;
 }
 
 function renderVentas(){
