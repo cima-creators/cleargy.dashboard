@@ -962,35 +962,48 @@ function adminDeleteVideo(id){
 async function syncWindsor(){
   const btn=document.getElementById("windsor-sync-btn");
   btn.textContent="Sincronizando...";btn.disabled=true;
-  try{
-    const url=`https://connectors.windsor.ai/instagram?api_key=${WINDSOR_API_KEY}&fields=media_permalink,views,likes,shares,saves,comments&date_preset=last_30d&_renderer=json`;
-    const res=await fetch(url);
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json=await res.json();
-    const posts=Array.isArray(json)?json:(json.data||json.results||[]);
-    let updated=0;
-    posts.forEach(post=>{
-      if(!post.media_permalink) return;
-      const wp=post.media_permalink.replace(/\/$/, "").toLowerCase();
-      const vid=data.videos.find(v=>{
-        const ig=(v.linkIg||"").replace(/\/$/, "").toLowerCase();
-        if(!ig) return false;
-        return ig===wp || ig.includes(wp) || wp.includes(ig);
-      });
-      if(vid){
-        if(post.views!=null && post.views>0) vid.views=post.views;
-        if(post.likes!=null && post.likes>0) vid.likes=post.likes;
-        if(post.shares!=null && post.shares>0) vid.shares=post.shares;
-        if(post.saves!=null && post.saves>0) vid.saves=post.saves;
-        updated++;
-      }
-    });
-    if(updated>0){saveData();renderAll();renderVideos();}
-    showToast(updated>0?`✓ Windsor: ${updated} videos actualizados`:`Windsor: no se encontraron coincidencias (${posts.length} posts recibidos)`);
-  }catch(e){
-    showToast("Error al conectar con Windsor: "+e.message);
-    console.error("Windsor error:",e);
+  const endpoint=`https://connectors.windsor.ai/instagram?api_key=${WINDSOR_API_KEY}&fields=media_permalink,views,likes,shares,saves,comments&date_preset=last_30d&_renderer=json`;
+  const proxies=["",`https://corsproxy.io/?`];
+  let posts=null;
+  for(const proxy of proxies){
+    try{
+      const res=await fetch(proxy+endpoint);
+      if(!res.ok) continue;
+      const json=await res.json();
+      posts=Array.isArray(json)?json:(json.data||json.results||[]);
+      console.log("Windsor raw sample:",posts[0]);
+      break;
+    }catch(e){ console.warn("Windsor via proxy '"+proxy+"' failed:",e.message); }
   }
+  if(!posts){
+    showToast("❌ No se pudo conectar con Windsor");
+    btn.textContent="🔄 Sync Instagram (Windsor)";btn.disabled=false;
+    return;
+  }
+  let updated=0;
+  posts.forEach(post=>{
+    const permalink=post.media_permalink||post.permalink||"";
+    if(!permalink) return;
+    const wp=permalink.replace(/\/$/, "").toLowerCase();
+    const vid=data.videos.find(v=>{
+      const ig=(v.linkIg||"").replace(/\/$/, "").toLowerCase();
+      if(!ig) return false;
+      return ig===wp || ig.includes(wp) || wp.includes(ig);
+    });
+    if(vid){
+      const v=post.views??post.impressions;
+      const l=post.likes??post.like_count;
+      const sh=post.shares??post.share_count;
+      const sa=post.saves??post.saved;
+      if(v>0) vid.views=v;
+      if(l>0) vid.likes=l;
+      if(sh>0) vid.shares=sh;
+      if(sa>0) vid.saves=sa;
+      updated++;
+    }
+  });
+  if(updated>0){saveData();renderAll();renderVideos();}
+  showToast(updated>0?`✓ Windsor: ${updated} videos actualizados`:`Windsor conectado — ${posts.length} posts, sin coincidencias de links`);
   btn.textContent="🔄 Sync Instagram (Windsor)";btn.disabled=false;
 }
 
