@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -112,31 +111,42 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
 /* VIEWS */
 .view{display:none;animation:fadeIn .2s ease;}.view.active{display:block;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-.view-title{font-family:'Nunito';font-size:22px;font-weight:900;letter-spacing:-.5px;margin-bottom:2px;}
+.view-title{font-family:'Nunito';font-size:24px;font-weight:900;letter-spacing:-.5px;margin-bottom:2px;}
 .view-sub{font-size:12px;color:var(--muted);margin-bottom:20px;font-weight:600;}
-.sec-label{font-family:'DM Mono';font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.sec-label{font-family:'DM Mono';font-size:8px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--surface2);display:flex;align-items:center;gap:8px;}
+.sec-label::before{content:'';display:inline-block;width:3px;height:12px;background:var(--accent);border-radius:2px;}
 
 /* STAT CARDS - responsive grid */
 .stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
 @media(max-width:900px){.stats-row{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr;}}
 @media(max-width:430px){.stats-row{grid-template-columns:1fr 1fr;}}
-.scard{background:var(--surface);border-radius:var(--radius-sm);padding:16px;box-shadow:var(--shadow);}
-.sc-label{font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
-.sc-val{font-family:'Nunito';font-size:32px;font-weight:900;line-height:1;letter-spacing:-1px;color:var(--text);}
-.sc-sub{font-size:10px;color:var(--muted);margin-top:4px;font-weight:600;}
+/* STAT CARDS */
+.stats-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:24px;}
+@media(max-width:900px){.stats-row{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr;}}
+.scard{background:var(--surface);border-radius:16px;padding:18px 16px 14px;box-shadow:0 2px 16px rgba(26,58,143,.07);position:relative;overflow:hidden;border-top:3px solid var(--scard-c,var(--accent));}
+.scard-icon{position:absolute;right:10px;top:8px;font-size:38px;opacity:.07;line-height:1;pointer-events:none;}
+.sc-label{font-family:'DM Mono';font-size:7px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+.sc-val{font-family:'Nunito';font-size:34px;font-weight:900;line-height:1;letter-spacing:-2px;}
+.sc-sub{font-size:10px;color:var(--muted);margin-top:5px;font-weight:600;font-family:'DM Mono';}
 
-/* CREATOR GRID - responsive */
+/* CREATOR GRID */
 .creator-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
 @media(max-width:900px){.creator-grid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:600px){.creator-grid{grid-template-columns:1fr 1fr;}}
-@media(max-width:430px){.creator-grid{grid-template-columns:1fr;}}
-.creator-card{background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s;}
-.creator-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);}
-.cc-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:13px;font-weight:500;margin-bottom:10px;border:2.5px solid;flex-shrink:0;}
-.cc-name{font-size:13px;font-weight:800;margin-bottom:6px;color:var(--text);}
-.cc-stat{font-family:'Nunito';font-size:28px;font-weight:900;letter-spacing:-1px;}
-.cc-sublabel{font-size:8px;font-family:'DM Mono';letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+@media(max-width:430px){.creator-grid{grid-template-columns:1fr 1fr;}}
+.creator-card{background:var(--surface);border-radius:18px;overflow:hidden;box-shadow:0 4px 20px rgba(26,58,143,.09);cursor:pointer;transition:all .2s;}
+.creator-card:hover{transform:translateY(-4px);box-shadow:0 8px 32px rgba(26,58,143,.16);}
+.cc-strip{height:54px;position:relative;flex-shrink:0;}
+.cc-avatar{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:14px;font-weight:700;border:3px solid white;position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);box-shadow:0 4px 14px rgba(0,0,0,.15);}
+.cc-body{padding:30px 14px 14px;text-align:center;}
+.cc-name{font-size:12px;font-weight:800;color:var(--text);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cc-stat{font-family:'Nunito';font-size:30px;font-weight:900;letter-spacing:-1px;line-height:1;}
+.cc-sublabel{font-size:8px;font-family:'DM Mono';letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+.cc-footer{display:flex;justify-content:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--surface2);}
+.cc-foot-item{font-size:9px;font-family:'DM Mono';color:var(--muted);text-align:center;}
+.cc-foot-val{font-size:13px;font-weight:700;font-family:'Nunito';color:var(--text);}
 
 /* TABLE */
 .twrap{background:var(--surface);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow);}
@@ -280,6 +290,11 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 
       <!-- OVERVIEW -->
       <div id="view-overview" class="view active">
+        <div id="overview-header" style="margin-bottom:22px;">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;" id="overview-date"></div>
+          <div style="font-family:'Nunito';font-size:26px;font-weight:900;letter-spacing:-.5px;color:var(--text);">Panel de control</div>
+          <div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:2px;">Cleargy Protein — Campaña UGC</div>
+        </div>
         <div class="stats-row" id="admin-stats"></div>
         <div class="sec-label">Creadoras</div>
         <div class="creator-grid" id="creator-grid"></div>
@@ -295,7 +310,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="view-title">Videos</div>
         <div class="view-sub">Revisá, puntuá y aprobá el contenido</div>
         <div style="margin-bottom:12px;">
-          <button id="windsor-sync-btn" class="hbtn" onclick="syncWindsor()" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;border:none;padding:10px 20px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(131,58,180,.3);">🔄 Sync Instagram (Windsor)</button>
+          <button id="apify-sync-btn" class="hbtn" onclick="syncApify()" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;border:none;padding:10px 20px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(131,58,180,.3);">🔄 Sync Instagram</button>
         </div>
         <div class="filters">
           <select class="fsel" id="vf-creator" onchange="renderVideos()">
@@ -323,7 +338,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
           </select>
         </div>
         <div class="twrap"><div class="twrap-scroll"><table>
-          <thead><tr><th>Creadora</th><th>Día</th><th>Plat.</th><th>Categoría</th><th>Links</th><th>Views</th><th>Estado</th><th>Nota admin</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Creadora</th><th>Día</th><th>Plat.</th><th>Categoría</th><th>Links</th><th>Métricas</th><th>Estado</th><th>Nota admin</th><th>Acciones</th></tr></thead>
           <tbody id="videos-tbody"></tbody>
         </table></div></div>
       </div>
@@ -685,7 +700,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 
 const ADMIN_PASS = "clargy-admin-2025";
 const ADMIN_PASS2 = "avellaneda-2025";
-const WINDSOR_API_KEY = "cc381c4b1fc37045302a32c3cbe050cdf9da";
+const APIFY_TOKEN = "apify_api_sRUZlk0n2hg5u4CfAae3W8mIrWimOl31281R";
 const COLORS = {creadora1:"#1a3a8f",creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora5:"#7c3aed",creadora6:"#db2777"};
 const NAMES = {creadora1:"Luca Solucci",creadora2:"Vane Contreras",creadora3:"María Leal",creadora4:"Daniela Baldassin",creadora5:"Lucila Ailin",creadora6:"Creadora 6"};
 const AVATARS = {creadora1:"LS",creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora5:"LA",creadora6:"C6"};
@@ -831,6 +846,8 @@ function getVideosInPeriod(creator, days){
 function renderOverview(){
   const day=getCampaignDay();
   const today=new Date().toISOString().split('T')[0];
+  const dateEl=document.getElementById("overview-date");
+  if(dateEl) dateEl.textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   const videosHoy=data.videos.filter(v=>v.date&&v.date.startsWith(today));
   const totalVids=data.videos.length;
   const totalVentas=CREATORS.reduce((a,c)=>a+(data.ventas[c]||0),0);
@@ -838,22 +855,31 @@ function renderOverview(){
   const viral=data.videos.filter(v=>v.views>=10000).length;
 
   document.getElementById("admin-stats").innerHTML=`
-    <div class="scard"><div class="sc-label">Día campaña</div><div class="sc-val" style="color:var(--accent)">${day}</div><div class="sc-sub">de ${CAMPAIGN_DAYS}</div></div>
-    <div class="scard"><div class="sc-label">Videos hoy</div><div class="sc-val" style="color:var(--blue)">${videosHoy.length}</div><div class="sc-sub">subidos hoy</div></div>
-    <div class="scard"><div class="sc-label">Videos totales</div><div class="sc-val">${totalVids}</div><div class="sc-sub">en toda la campaña</div></div>
-    <div class="scard"><div class="sc-label">Ventas totales</div><div class="sc-val" style="color:var(--gold)">${totalVentas}</div><div class="sc-sub">todas las creadoras</div></div>
-    <div class="scard"><div class="sc-label">Pendientes</div><div class="sc-val" style="color:var(--accent2)">${pending}</div><div class="sc-sub">sin score/aprobar</div></div>
-    <div class="scard"><div class="sc-label">Virales</div><div class="sc-val" style="color:var(--accent3)">${viral}</div><div class="sc-sub">+10K views</div></div>
+    <div class="scard" style="--scard-c:var(--accent)"><div class="scard-icon">📅</div><div class="sc-label">Día campaña</div><div class="sc-val" style="color:var(--accent)">${day}</div><div class="sc-sub">de ${CAMPAIGN_DAYS} días</div></div>
+    <div class="scard" style="--scard-c:#2a8fd4"><div class="scard-icon">🎬</div><div class="sc-label">Videos hoy</div><div class="sc-val" style="color:#2a8fd4">${videosHoy.length}</div><div class="sc-sub">subidos hoy</div></div>
+    <div class="scard" style="--scard-c:var(--muted)"><div class="scard-icon">📂</div><div class="sc-label">Total videos</div><div class="sc-val" style="color:var(--text)">${totalVids}</div><div class="sc-sub">en la campaña</div></div>
+    <div class="scard" style="--scard-c:var(--gold)"><div class="scard-icon">🛒</div><div class="sc-label">Ventas totales</div><div class="sc-val" style="color:var(--gold)">${totalVentas}</div><div class="sc-sub">todas las creadoras</div></div>
+    <div class="scard" style="--scard-c:var(--accent2)"><div class="scard-icon">⏳</div><div class="sc-label">Pendientes</div><div class="sc-val" style="color:var(--accent2)">${pending}</div><div class="sc-sub">sin aprobar</div></div>
+    <div class="scard" style="--scard-c:#7c3aed"><div class="scard-icon">🔥</div><div class="sc-label">Virales</div><div class="sc-val" style="color:#7c3aed">${viral}</div><div class="sc-sub">+10K views</div></div>
   `;
 
   document.getElementById("creator-grid").innerHTML=CREATORS.map(c=>{
     const vids=data.videos.filter(v=>v.creator===c);
     const ventas=data.ventas[c]||0;
+    const avg=avgScore(vids)||"—";
+    const firstName=NAMES[c].split(' ')[0];
     return`<div class="creator-card" onclick="document.getElementById('vf-creator').value='${c}';nav(document.querySelector('[data-view=videos]'))">
-      <div class="cc-avatar" style="background:${COLORS[c]}22;border-color:${COLORS[c]};color:${COLORS[c]}">${AVATARS[c]}</div>
-      <div class="cc-name">${NAMES[c]}</div>
-      <div class="cc-stat">${ventas}</div><div class="cc-sublabel">ventas</div>
-      <div style="margin-top:8px;font-size:10px;color:var(--muted);font-family:'DM Mono'">${vids.length} videos · avg ${avgScore(vids)||"—"}</div>
+      <div class="cc-strip" style="background:linear-gradient(135deg,${COLORS[c]},${COLORS[c]}bb)"></div>
+      <div class="cc-avatar" style="background:${COLORS[c]};color:white;">${AVATARS[c]}</div>
+      <div class="cc-body">
+        <div class="cc-name">${firstName}</div>
+        <div class="cc-stat" style="color:${COLORS[c]}">${vids.length}</div>
+        <div class="cc-sublabel">videos</div>
+        <div class="cc-footer">
+          <div class="cc-foot-item"><div class="cc-foot-val">${ventas}</div>ventas</div>
+          <div class="cc-foot-item"><div class="cc-foot-val">${avg}</div>score</div>
+        </div>
+      </div>
     </div>`;
   }).join("");
 
@@ -876,8 +902,12 @@ function videoRow(v, compact=false){
         ${!v.linkIg&&!v.linkTt?`<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`:''}
       </div>
     </td>
-    <td style="font-family:'DM Mono';font-size:11px;">${fmtV(v.views)}</td>
-    ${!compact?`<td style="font-family:'DM Mono';font-size:11px;">${fmtV(v.likes)}</td>`:""}
+    <td style="font-family:'DM Mono';font-size:11px;">
+      <div>${fmtV(v.views)} <span style="color:var(--muted);font-size:9px;">views</span></div>
+      ${v.likes?`<div>${fmtV(v.likes)} <span style="color:var(--muted);font-size:9px;">likes</span></div>`:""}
+      ${v.comments?`<div>${fmtV(v.comments)} <span style="color:var(--muted);font-size:9px;">comments</span></div>`:""}
+    </td>
+    ${!compact?`<td style="display:none;"></td>`:""}
     <td><span class="badge badge-${v.status}">${v.status==="approved"?"✓ Aprobado":v.status==="rejected"?"✗ Rechazado":"⏳ Pendiente"}</span></td>
     <td><input type="text" value="${v.adminNote||''}" placeholder="Agregar nota..." onchange="setAdminNote('${v.id}',this.value)" style="background:var(--surface2);border:1px solid var(--border);padding:5px 8px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:140px;color:var(--text);outline:none;"></td>
     <td><div class="action-row">
@@ -959,52 +989,71 @@ function adminDeleteVideo(id){
   saveData();renderAll();renderVideos();showToast("Video eliminado");
 }
 
-async function syncWindsor(){
-  const btn=document.getElementById("windsor-sync-btn");
+async function syncApify(){
+  const btn=document.getElementById("apify-sync-btn");
   btn.textContent="Sincronizando...";btn.disabled=true;
-  const endpoint=`https://connectors.windsor.ai/instagram?api_key=${WINDSOR_API_KEY}&fields=media_permalink,views,likes,shares,saves,comments&date_preset=last_30d&_renderer=json`;
-  const proxies=["",`https://corsproxy.io/?`];
-  let posts=null;
-  for(const proxy of proxies){
-    try{
-      const res=await fetch(proxy+endpoint);
-      if(!res.ok) continue;
-      const json=await res.json();
-      posts=Array.isArray(json)?json:(json.data||json.results||[]);
-      console.log("Windsor raw sample:",posts[0]);
-      break;
-    }catch(e){ console.warn("Windsor via proxy '"+proxy+"' failed:",e.message); }
-  }
-  if(!posts){
-    showToast("❌ No se pudo conectar con Windsor");
-    btn.textContent="🔄 Sync Instagram (Windsor)";btn.disabled=false;
+
+  const links=[...new Set(data.videos.map(v=>v.linkIg).filter(l=>l&&l.includes("instagram.com")))];
+  if(links.length===0){
+    showToast("No hay links de Instagram cargados");
+    btn.textContent="🔄 Sync Instagram";btn.disabled=false;
     return;
   }
-  let updated=0;
-  posts.forEach(post=>{
-    const permalink=post.media_permalink||post.permalink||"";
-    if(!permalink) return;
-    const wp=permalink.replace(/\/$/, "").toLowerCase();
-    const vid=data.videos.find(v=>{
-      const ig=(v.linkIg||"").replace(/\/$/, "").toLowerCase();
-      if(!ig) return false;
-      return ig===wp || ig.includes(wp) || wp.includes(ig);
-    });
-    if(vid){
-      const v=post.views??post.impressions;
-      const l=post.likes??post.like_count;
-      const sh=post.shares??post.share_count;
-      const sa=post.saves??post.saved;
-      if(v>0) vid.views=v;
-      if(l>0) vid.likes=l;
-      if(sh>0) vid.shares=sh;
-      if(sa>0) vid.saves=sa;
-      updated++;
+
+  try{
+    // Iniciar run en Apify
+    const startRes=await fetch(
+      `https://api.apify.com/v2/acts/apify~instagram-scraper/runs?token=${APIFY_TOKEN}`,
+      {method:"POST",headers:{"Content-Type":"application/json"},
+       body:JSON.stringify({directUrls:links,resultsType:"posts",resultsLimit:links.length})}
+    );
+    const startJson=await startRes.json();
+    const runId=startJson.data?.id;
+    const datasetId=startJson.data?.defaultDatasetId;
+    if(!runId) throw new Error("No se pudo iniciar el run");
+
+    showToast(`⏳ Procesando ${links.length} videos...`);
+
+    // Polling hasta que termine
+    let status="RUNNING",attempts=0;
+    while((status==="RUNNING"||status==="READY")&&attempts<40){
+      await new Promise(r=>setTimeout(r,4000));
+      const sr=await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`);
+      const sj=await sr.json();
+      status=sj.data?.status;
+      attempts++;
     }
-  });
-  if(updated>0){saveData();renderAll();renderVideos();}
-  showToast(updated>0?`✓ Windsor: ${updated} videos actualizados`:`Windsor conectado — ${posts.length} posts, sin coincidencias de links`);
-  btn.textContent="🔄 Sync Instagram (Windsor)";btn.disabled=false;
+    if(status!=="SUCCEEDED") throw new Error("Run terminó con estado: "+status);
+
+    // Obtener resultados
+    const dr=await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`);
+    const posts=await dr.json();
+
+    let updated=0;
+    posts.forEach(post=>{
+      const postUrl=(post.url||post.inputUrl||"").replace(/\/$/,"").split("?")[0].toLowerCase();
+      const vid=data.videos.find(v=>{
+        const ig=(v.linkIg||"").replace(/\/$/,"").split("?")[0].toLowerCase();
+        return ig&&(ig===postUrl||ig.includes(postUrl)||postUrl.includes(ig));
+      });
+      if(vid){
+        const views=post.videoViewCount||post.videoPlayCount||0;
+        const likes=post.likesCount||0;
+        const comments=post.commentsCount||0;
+        if(views>0) vid.views=views;
+        if(likes>0) vid.likes=likes;
+        if(comments>0) vid.comments=comments;
+        updated++;
+      }
+    });
+
+    if(updated>0){saveData();renderAll();renderVideos();}
+    showToast(updated>0?`✓ ${updated} videos actualizados con métricas de IG`:`Apify OK — ${posts.length} posts, revisá que los links coincidan`);
+  }catch(e){
+    showToast("❌ Error: "+e.message);
+    console.error("Apify error:",e);
+  }
+  btn.textContent="🔄 Sync Instagram";btn.disabled=false;
 }
 
 function renderVentas(){
