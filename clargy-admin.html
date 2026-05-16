@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -121,12 +122,16 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-
 @media(max-width:900px){.stats-row{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr;}}
 @media(max-width:430px){.stats-row{grid-template-columns:1fr 1fr;}}
+/* PERIOD PILLS */
+.period-pill{padding:6px 14px;border-radius:20px;font-size:11px;font-family:'Nunito';font-weight:700;cursor:pointer;border:2px solid var(--border2);color:var(--muted);background:var(--surface);transition:all .12s;}
+.period-pill.active{background:var(--blue);color:white;border-color:var(--blue);box-shadow:0 3px 10px rgba(26,58,143,.25);}
+
 /* STAT CARDS */
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
 @media(max-width:600px){.stats-row{grid-template-columns:1fr 1fr;}}
 .scard{background:var(--surface);border-radius:14px;padding:20px 18px 16px;box-shadow:0 1px 8px rgba(26,58,143,.07);}
 .sc-label{font-family:'DM Mono';font-size:7px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
-.sc-val{font-family:'Nunito';font-size:36px;font-weight:900;line-height:1;letter-spacing:-2px;color:var(--blue);}
+.sc-val{font-family:'Nunito';font-size:36px;font-weight:900;line-height:1;letter-spacing:-2px;}
 .sc-sub{font-size:9px;color:var(--muted);margin-top:6px;font-family:'DM Mono';letter-spacing:.5px;}
 
 /* CREATOR GRID */
@@ -168,8 +173,10 @@ td{padding:11px 14px;font-size:12px;vertical-align:middle;}
 .abtn-neutral:hover{border-color:var(--blue-mid);color:var(--blue-mid);}
 
 /* FILTERS */
-.filters{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filters{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
 .fsel{background:var(--surface);border:2px solid var(--border);color:var(--muted);padding:8px 12px;border-radius:var(--radius-sm);font-size:12px;font-family:'Nunito';font-weight:600;cursor:pointer;outline:none;}
+.col-toggle{padding:4px 12px;border-radius:20px;font-size:10px;font-family:'DM Mono';font-weight:600;cursor:pointer;border:1.5px solid var(--border2);color:var(--muted);background:var(--surface);transition:all .12s;letter-spacing:.3px;}
+.col-toggle.active{background:var(--accent);color:white;border-color:var(--accent);}
 
 /* VENTAS */
 .ventas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
@@ -219,9 +226,17 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 .idea-form{background:var(--surface);border-radius:var(--radius);padding:22px;margin-bottom:16px;box-shadow:var(--shadow);}
 
 /* VIRAL CARD */
-.viral-card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);}
-.viral-rank{font-family:'Nunito';font-size:28px;font-weight:900;color:var(--muted2);min-width:36px;}
-.viral-views{font-family:'Nunito';font-size:22px;font-weight:900;color:var(--blue);}
+.viral-card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);border-left:4px solid var(--border2);}
+.viral-card.v-mega{border-left-color:#16a34a;background:rgba(22,163,74,.02);}
+.viral-card.v-high{border-left-color:var(--accent);}
+.viral-rank{font-family:'Nunito';font-size:28px;font-weight:900;color:var(--muted2);min-width:32px;letter-spacing:-1px;}
+.viral-rank.r1{color:#f59e0b;}.viral-rank.r2{color:#9ca3af;}.viral-rank.r3{color:#cd9060;}
+.viral-views{font-family:'Nunito';font-size:24px;font-weight:900;line-height:1;letter-spacing:-1px;}
+.viral-views.v-mega{color:#16a34a;}
+.viral-views.v-high{color:var(--accent);}
+.viral-badge-pill{font-size:8px;font-family:'DM Mono';font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.5px;display:inline-block;margin-top:3px;}
+.viral-badge-pill.mega{background:rgba(22,163,74,.12);color:#16a34a;}
+.viral-badge-pill.high{background:rgba(26,58,143,.1);color:var(--accent);}
 </style>
 </head>
 <body>
@@ -287,6 +302,12 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
           <div style="font-family:'Nunito';font-size:26px;font-weight:900;letter-spacing:-.5px;color:var(--text);">Panel de control</div>
           <div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:2px;">Cleargy Protein — Campaña UGC</div>
         </div>
+        <div style="display:flex;gap:6px;margin-bottom:14px;" id="period-pills">
+          <button class="period-pill active" onclick="setOverviewPeriod(1,this)">Hoy</button>
+          <button class="period-pill" onclick="setOverviewPeriod(3,this)">3 días</button>
+          <button class="period-pill" onclick="setOverviewPeriod(7,this)">7 días</button>
+          <button class="period-pill" onclick="setOverviewPeriod(30,this)">30 días</button>
+        </div>
         <div class="stats-row" id="admin-stats"></div>
         <div class="sec-label">Creadoras</div>
         <div class="creator-grid" id="creator-grid"></div>
@@ -317,19 +338,23 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
             <option value="approved">Aprobados</option>
             <option value="rejected">Rechazados</option>
           </select>
-          <select class="fsel" id="vf-week" onchange="renderVideos()">
-            <option value="ALL">Todas las semanas</option>
-            <option value="1">Semana 1</option><option value="2">Semana 2</option>
-            <option value="3">Semana 3</option><option value="4">Semana 4</option>
-          </select>
+          <input type="date" class="fsel" id="vf-date-from" onchange="renderVideos()" title="Desde">
+          <input type="date" class="fsel" id="vf-date-to" onchange="renderVideos()" title="Hasta">
           <select class="fsel" id="vf-sort" onchange="renderVideos()">
             <option value="date_desc">↓ Más recientes</option>
             <option value="views_desc">↓ Más views</option>
             <option value="views_asc">↑ Menos views</option>
           </select>
         </div>
-        <div class="twrap"><div class="twrap-scroll"><table>
-          <thead><tr><th>Creadora</th><th>Día</th><th>Plat.</th><th>Categoría</th><th>Links</th><th>Métricas</th><th>Estado</th><th>Nota admin</th><th>Acciones</th></tr></thead>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
+          <span style="font-family:'DM Mono';font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-right:4px;">Columnas:</span>
+          <button class="col-toggle active" data-col="cat" onclick="toggleCol('cat',this)">Categoría</button>
+          <button class="col-toggle active" data-col="metrics" onclick="toggleCol('metrics',this)">Métricas</button>
+          <button class="col-toggle active" data-col="nota" onclick="toggleCol('nota',this)">Nota</button>
+          <button class="col-toggle" data-col="plat" onclick="toggleCol('plat',this)">Plataforma</button>
+        </div>
+        <div class="twrap"><div class="twrap-scroll"><table id="videos-table">
+          <thead id="videos-thead"></thead>
           <tbody id="videos-tbody"></tbody>
         </table></div></div>
       </div>
@@ -708,7 +733,19 @@ function saveData(){
   if(window._fbSave) window._fbSave(data);
 }
 
-let scoreVideoId=null;
+let overviewPeriod=1;
+let vidCols={cat:true,metrics:true,nota:true,plat:false};
+function toggleCol(col,el){
+  vidCols[col]=!vidCols[col];
+  el.classList.toggle("active",vidCols[col]);
+  renderVideos();
+}
+function setOverviewPeriod(days,el){
+  overviewPeriod=days;
+  document.querySelectorAll(".period-pill").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  renderOverview();
+}
 
 function enterAdmin(){
   localStorage.setItem("clargy_admin_session","1");
@@ -823,42 +860,50 @@ function getVideosInPeriod(creator, days){
 
 function renderOverview(){
   const day=getCampaignDay();
-  const today=new Date().toISOString().split('T')[0];
   const dateEl=document.getElementById("overview-date");
   if(dateEl) dateEl.textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-  const videosHoy=data.videos.filter(v=>v.date&&v.date.startsWith(today));
+
+  const cutoff=new Date(Date.now()-overviewPeriod*24*60*60*1000);
+  const periodLabel=overviewPeriod===1?"hoy":overviewPeriod===3?"3 días":overviewPeriod===7?"7 días":"30 días";
+  const videosEnPeriodo=data.videos.filter(v=>v.date&&new Date(v.date)>=cutoff);
   const totalVids=data.videos.length;
   const totalVentas=CREATORS.reduce((a,c)=>a+(data.ventas[c]||0),0);
   const pending=data.videos.filter(v=>v.status==="pending").length;
   const viral=data.videos.filter(v=>v.views>=10000).length;
+  const VIDEO_GOAL=150;
 
   document.getElementById("admin-stats").innerHTML=`
-    <div class="scard"><div class="sc-label">Día campaña</div><div class="sc-val">${day}</div><div class="sc-sub">de ${CAMPAIGN_DAYS} días</div></div>
-    <div class="scard"><div class="sc-label">Videos hoy</div><div class="sc-val">${videosHoy.length}</div><div class="sc-sub">subidos hoy</div></div>
-    <div class="scard"><div class="sc-label">Total videos</div><div class="sc-val">${totalVids}</div><div class="sc-sub">en la campaña</div></div>
-    <div class="scard"><div class="sc-label">Ventas totales</div><div class="sc-val">${totalVentas}</div><div class="sc-sub">todas las creadoras</div></div>
-    <div class="scard"><div class="sc-label">Pendientes</div><div class="sc-val">${pending}</div><div class="sc-sub">sin aprobar</div></div>
-    <div class="scard"><div class="sc-label">Virales</div><div class="sc-val">${viral}</div><div class="sc-sub">+10K views</div></div>
+    <div class="scard"><div class="sc-label">Día campaña</div><div class="sc-val" style="color:#1a3a8f">${day}</div><div class="sc-sub">de ${CAMPAIGN_DAYS} días</div></div>
+    <div class="scard"><div class="sc-label">Videos · ${periodLabel}</div><div class="sc-val" style="color:#16a34a">${videosEnPeriodo.length}</div><div class="sc-sub">en el período</div></div>
+    <div class="scard"><div class="sc-label">Total videos</div><div class="sc-val" style="color:#2a8fd4">${totalVids}</div><div class="sc-sub">en la campaña</div></div>
+    <div class="scard"><div class="sc-label">Ventas totales</div><div class="sc-val" style="color:#d97706">${totalVentas}</div><div class="sc-sub">todas las creadoras</div></div>
+    <div class="scard"><div class="sc-label">Pendientes</div><div class="sc-val" style="color:#e85d26">${pending}</div><div class="sc-sub">sin aprobar</div></div>
+    <div class="scard"><div class="sc-label">Virales</div><div class="sc-val" style="color:#7c3aed">${viral}</div><div class="sc-sub">+10K views</div></div>
   `;
 
   document.getElementById("creator-grid").innerHTML=CREATORS.map(c=>{
     const vids=data.videos.filter(v=>v.creator===c);
     const ventas=data.ventas[c]||0;
+    const pct=Math.min(100,Math.round(vids.length/VIDEO_GOAL*100));
     return`<div class="creator-card" onclick="document.getElementById('vf-creator').value='${c}';nav(document.querySelector('[data-view=videos]'))">
       <div class="cc-avatar" style="background:${COLORS[c]}18;border:2px solid ${COLORS[c]};color:${COLORS[c]};">${AVATARS[c]}</div>
       <div class="cc-info">
         <div class="cc-name">${NAMES[c].split(' ')[0]}</div>
         <div class="cc-meta">${vids.length} videos · ${ventas} ventas</div>
+        <div style="height:3px;background:var(--surface2);border-radius:3px;margin-top:6px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${COLORS[c]};border-radius:3px;transition:width .4s;"></div>
+        </div>
       </div>
     </div>`;
   }).join("");
 
-  const recent=[...data.videos].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
-  document.getElementById("overview-videos").innerHTML=recent.map(v=>videoRow(v,true)).join("");
+  const recent=[...videosEnPeriodo].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,10);
+  document.getElementById("overview-videos").innerHTML=recent.length?recent.map(v=>videoRow(v,true)).join(""):`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px;font-family:'DM Mono';font-size:11px;">Sin videos en este período</td></tr>`;
 }
 
 function videoRow(v, compact=false){
-  const metrics=[fmtV(v.views)+" views", v.likes?fmtV(v.likes)+" likes":"", v.comments?fmtV(v.comments)+" coment.":""].filter(Boolean).join(" · ");
+  const cols=compact?{cat:false,metrics:true,nota:false,plat:false}:vidCols;
+  const metricsStr=[fmtV(v.views)+" views", cols.metrics&&v.likes?fmtV(v.likes)+" likes":"", cols.metrics&&v.comments?fmtV(v.comments)+" coment.":""].filter(Boolean).join(" · ");
   const copyBtn = v.linkIg
     ? `<button onclick="navigator.clipboard.writeText('${v.linkIg}');showToast('Link IG copiado')" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`
     : v.linkTt
@@ -866,19 +911,18 @@ function videoRow(v, compact=false){
     : `<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`;
   return`<tr>
     <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:26px;height:26px;border-radius:50%;background:${COLORS[v.creator]}22;border:1px solid ${COLORS[v.creator]};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${COLORS[v.creator]}">${AVATARS[v.creator]}</div><span style="font-size:12px;">${NAMES[v.creator].split(' ')[0]}</span></div></td>
-    <td style="font-family:'DM Mono';font-size:11px;white-space:nowrap;">Día ${v.day}</td>
-    <td style="font-size:11px;white-space:nowrap;">${v.linkIg&&v.linkTt?'📸🎵':v.linkIg?'📸':'🎵'}</td>
-    ${!compact?`<td style="font-size:11px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cat}</td>`:""}
+    <td style="font-family:'DM Mono';font-size:11px;white-space:nowrap;">${v.date?new Date(v.date).toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"}):"—"} · D${v.day}</td>
+    ${cols.plat?`<td style="font-size:11px;white-space:nowrap;">${v.linkIg&&v.linkTt?'📸🎵':v.linkIg?'📸':'🎵'}</td>`:""}
+    ${cols.cat?`<td style="font-size:11px;color:var(--muted);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cat}</td>`:""}
     <td style="white-space:nowrap;">${copyBtn}</td>
-    <td style="font-family:'DM Mono';font-size:10px;color:var(--muted);white-space:nowrap;">${metrics}</td>
-    ${!compact?`<td style="display:none;"></td>`:""}
+    ${cols.metrics?`<td style="font-family:'DM Mono';font-size:10px;color:var(--muted);white-space:nowrap;">${metricsStr}</td>`:""}
     <td><span class="badge badge-${v.status}">${v.status==="approved"?"✓ Ok":v.status==="rejected"?"✗":"⏳"}</span></td>
-    ${!compact?`<td><input type="text" value="${v.adminNote||''}" placeholder="Nota..." onchange="setAdminNote('${v.id}',this.value)" style="background:var(--surface2);border:1px solid var(--border);padding:4px 8px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:130px;color:var(--text);outline:none;"></td>`:""}
+    ${cols.nota?`<td><input type="text" value="${v.adminNote||''}" placeholder="Nota..." onchange="setAdminNote('${v.id}',this.value)" style="background:var(--surface2);border:1px solid var(--border);padding:4px 8px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:120px;color:var(--text);outline:none;"></td>`:""}
     <td><div class="action-row" style="flex-wrap:nowrap;">
       <button class="abtn abtn-approve" onclick="setStatus('${v.id}','approved')">✓</button>
       <button class="abtn abtn-reject" onclick="setStatus('${v.id}','rejected')">✗</button>
       <button class="abtn" style="border-color:rgba(74,143,255,.3);color:var(--accent3);background:rgba(74,143,255,.05);" onclick="openEditVideo('${v.id}')">✏</button>
-      ${v.driveLink?`<a href="${v.driveLink}" target="_blank" class="abtn" style="border-color:rgba(13,148,136,.3);color:#0d9488;background:rgba(13,148,136,.05);text-decoration:none;" title="Descargar de Drive">⬇</a><button class="abtn" style="border-color:rgba(13,148,136,.3);color:#0d9488;background:rgba(13,148,136,.05);" onclick="navigator.clipboard.writeText('${v.driveLink}');showToast('Link Drive copiado')" title="Copiar link Drive">🔗</button>`:""}
+      ${v.driveLink?`<a href="${v.driveLink}" target="_blank" class="abtn" style="border-color:rgba(13,148,136,.3);color:#0d9488;background:rgba(13,148,136,.05);text-decoration:none;" title="Abrir en Drive">⬇</a>`:""}
       <button class="abtn" style="border-color:rgba(232,93,38,.3);color:var(--accent2);background:rgba(232,93,38,.05);" onclick="adminDeleteVideo('${v.id}')">🗑</button>
     </div></td>
   </tr>`;
@@ -887,17 +931,33 @@ function videoRow(v, compact=false){
 function renderVideos(){
   const cf=document.getElementById("vf-creator").value;
   const sf=document.getElementById("vf-status").value;
-  const wf=document.getElementById("vf-week").value;
   const vsort=document.getElementById("vf-sort")?.value||"date_desc";
+  const dateFrom=document.getElementById("vf-date-from")?.value;
+  const dateTo=document.getElementById("vf-date-to")?.value;
   let vids=[...data.videos].sort((a,b)=>{
     if(vsort==="views_desc") return (b.views||0)-(a.views||0);
     if(vsort==="views_asc") return (a.views||0)-(b.views||0);
     return new Date(b.date)-new Date(a.date);
   });
-  if(cf!=="ALL")vids=vids.filter(v=>v.creator===cf);
-  if(sf!=="ALL")vids=vids.filter(v=>v.status===sf);
-  if(wf!=="ALL")vids=vids.filter(v=>getWeek(v.day)===parseInt(wf));
-  document.getElementById("videos-tbody").innerHTML=vids.length?vids.map(v=>videoRow(v)).join(""):`<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:32px;">Sin videos</td></tr>`;
+  if(cf!=="ALL") vids=vids.filter(v=>v.creator===cf);
+  if(sf!=="ALL") vids=vids.filter(v=>v.status===sf);
+  if(dateFrom) vids=vids.filter(v=>v.date&&v.date.slice(0,10)>=dateFrom);
+  if(dateTo)   vids=vids.filter(v=>v.date&&v.date.slice(0,10)<=dateTo);
+
+  const cols=vidCols;
+  const thead=document.getElementById("videos-thead");
+  if(thead) thead.innerHTML=`<tr>
+    <th>Creadora</th><th>Día</th>
+    ${cols.plat?`<th>Plat.</th>`:""}
+    ${cols.cat?`<th>Categoría</th>`:""}
+    <th>Links</th>
+    ${cols.metrics?`<th>Métricas</th>`:""}
+    <th>Estado</th>
+    ${cols.nota?`<th>Nota</th>`:""}
+    <th>Acciones</th>
+  </tr>`;
+
+  document.getElementById("videos-tbody").innerHTML=vids.length?vids.map(v=>videoRow(v)).join(""):`<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:32px;">Sin videos</td></tr>`;
 }
 
 function setStatus(id,status){
@@ -1134,18 +1194,47 @@ function renderBonos(){
 
 
 function renderViral(){
-  const vids=[...data.videos].filter(v=>v.views>=10000).sort((a,b)=>b.views-a.views).slice(0,20);
-  document.getElementById("viral-list").innerHTML=vids.length?vids.map((v,i)=>`
-    <div class="viral-card">
-      <div class="viral-rank">${i+1}</div>
-      <div style="width:36px;height:36px;border-radius:50%;background:${COLORS[v.creator]}22;border:2px solid ${COLORS[v.creator]};display:flex;align-items:center;justify-content:center;font-family:'Nunito';font-size:12px;font-weight:800;color:${COLORS[v.creator]};flex-shrink:0;">${AVATARS[v.creator]}</div>
-      <div class="viral-info">
-        <div class="viral-creator-name">${NAMES[v.creator]}</div>
-        <div class="viral-meta">Día ${v.day} · ${v.cat} · ${v.platform==="ig"?"Instagram":v.platform==="tt"?"TikTok":"IG+TT"}</div>
-        <a href="${v.link}" target="_blank" style="color:var(--muted);font-size:10px;font-family:'DM Mono';text-decoration:none;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">Ver video ↗</a>
+  // Auto-feature todos los +10K views
+  let changed=false;
+  data.videos.forEach(v=>{
+    const shouldFeat=v.views>=10000;
+    if(shouldFeat && !v.featured){v.featured=true;changed=true;}
+  });
+  if(changed) saveData();
+
+  const minV=parseInt(document.getElementById("vir-minviews")?.value||10000);
+  const cf=document.getElementById("vir-creator")?.value||"ALL";
+  const plat=document.getElementById("vir-plat")?.value||"ALL";
+  const vsort=document.getElementById("vir-sort")?.value||"views_desc";
+  let vids=[...data.videos].filter(v=>v.views>=minV);
+  if(cf!=="ALL") vids=vids.filter(v=>v.creator===cf);
+  if(plat==="ig") vids=vids.filter(v=>v.linkIg);
+  if(plat==="tt") vids=vids.filter(v=>v.linkTt);
+  vids.sort((a,b)=>vsort==="views_asc"?(a.views||0)-(b.views||0):(b.views||0)-(a.views||0));
+  vids=vids.slice(0,20);
+
+  document.getElementById("viral-list").innerHTML=vids.length?vids.map((v,i)=>{
+    const isMega=v.views>=100000;
+    const cardClass=isMega?"v-mega":"v-high";
+    const viewsClass=isMega?"v-mega":"v-high";
+    const rankClass=i===0?"r1":i===1?"r2":i===2?"r3":"";
+    const badgeClass=isMega?"mega":"high";
+    const badgeLabel=isMega?"🔥 +100K":"⚡ +10K";
+    return`<div class="viral-card ${cardClass}">
+      <div class="viral-rank ${rankClass}">${i+1}</div>
+      <div style="width:36px;height:36px;border-radius:50%;background:${COLORS[v.creator]}22;border:2px solid ${COLORS[v.creator]};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:${COLORS[v.creator]};flex-shrink:0;">${AVATARS[v.creator]}</div>
+      <div class="viral-info" style="flex:1;">
+        <div class="viral-creator-name">${NAMES[v.creator].split(' ')[0]} · <span style="font-weight:600;color:var(--muted);">Día ${v.day}</span></div>
+        <div class="viral-meta">${v.cat} · ${v.platform==="ig"?"📸 IG":v.platform==="tt"?"🎵 TT":"📸🎵"}</div>
+        ${v.linkIg?`<a href="${v.linkIg}" target="_blank" style="color:var(--muted);font-size:10px;font-family:'DM Mono';text-decoration:none;">Ver en IG ↗</a>`:v.link?`<a href="${v.link}" target="_blank" style="color:var(--muted);font-size:10px;font-family:'DM Mono';text-decoration:none;">Ver video ↗</a>`:""}
       </div>
-      <div><div class="viral-views">${fmtV(v.views)}</div></div>
-    </div>`).join(""):`<div style="color:var(--muted);text-align:center;padding:40px;">Sin videos todavía</div>`;
+      <div style="text-align:right;flex-shrink:0;">
+        <div class="viral-views ${viewsClass}">${fmtV(v.views)}</div>
+        <div style="font-size:8px;font-family:'DM Mono';color:var(--muted);margin-top:1px;">views</div>
+        <span class="viral-badge-pill ${badgeClass}">${badgeLabel}</span>
+      </div>
+    </div>`;
+  }).join(""):`<div style="color:var(--muted);text-align:center;padding:40px;font-family:'DM Mono';font-size:11px;">Sin videos virales todavía</div>`;
 }
 
 function openAddIdea(){
