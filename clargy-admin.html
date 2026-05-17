@@ -286,6 +286,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="nitem" data-view="ideas" onclick="nav(this)"><div class="ndot" style="background:#7c3aed"></div>Ideas</div>
         <div class="nitem" data-view="mensajes" onclick="nav(this)"><div class="ndot" style="background:var(--blue-light)"></div>Mensajes <span class="nbadge" id="nb-msgs">0</span></div>
         <div class="slabel">Finanzas</div>
+        <div class="nitem" data-view="shopify" onclick="nav(this)"><div class="ndot" style="background:#16a34a"></div>Ventas Shopify <span class="nbadge" id="nb-shopify">0</span></div>
         <div class="nitem" data-view="finanzas" onclick="nav(this)"><div class="ndot" style="background:var(--gold)"></div>Pagos</div>
         <div class="nitem" data-view="comprobantes" onclick="nav(this)"><div class="ndot" style="background:#0d9488"></div>Comprobantes</div>
         <div class="slabel">Config</div>
@@ -330,7 +331,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
             <option value="ALL">Todas</option>
             <option value="creadora1">Luca Solucci</option><option value="creadora2">Vane Contreras</option>
             <option value="creadora3">María Leal</option><option value="creadora4">Daniela Baldassin</option>
-            <option value="creadora5">Lucila Ailin</option><option value="creadora6">Creadora 6</option>
+            <option value="creadora5">Emi San Martin</option><option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
           </select>
           <select class="fsel" id="vf-status" onchange="renderVideos()">
             <option value="ALL">Todos</option>
@@ -372,8 +373,8 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
             <option value="creadora2">Vane Contreras</option>
             <option value="creadora3">María Leal</option>
             <option value="creadora4">Daniela Baldassin</option>
-            <option value="creadora5">Lucila Ailin</option>
-            <option value="creadora6">Creadora 6</option>
+            <option value="creadora5">Emi San Martin</option>
+            <option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
           </select>
           <input type="date" class="fsel" id="vt-from" onchange="renderVentasHistorial()" style="color:var(--text);">
           <input type="date" class="fsel" id="vt-to" onchange="renderVentasHistorial()" style="color:var(--text);">
@@ -404,8 +405,8 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
             <option value="creadora2">Vane Contreras</option>
             <option value="creadora3">María Leal</option>
             <option value="creadora4">Daniela Baldassin</option>
-            <option value="creadora5">Lucila Ailin</option>
-            <option value="creadora6">Creadora 6</option>
+            <option value="creadora5">Emi San Martin</option>
+            <option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
           </select>
           <select class="fsel" id="vir-minviews" onchange="renderViral()">
             <option value="0">Todos los videos</option>
@@ -474,6 +475,13 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         </table></div></div>
       </div>
 
+      <!-- VENTAS SHOPIFY -->
+      <div id="view-shopify" class="view">
+        <div class="view-title">Ventas Shopify</div>
+        <div class="view-sub">Ventas atribuidas por UTM de cada creadora</div>
+        <div id="shopify-content"></div>
+      </div>
+
       <!-- CONFIG -->
       <div id="view-config" class="view">
         <div class="view-title">Configuración</div>
@@ -508,8 +516,8 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
             <option value="creadora2">Vane Contreras</option>
             <option value="creadora3">María Leal</option>
             <option value="creadora4">Daniela Baldassin</option>
-            <option value="creadora5">Lucila Ailin</option>
-            <option value="creadora6">Creadora 6</option>
+            <option value="creadora5">Emi San Martin</option>
+            <option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
           </select>
           <select class="fsel" id="comp-tipo" onchange="renderComprobantes()">
             <option value="ALL">Todos los tipos</option>
@@ -562,8 +570,8 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
           <option value="ALL">Todas las creadoras</option>
           <option value="creadora1">Creadora 1</option><option value="creadora2">Creadora 2</option>
           <option value="creadora3">Creadora 3</option><option value="creadora4">Creadora 4</option>
-          <option value="creadora5">Lucila Ailin</option>
-          <option value="creadora6">Creadora 6</option>
+          <option value="creadora5">Emi San Martin</option>
+          <option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
         </select>
       </div>
     </div>
@@ -626,8 +634,8 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
           <option value="creadora2">Vane Contreras</option>
           <option value="creadora3">María Leal</option>
           <option value="creadora4">Daniela Baldassin</option>
-          <option value="creadora5">Lucila Ailin</option>
-          <option value="creadora6">Creadora 6</option>
+          <option value="creadora5">Emi San Martin</option>
+          <option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
         </select>
       </div>
       <div><div class="flabel" style="margin-bottom:6px;">Tipo</div>
@@ -705,18 +713,18 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 const ADMIN_PASS = "clargy-admin-2025";
 const ADMIN_PASS2 = "avellaneda-2025";
 const APIFY_TOKEN = "apify_api_sRUZlk0n2hg5u4CfAae3W8mIrWimOl31281R";
-const COLORS = {creadora1:"#1a3a8f",creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora5:"#7c3aed",creadora6:"#db2777"};
-const NAMES = {creadora1:"Luca Solucci",creadora2:"Vane Contreras",creadora3:"María Leal",creadora4:"Daniela Baldassin",creadora5:"Lucila Ailin",creadora6:"Creadora 6"};
-const AVATARS = {creadora1:"LS",creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora5:"LA",creadora6:"C6"};
-const CREATORS = ["creadora1","creadora2","creadora3","creadora4","creadora5","creadora6"];
+const COLORS = {creadora1:"#1a3a8f",creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora5:"#7c3aed",creadora6:"#db2777",creadora7:"#0891b2"};
+const NAMES = {creadora1:"Luca Solucci",creadora2:"Vane Contreras",creadora3:"María Leal",creadora4:"Daniela Baldassin",creadora5:"Emi San Martin",creadora6:"More Porto",creadora7:"Jessica Grant"};
+const AVATARS = {creadora1:"LS",creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora5:"ES",creadora6:"MP",creadora7:"JG"};
+const CREATORS = ["creadora1","creadora2","creadora3","creadora4","creadora5","creadora6","creadora7"];
 const SALARY = 650000;
 const COMISION_POR_VENTA = 2500;
 const MIN_VIDEOS = 150;
 const CAMPAIGN_DAYS = 30;
 
 let data = {
-  ventas:{creadora1:0,creadora2:0,creadora3:0,creadora4:0,creadora5:0,creadora6:0},
-  bonos:{creadora1:0,creadora2:0,creadora3:0,creadora4:0,creadora5:0,creadora6:0},
+  ventas:{creadora1:0,creadora2:0,creadora3:0,creadora4:0,creadora5:0,creadora6:0,creadora7:0},
+  bonos:{creadora1:0,creadora2:0,creadora3:0,creadora4:0,creadora5:0,creadora6:0,creadora7:0},
   videos:[],ideas:[],semanaActual:1,
 };
 
@@ -800,6 +808,7 @@ function nav(el){
   if(v==="ideas")renderIdeas();
   if(v==="mensajes")renderMensajes();
   if(v==="finanzas")renderFinanzas();
+  if(v==="shopify")renderShopify();
   if(v==="config"){loadConfig();setTimeout(renderConfigCreadoras,100);}
   if(v==="comprobantes"){renderComprobantes();}
 }
@@ -1555,9 +1564,15 @@ function submitComprobante(){
   const fileInput=document.getElementById('comp-archivo');
   const file=fileInput&&fileInput.files[0];
   function guardar(archivoDataUrl){
+    const id=Date.now();
     if(!data.comprobantes)data.comprobantes=[];
-    data.comprobantes.push({id:Date.now(),creator,tipo,monto,concepto,fecha,pagado,archivo:archivoDataUrl||null});
+    data.comprobantes.push({id,creator,tipo,monto,concepto,fecha,pagado,archivo:archivoDataUrl||null});
+    if(pagado){
+      if(!data.pagos)data.pagos=[];
+      data.pagos.push({id,creator,monto,concepto,fecha,archivo:archivoDataUrl||null});
+    }
     saveData();renderComprobantes();
+    if(document.getElementById('fin-grid'))renderFinanzas();
     document.getElementById('comp-overlay').classList.remove('open');
     if(fileInput)fileInput.value="";
     showToast("✓ Comprobante guardado");
@@ -1703,10 +1718,86 @@ loadConfig();
 })();
 </script>
 
+  <script>
+  let salesData = [];
+  function renderShopify(){
+    const el = document.getElementById('shopify-content');
+    if(!el) return;
+    if(!salesData.length){
+      el.innerHTML=`<div style="text-align:center;padding:48px;color:var(--muted);font-family:'DM Mono';font-size:11px;line-height:1.8;">Sin ventas registradas todavía.<br>Las ventas aparecen acá cuando alguien compra usando el link UTM de una creadora.</div>`;
+      return;
+    }
+    const byCreator={};
+    CREATORS.forEach(c=>byCreator[c]={count:0,total:0});
+    salesData.forEach(s=>{
+      if(byCreator[s.creator]){byCreator[s.creator].count++;byCreator[s.creator].total+=s.amount||0;}
+    });
+    const totalVentas=salesData.length;
+    const totalAmount=salesData.reduce((a,s)=>a+(s.amount||0),0);
+    const sorted=[...CREATORS].sort((a,b)=>(byCreator[b].total||0)-(byCreator[a].total||0));
+    const top=sorted.find(c=>byCreator[c].count>0);
+    const badge=document.getElementById('nb-shopify');
+    if(badge)badge.textContent=totalVentas;
+    el.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:4px solid #16a34a;">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Total ventas</div>
+          <div style="font-family:'Nunito';font-size:28px;font-weight:900;color:#16a34a;">${totalVentas}</div>
+        </div>
+        <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--accent);">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Total recaudado</div>
+          <div style="font-family:'Nunito';font-size:24px;font-weight:900;color:var(--accent);">${fmtP(totalAmount)}</div>
+        </div>
+        <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--gold);">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Mejor creadora</div>
+          <div style="font-family:'Nunito';font-size:16px;font-weight:900;color:var(--gold);">${top?NAMES[top].split(' ')[0]:'—'}</div>
+        </div>
+      </div>
+      <div style="margin-bottom:20px;">
+        ${sorted.filter(c=>byCreator[c].count>0).map(c=>`
+          <div style="background:var(--surface);border-radius:var(--radius);padding:14px;margin-bottom:8px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:${COLORS[c]}18;border:2px solid ${COLORS[c]};display:flex;align-items:center;justify-content:center;font-family:'DM Mono';font-size:11px;font-weight:700;color:${COLORS[c]};flex-shrink:0;">${AVATARS[c]}</div>
+            <div style="flex:1;">
+              <div style="font-weight:700;font-size:13px;">${NAMES[c]}</div>
+              <div style="font-size:10px;font-family:'DM Mono';color:var(--muted);">${byCreator[c].count} venta${byCreator[c].count!==1?'s':''}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Nunito';font-size:18px;font-weight:900;color:#16a34a;">${fmtP(byCreator[c].total)}</div>
+              <div style="font-size:9px;font-family:'DM Mono';color:var(--muted);">comisión: ${fmtP(byCreator[c].count*COMISION_POR_VENTA)}</div>
+            </div>
+          </div>`).join('')}
+        ${sorted.every(c=>!byCreator[c].count)?'<div style="text-align:center;padding:20px;color:var(--muted);font-family:\'DM Mono\';font-size:11px;">Sin ventas aún</div>':''}
+      </div>
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;">Últimas ventas</div>
+      <div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead><tr style="border-bottom:1px solid var(--border);">
+            <th style="padding:10px 14px;text-align:left;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">CREADORA</th>
+            <th style="padding:10px 14px;text-align:left;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">PRODUCTO</th>
+            <th style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">MONTO</th>
+            <th style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">FECHA</th>
+          </tr></thead>
+          <tbody>
+            ${[...salesData].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,50).map(s=>`
+              <tr style="border-bottom:1px solid var(--border2);">
+                <td style="padding:10px 14px;"><div style="display:flex;align-items:center;gap:8px;">
+                  <div style="width:24px;height:24px;border-radius:50%;background:${(COLORS[s.creator]||'#999')}18;border:1px solid ${COLORS[s.creator]||'#999'};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:${COLORS[s.creator]||'#999'}">${AVATARS[s.creator]||'?'}</div>
+                  <span style="font-size:12px;">${(NAMES[s.creator]||s.creator||'—').split(' ')[0]}</span>
+                </div></td>
+                <td style="padding:10px 14px;font-size:11px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.product||'—'}</td>
+                <td style="padding:10px 14px;text-align:right;font-family:'Nunito';font-weight:800;font-size:13px;color:#16a34a;">${fmtP(s.amount||0)}</td>
+                <td style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:10px;color:var(--muted);">${(s.date||'').split('T')[0]}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  }
+  </script>
+
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, onSnapshot, getDoc, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCTv4DiRCpbCpGYP6E86TPHlkPvaAZTN3g",
@@ -1741,6 +1832,27 @@ loadConfig();
         }
       });
     };
+
+    // Listener para ventas Shopify
+    const SALES_COL = collection(db, "sales");
+    onSnapshot(SALES_COL, (snap) => {
+      salesData = snap.docs.map(d => {
+        const f = d.data();
+        return {
+          id: d.id,
+          creator: f.creator,
+          orderId: f.orderId,
+          amount: typeof f.amount === 'number' ? f.amount : parseFloat(f.amount||0),
+          date: f.date,
+          product: f.product,
+          currency: f.currency
+        };
+      });
+      const badge = document.getElementById('nb-shopify');
+      if(badge) badge.textContent = salesData.length;
+      const activeView = document.querySelector('.view.active');
+      if(activeView && activeView.id === 'view-shopify') renderShopify();
+    });
 
     window.dispatchEvent(new CustomEvent("firebase-ready"));
   </script>
