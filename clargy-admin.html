@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -892,9 +891,9 @@ function videoRow(v, compact=false){
   const cols=compact?{cat:false,metrics:true,nota:false,plat:false}:vidCols;
   const metricsStr=[fmtV(v.views)+" views", cols.metrics&&v.likes?fmtV(v.likes)+" likes":"", cols.metrics&&v.comments?fmtV(v.comments)+" coment.":""].filter(Boolean).join(" · ");
   const copyBtn = v.linkIg
-    ? `<button onclick="navigator.clipboard.writeText('${v.linkIg}');showToast('Link IG copiado')" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`
+    ? `<a href="${v.linkIg.startsWith('http')?v.linkIg:'https://'+v.linkIg}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">📸 Ver IG</a>`
     : v.linkTt
-    ? `<button onclick="navigator.clipboard.writeText('${v.linkTt}');showToast('Link TT copiado')" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`
+    ? `<a href="${v.linkTt.startsWith('http')?v.linkTt:'https://'+v.linkTt}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">🎵 Ver TT</a>`
     : `<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`;
   return`<tr>
     <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:26px;height:26px;border-radius:50%;background:${COLORS[v.creator]}22;border:1px solid ${COLORS[v.creator]};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${COLORS[v.creator]}">${AVATARS[v.creator]}</div><span style="font-size:12px;">${NAMES[v.creator].split(' ')[0]}</span></div></td>
@@ -1136,7 +1135,10 @@ function renderViral(){
       <div class="viral-info" style="flex:1;">
         <div class="viral-creator-name">${NAMES[v.creator].split(' ')[0]} · <span style="font-weight:600;color:var(--muted);">Día ${v.day}</span></div>
         <div class="viral-meta">${v.cat} · ${v.platform==="ig"?"📸 IG":v.platform==="tt"?"🎵 TT":"📸🎵"}</div>
-        ${v.linkIg?`<a href="${v.linkIg}" target="_blank" style="color:var(--muted);font-size:10px;font-family:'DM Mono';text-decoration:none;">Ver en IG ↗</a>`:v.link?`<a href="${v.link}" target="_blank" style="color:var(--muted);font-size:10px;font-family:'DM Mono';text-decoration:none;">Ver video ↗</a>`:""}
+        <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
+          ${v.linkIg?`<a href="${v.linkIg.startsWith('http')?v.linkIg:'https://'+v.linkIg}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">📸 Ver IG</a>`:""}
+          ${v.driveLink?`<a href="${v.driveLink}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid rgba(13,148,136,.3);color:#0d9488;background:rgba(13,148,136,.05);text-decoration:none;">⬇ Drive</a>`:""}
+        </div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div class="viral-views ${viewsClass}">${fmtV(v.views)}</div>
