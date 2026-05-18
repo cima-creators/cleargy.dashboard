@@ -287,11 +287,8 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 
       <!-- OVERVIEW -->
       <div id="view-overview" class="view active">
-        <div id="overview-header" style="margin-bottom:22px;">
-          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;" id="overview-date"></div>
-          <div style="font-family:'Nunito';font-size:26px;font-weight:900;letter-spacing:-.5px;color:var(--text);">Panel de control</div>
-          <div style="font-size:13px;color:var(--muted);font-weight:600;margin-top:2px;">Cleargy Protein — Campaña UGC</div>
-        </div>
+        <div id="overview-date" style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px;"></div>
+        <div id="overview-hero" style="margin-bottom:16px;"></div>
         <div style="display:flex;gap:6px;margin-bottom:14px;" id="period-pills">
           <button class="period-pill active" onclick="setOverviewPeriod(1,this)">Hoy</button>
           <button class="period-pill" onclick="setOverviewPeriod(3,this)">3 días</button>
@@ -841,11 +838,32 @@ function renderOverview(){
   const viral=data.videos.filter(v=>v.views>=10000).length;
   const VIDEO_GOAL=150;
 
+  const vidPct = Math.min(100, Math.round(totalVids / 150 * 100));
+  document.getElementById("overview-hero").innerHTML=`
+    <div style="background:#1a3a8f;border-radius:20px;padding:24px 22px;color:white;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+        <div>
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.65;margin-bottom:6px;">DÍA DE CAMPAÑA</div>
+          <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${day} <span style="font-size:26px;opacity:.5;">/ ${CAMPAIGN_DAYS}</span></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.65;margin-bottom:6px;">VENTAS TOTALES</div>
+          <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${totalVentas}</div>
+        </div>
+      </div>
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;opacity:.6;margin-bottom:8px;">VIDEOS: ${totalVids} / 150</div>
+      <div style="background:rgba(255,255,255,.2);border-radius:6px;height:8px;">
+        <div style="background:white;height:100%;width:${vidPct}%;border-radius:6px;transition:width .4s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-family:'DM Mono';font-size:9px;opacity:.4;margin-top:5px;">
+        <span>0</span><span>150 videos</span>
+      </div>
+    </div>
+  `;
+
   document.getElementById("admin-stats").innerHTML=`
-    <div class="scard"><div class="sc-label">Día campaña</div><div class="sc-val" style="color:#1a3a8f">${day}</div><div class="sc-sub">de ${CAMPAIGN_DAYS} días</div></div>
     <div class="scard"><div class="sc-label">Videos · ${periodLabel}</div><div class="sc-val" style="color:#16a34a">${videosEnPeriodo.length}</div><div class="sc-sub">en el período</div></div>
     <div class="scard"><div class="sc-label">Total videos</div><div class="sc-val" style="color:#2a8fd4">${totalVids}</div><div class="sc-sub">en la campaña</div></div>
-    <div class="scard"><div class="sc-label">Ventas totales</div><div class="sc-val" style="color:#d97706">${totalVentas}</div><div class="sc-sub">todas las creadoras</div></div>
     <div class="scard"><div class="sc-label">Pendientes</div><div class="sc-val" style="color:#e85d26">${pending}</div><div class="sc-sub">sin aprobar</div></div>
     <div class="scard"><div class="sc-label">Virales</div><div class="sc-val" style="color:#7c3aed">${viral}</div><div class="sc-sub">+10K views</div></div>
   `;
