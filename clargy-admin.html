@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -670,7 +671,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 
 const ADMIN_PASS = "clargy-admin-2025";
 const ADMIN_PASS2 = "avellaneda-2025";
-const APIFY_TOKEN = "apify_api_sRUZlk0n2hg5u4CfAae3W8mIrWimOl31281R";
+const APIFY_TOKEN = "apify_api_z6pzNYSLE6NNndj5d0NLc0fH6Xerqk1R7yV5";
 const COLORS = {creadora1:"#1a3a8f",creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora5:"#7c3aed",creadora6:"#db2777",creadora7:"#0891b2"};
 const NAMES = {creadora1:"Luca Solucci",creadora2:"Vane Contreras",creadora3:"María Leal",creadora4:"Daniela Baldassin",creadora5:"Emi San Martin",creadora6:"More Porto",creadora7:"Jessica Grant"};
 const AVATARS = {creadora1:"LS",creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora5:"ES",creadora6:"MP",creadora7:"JG"};
@@ -980,7 +981,9 @@ async function syncApify(){
   const btn=document.getElementById("apify-sync-btn");
   btn.textContent="Sincronizando...";btn.disabled=true;
 
-  const links=[...new Set(data.videos.map(v=>v.linkIg).filter(l=>l&&l.includes("instagram.com")))];
+  // Normalizar links: siempre con https://
+  const rawLinks=[...new Set(data.videos.map(v=>v.linkIg).filter(l=>l&&l.includes("instagram.com")))];
+  const links=rawLinks.map(l=>l.startsWith('http')?l:'https://'+l);
   if(links.length===0){
     showToast("No hay links de Instagram cargados");
     btn.textContent="🔄 Sync Instagram";btn.disabled=false;
@@ -988,7 +991,6 @@ async function syncApify(){
   }
 
   try{
-    // Iniciar run en Apify
     const startRes=await fetch(
       `https://api.apify.com/v2/acts/apify~instagram-scraper/runs?token=${APIFY_TOKEN}`,
       {method:"POST",headers:{"Content-Type":"application/json"},
@@ -997,11 +999,10 @@ async function syncApify(){
     const startJson=await startRes.json();
     const runId=startJson.data?.id;
     const datasetId=startJson.data?.defaultDatasetId;
-    if(!runId) throw new Error("No se pudo iniciar el run");
+    if(!runId) throw new Error("No se pudo iniciar el run: "+JSON.stringify(startJson));
 
     showToast(`⏳ Procesando ${links.length} videos...`);
 
-    // Polling hasta que termine
     let status="RUNNING",attempts=0;
     while((status==="RUNNING"||status==="READY")&&attempts<40){
       await new Promise(r=>setTimeout(r,4000));
@@ -1012,21 +1013,24 @@ async function syncApify(){
     }
     if(status!=="SUCCEEDED") throw new Error("Run terminó con estado: "+status);
 
-    // Obtener resultados
     const dr=await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`);
     const posts=await dr.json();
+
+    console.log("Apify posts:", posts.length, posts[0]); // debug
 
     let updated=0;
     posts.forEach(post=>{
       const postUrl=(post.url||post.inputUrl||"").replace(/\/$/,"").split("?")[0].toLowerCase();
       const vid=data.videos.find(v=>{
-        const ig=(v.linkIg||"").replace(/\/$/,"").split("?")[0].toLowerCase();
-        return ig&&(ig===postUrl||ig.includes(postUrl)||postUrl.includes(ig));
+        const ig=(v.linkIg||"").replace(/^https?:\/\//,"").replace(/\/$/,"").split("?")[0].toLowerCase();
+        const pu=postUrl.replace(/^https?:\/\//,"");
+        return ig&&(ig===pu||ig.includes(pu)||pu.includes(ig));
       });
       if(vid){
-        const views=post.videoPlayCount||post.videoViewCount||0;
-        const likes=post.likesCount||0;
-        const comments=post.commentsCount||0;
+        // Intentar todos los campos posibles de views
+        const views=post.videoPlayCount||post.videoViewCount||post.playCount||post.viewsCount||post.video_view_count||0;
+        const likes=post.likesCount||post.like_count||0;
+        const comments=post.commentsCount||post.comment_count||0;
         if(views>0) vid.views=views;
         if(likes>0) vid.likes=likes;
         if(comments>0) vid.comments=comments;
@@ -1035,7 +1039,7 @@ async function syncApify(){
     });
 
     if(updated>0){saveData();renderAll();renderVideos();}
-    showToast(updated>0?`✓ ${updated} videos actualizados con métricas de IG`:`Apify OK — ${posts.length} posts, revisá que los links coincidan`);
+    showToast(updated>0?`✓ ${updated} videos actualizados`:`Apify OK — ${posts.length} posts encontrados, 0 matches. Revisá consola.`);
   }catch(e){
     showToast("❌ Error: "+e.message);
     console.error("Apify error:",e);
