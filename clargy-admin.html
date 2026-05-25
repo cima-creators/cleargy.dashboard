@@ -1090,7 +1090,7 @@ async function notifyNoVideos(){
     return{
       number:PHONES[c],
       name:NAMES[c],
-      body:`Hola ${NAMES[c].split(" ")[0]}! ⏰ Te ${faltan===1?"falta":"faltan"} ${faltan} video${faltan>1?"s":""} para llegar a los 5 de hoy. ¡Subílos antes de las 21hs! 💪`
+      body:"Hola "+NAMES[c].split(" ")[0]+"! 🌟 ¿Cómo vas? Te escribimos desde Cleargy porque todavía "+(faltan===5?"no subiste ningún video hoy":(faltan===1?"te falta 1 video":"te faltan "+faltan+" videos"))+". Ya sabés que el límite es las 21hs y queremos que llegues con todo 💪 ¡Cualquier cosa nos avisás!"
     };
   });
   try{
