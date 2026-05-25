@@ -1129,7 +1129,6 @@ function updateSyncStatus(){
 
 const AUTO_SYNC_MS=6*60*60*1000;
 const AUTO_WP_MS=24*60*60*1000;
-const ADMIN_PHONE="5491123538064";
 
 function checkAutoSync(){
   if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_MS) syncApify();
