@@ -310,6 +310,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="view-sub">Revisá, puntuá y aprobá el contenido</div>
         <div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <button id="apify-sync-btn" class="hbtn" onclick="syncApify()" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;border:none;padding:10px 20px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(131,58,180,.3);">🔄 Sync Instagram</button>
+          <button id="wp-notify-btn" onclick="notifyNoVideos()" style="background:linear-gradient(135deg,#25d366,#128c7e);color:white;border:none;padding:10px 20px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(37,211,102,.3);">📲 Avisar sin videos</button>
           <span id="sync-status" style="font-size:12px;color:#aaa;font-family:'Nunito';"></span>
         </div>
         <div class="filters">
@@ -672,6 +673,17 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 const ADMIN_PASS = "clargy-admin-2025";
 const ADMIN_PASS2 = "avellaneda-2025";
 const APIFY_TOKEN = "apify_api_z6pzNYSLE6NNndj5d0NLc0fH6Xerqk1R7yV5";
+const WHATICKET_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJyZWFkOndoYXRzYXBwcyIsImNyZWF0ZTptZXNzYWdlcyJdLCJjb21wYW55SWQiOiI1ZmI1NjZmNi00NzRhLTQ5ZmUtOWZlNi0wNTllYTU2MjM4OWYiLCJpYXQiOjE3Nzk3NDI4NTB9.eRL0gFvve6LJUClTfAuuvrGedBySjgfO2LPWs5070P0";
+const WHATICKET_CONNECTION = "ca448a0f-b10e-4088-8ce2-ef78810cf7d2";
+const PHONES = {
+  creadora1: "",
+  creadora2: "5491168213265",
+  creadora3: "5491130837262",
+  creadora4: "5493462573927",
+  creadora5: "",
+  creadora6: "5491132887601",
+  creadora7: "5492317627240"
+};
 const COLORS = {creadora1:"#1a3a8f",creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora5:"#7c3aed",creadora6:"#db2777",creadora7:"#0891b2"};
 const NAMES = {creadora1:"Luca Solucci",creadora2:"Vane Contreras",creadora3:"María Leal",creadora4:"Daniela Baldassin",creadora5:"Emi San Martin",creadora6:"More Porto",creadora7:"Jessica Grant"};
 const AVATARS = {creadora1:"LS",creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora5:"ES",creadora6:"MP",creadora7:"JG"};
@@ -1037,12 +1049,12 @@ async function syncApify(){
 
     if(updated>0){saveData();renderAll();renderVideos();}
     showToast(updated>0?`✓ ${updated} videos actualizados`:`Apify OK — ${posts.length} posts encontrados, 0 matches. Revisá consola.`);
-    data.lastSyncTime=Date.now();saveData();updateSyncStatus();
   }catch(e){
     showToast("❌ Error: "+e.message);
     console.error("Apify error:",e);
   }
   btn.textContent="🔄 Sync Instagram";btn.disabled=false;
+  data.lastSyncTime=Date.now();saveData();updateSyncStatus();
 }
 
 function updateSyncStatus(){
@@ -1052,16 +1064,52 @@ function updateSyncStatus(){
   const mins=Math.round((Date.now()-data.lastSyncTime)/60000);
   const next=360-mins;
   if(mins<1) el.textContent="Último sync: ahora · próximo en 6hs";
-  else if(next>0) el.textContent=`Último sync: hace ${mins<60?mins+"min":(Math.floor(mins/60)+"hs")} · próximo en ${next<60?next+"min":Math.floor(next/60)+"hs"}`;
-  else el.textContent=`Último sync: hace ${Math.floor(mins/60)}hs · sincronizando...`;
+  else if(next>0) el.textContent=`Último sync: hace ${mins<60?mins+"min":Math.floor(mins/60)+"hs"} · próximo en ${next<60?next+"min":Math.floor(next/60)+"hs"}`;
+  else el.textContent=`Último sync: hace ${Math.floor(mins/60)}hs`;
 }
 
-const AUTO_SYNC_INTERVAL=6*60*60*1000;
+const AUTO_SYNC_MS=6*60*60*1000;
 function checkAutoSync(){
-  if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_INTERVAL) syncApify();
+  if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_MS) syncApify();
   else updateSyncStatus();
 }
-setInterval(()=>{updateSyncStatus();if(data.lastSyncTime&&Date.now()-data.lastSyncTime>=AUTO_SYNC_INTERVAL)syncApify();},60000);
+setInterval(()=>{updateSyncStatus();if(data.lastSyncTime&&Date.now()-data.lastSyncTime>=AUTO_SYNC_MS)syncApify();},60000);
+
+async function notifyNoVideos(){
+  const btn=document.getElementById("wp-notify-btn");
+  btn.textContent="Enviando...";btn.disabled=true;
+  const sinVideos=Object.keys(PHONES).filter(c=>{
+    if(!PHONES[c]) return false;
+    return !data.videos||data.videos.filter(v=>v.creator===c).length===0;
+  });
+  if(sinVideos.length===0){showToast("✅ Todas subieron videos");btn.textContent="📲 Avisar sin videos";btn.disabled=false;return;}
+  const messages=sinVideos.map(c=>({
+    number:PHONES[c],
+    name:NAMES[c],
+    body:`Hola ${NAMES[c].split(" ")[0]}! 👋 Te recordamos que todavía no subiste tus videos esta semana en Cleargy. ¡Animate! 💪`
+  }));
+  try{
+    const res=await fetch("https://api.whaticket.com/api/v1/messages",{
+      method:"POST",
+      headers:{"Authorization":`Bearer ${WHATICKET_TOKEN}`,"Content-Type":"application/json"},
+      body:JSON.stringify({connectionId:WHATICKET_CONNECTION,messages})
+    });
+    const json=await res.json();
+    if(json.message==="messages scheduled"){
+      showToast(`✅ WP enviado a ${sinVideos.length} creadora${sinVideos.length>1?"s":""}`);
+      data.lastWpNotify=Date.now();saveData();
+    } else {
+      showToast("❌ Error WP: "+JSON.stringify(json));
+    }
+  }catch(e){showToast("❌ Error: "+e.message);}
+  btn.textContent="📲 Avisar sin videos";btn.disabled=false;
+}
+
+const AUTO_WP_MS=24*60*60*1000;
+setInterval(()=>{
+  const h=new Date().getHours();
+  if(h===10&&(!data.lastWpNotify||Date.now()-data.lastWpNotify>=AUTO_WP_MS)) notifyNoVideos();
+},60000);
 
 
 function renderBonos(){
