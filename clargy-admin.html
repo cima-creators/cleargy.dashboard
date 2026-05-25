@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -779,7 +780,7 @@ function nav(el){
   if(v==="comprobantes"){renderComprobantes();}
 }
 
-function getCampaignDay(){const start=data.campaignStart?new Date(data.campaignStart):new Date("2025-06-01");const now=new Date();const d=Math.floor((now-start)/(1000*60*60*24))+1;return Math.min(Math.max(d,1),30);}
+function getCampaignDay(){const start=data.campaignStart?new Date(data.campaignStart):new Date("2026-05-25");const now=new Date();const d=Math.floor((now-start)/(1000*60*60*24))+1;return Math.min(Math.max(d,1),30);}
 function fmtV(v){if(!v)return"0";if(v>=1000000)return(v/1000000).toFixed(1)+"M";if(v>=1000)return(v/1000).toFixed(0)+"K";return v.toString();}
 function fmtP(n){return"$"+Math.round(n).toLocaleString("es-AR");}
 function getWeek(day){return Math.ceil(day/7);}
@@ -804,7 +805,7 @@ function renderAll(){
     mergeExtraCreators();
     const day=getCampaignDay();
     const el=document.getElementById("h-day");
-    if(el) el.textContent=`Día ${day} de ${CAMPAIGN_DAYS}`;
+    if(el) el.textContent=`Día ${day}`;
     renderOverview();
     const pending=data.videos.filter(v=>v.status==="pending").length;
     const nbp=document.getElementById("nb-pending");
@@ -853,7 +854,7 @@ function renderOverview(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
         <div>
           <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.65;margin-bottom:6px;">DÍA DE CAMPAÑA</div>
-          <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${day} <span style="font-size:26px;opacity:.5;">/ ${CAMPAIGN_DAYS}</span></div>
+          <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${day}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.65;margin-bottom:6px;">VENTAS TOTALES</div>
@@ -1131,7 +1132,7 @@ const AUTO_SYNC_MS=6*60*60*1000;
 const AUTO_WP_MS=24*60*60*1000;
 
 function checkAutoSync(){
-  if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_MS) syncApify();
+  if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_MS){setTimeout(()=>{syncApify();syncTikTok();},3000);}
   else updateSyncStatus();
 }
 
@@ -1182,7 +1183,7 @@ async function sendAdminReport(){
 
 setInterval(()=>{
   updateSyncStatus();
-  if(data.lastSyncTime&&Date.now()-data.lastSyncTime>=AUTO_SYNC_MS) syncApify();
+  if(data.lastSyncTime&&Date.now()-data.lastSyncTime>=AUTO_SYNC_MS){syncApify();syncTikTok();}
   const h=new Date().getHours();
   if(h===18&&(!data.lastWpNotify||Date.now()-data.lastWpNotify>=AUTO_WP_MS)) notifyNoVideos();
   if(h===21&&(!data.lastAdminReport||Date.now()-data.lastAdminReport>=AUTO_WP_MS)){data.lastAdminReport=Date.now();saveData();sendAdminReport();}
