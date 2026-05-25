@@ -1080,14 +1080,19 @@ async function notifyNoVideos(){
   btn.textContent="Enviando...";btn.disabled=true;
   const sinVideos=Object.keys(PHONES).filter(c=>{
     if(!PHONES[c]) return false;
-    return !data.videos||data.videos.filter(v=>v.creator===c).length===0;
+    const cant=(data.videos||[]).filter(v=>v.creator===c).length;
+    return cant<5;
   });
-  if(sinVideos.length===0){showToast("✅ Todas subieron videos");btn.textContent="📲 Avisar sin videos";btn.disabled=false;return;}
-  const messages=sinVideos.map(c=>({
-    number:PHONES[c],
-    name:NAMES[c],
-    body:`Hola ${NAMES[c].split(" ")[0]}! 👋 Te recordamos que todavía no subiste tus videos esta semana en Cleargy. ¡Animate! 💪`
-  }));
+  if(sinVideos.length===0){showToast("✅ Todas tienen 5 videos");btn.textContent="📲 Avisar sin videos";btn.disabled=false;return;}
+  const messages=sinVideos.map(c=>{
+    const cant=(data.videos||[]).filter(v=>v.creator===c).length;
+    const faltan=5-cant;
+    return{
+      number:PHONES[c],
+      name:NAMES[c],
+      body:`Hola ${NAMES[c].split(" ")[0]}! ⏰ Te ${faltan===1?"falta":"faltan"} ${faltan} video${faltan>1?"s":""} para llegar a los 5 de hoy. ¡Subílos antes de las 21hs! 💪`
+    };
+  });
   try{
     const res=await fetch("https://api.whaticket.com/api/v1/messages",{
       method:"POST",
@@ -1108,7 +1113,7 @@ async function notifyNoVideos(){
 const AUTO_WP_MS=24*60*60*1000;
 setInterval(()=>{
   const h=new Date().getHours();
-  if(h===10&&(!data.lastWpNotify||Date.now()-data.lastWpNotify>=AUTO_WP_MS)) notifyNoVideos();
+  if(h===18&&(!data.lastWpNotify||Date.now()-data.lastWpNotify>=AUTO_WP_MS)) notifyNoVideos();
 },60000);
 
 
