@@ -844,9 +844,9 @@ function renderOverview(){
   const totalVentas=CREATORS.reduce((a,c)=>a+(data.ventas[c]||0),0);
   const pending=data.videos.filter(v=>v.status==="pending").length;
   const viral=data.videos.filter(v=>v.views>=10000).length;
-  const VIDEO_GOAL=150;
+  const VIDEO_GOAL=750;
 
-  const vidPct = Math.min(100, Math.round(totalVids / 150 * 100));
+  const vidPct = Math.min(100, Math.round(totalVids / 750 * 100));
   document.getElementById("overview-hero").innerHTML=`
     <div style="background:#1a3a8f;border-radius:20px;padding:24px 22px;color:white;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
@@ -864,7 +864,7 @@ function renderOverview(){
         <div style="background:white;height:100%;width:${vidPct}%;border-radius:6px;transition:width .4s;"></div>
       </div>
       <div style="display:flex;justify-content:space-between;font-family:'DM Mono';font-size:9px;opacity:.4;margin-top:5px;">
-        <span>0</span><span>150 videos</span>
+        <span>0</span><span>750 videos</span>
       </div>
     </div>
   `;
