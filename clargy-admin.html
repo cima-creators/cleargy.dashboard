@@ -1111,9 +1111,47 @@ async function notifyNoVideos(){
 }
 
 const AUTO_WP_MS=24*60*60*1000;
+const ADMIN_PHONE="5491123538064";
+
+function getVideosOnDay(creator, daysAgo){
+  const d=new Date(); d.setDate(d.getDate()-daysAgo);
+  const key=d.toISOString().slice(0,10);
+  return (data.videos||[]).filter(v=>v.creator===creator&&(v.date||"").startsWith(key)).length;
+}
+
+async function sendAdminReport(){
+  const hoy=Object.keys(PHONES).filter(c=>PHONES[c]&&(data.videos||[]).filter(v=>v.creator===c).length<5);
+  const racha=Object.keys(PHONES).filter(c=>{
+    if(!PHONES[c]) return false;
+    return getVideosOnDay(c,0)===0&&getVideosOnDay(c,1)===0;
+  });
+  if(hoy.length===0&&racha.length===0) return;
+  let msg="📊 *Reporte Cleargy — "+new Date().toLocaleDateString("es-AR")+"*\n\n";
+  if(hoy.length>0){
+    msg+="⚠️ *Sin 5 videos hoy:*\n";
+    hoy.forEach(c=>{const cant=(data.videos||[]).filter(v=>v.creator===c).length;msg+="• "+NAMES[c]+" ("+cant+"/5)\n";});
+    msg+="\n";
+  }
+  if(racha.length>0){
+    msg+="🔴 *Racha — 2 días sin subir:*\n";
+    racha.forEach(c=>{msg+="• "+NAMES[c]+"\n";});
+  }
+  try{
+    await fetch("https://api.whaticket.com/api/v1/messages",{
+      method:"POST",
+      headers:{"Authorization":`Bearer ${WHATICKET_TOKEN}`,"Content-Type":"application/json"},
+      body:JSON.stringify({connectionId:WHATICKET_CONNECTION,messages:[{number:ADMIN_PHONE,name:"Jhoseva",body:msg}]})
+    });
+  }catch(e){console.error("Admin report error:",e);}
+}
+
 setInterval(()=>{
   const h=new Date().getHours();
   if(h===18&&(!data.lastWpNotify||Date.now()-data.lastWpNotify>=AUTO_WP_MS)) notifyNoVideos();
+  if(h===21&&(!data.lastAdminReport||Date.now()-data.lastAdminReport>=AUTO_WP_MS)){
+    data.lastAdminReport=Date.now();saveData();
+    sendAdminReport();
+  }
 },60000);
 
 
