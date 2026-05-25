@@ -308,8 +308,9 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div id="view-videos" class="view">
         <div class="view-title">Videos</div>
         <div class="view-sub">Revisá, puntuá y aprobá el contenido</div>
-        <div style="margin-bottom:12px;">
+        <div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <button id="apify-sync-btn" class="hbtn" onclick="syncApify()" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;border:none;padding:10px 20px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(131,58,180,.3);">🔄 Sync Instagram</button>
+          <span id="sync-status" style="font-size:12px;color:#aaa;font-family:'Nunito';"></span>
         </div>
         <div class="filters">
           <select class="fsel" id="vf-creator" onchange="renderVideos()">
@@ -717,7 +718,7 @@ function enterAdmin(){
   localStorage.setItem("clargy_admin_session","1");
   document.getElementById("login-screen").style.display="none";
   document.getElementById("admin-app").style.display="flex";
-  loadData().then(()=>renderAll());
+  loadData().then(()=>{renderAll();checkAutoSync();});
   function startAdminListen(){
     window._fbListen((newData)=>{
       data = newData;
@@ -1036,12 +1037,31 @@ async function syncApify(){
 
     if(updated>0){saveData();renderAll();renderVideos();}
     showToast(updated>0?`✓ ${updated} videos actualizados`:`Apify OK — ${posts.length} posts encontrados, 0 matches. Revisá consola.`);
+    data.lastSyncTime=Date.now();saveData();updateSyncStatus();
   }catch(e){
     showToast("❌ Error: "+e.message);
     console.error("Apify error:",e);
   }
   btn.textContent="🔄 Sync Instagram";btn.disabled=false;
 }
+
+function updateSyncStatus(){
+  const el=document.getElementById("sync-status");
+  if(!el)return;
+  if(!data.lastSyncTime){el.textContent="Sin sync previo";return;}
+  const mins=Math.round((Date.now()-data.lastSyncTime)/60000);
+  const next=360-mins;
+  if(mins<1) el.textContent="Último sync: ahora · próximo en 6hs";
+  else if(next>0) el.textContent=`Último sync: hace ${mins<60?mins+"min":(Math.floor(mins/60)+"hs")} · próximo en ${next<60?next+"min":Math.floor(next/60)+"hs"}`;
+  else el.textContent=`Último sync: hace ${Math.floor(mins/60)}hs · sincronizando...`;
+}
+
+const AUTO_SYNC_INTERVAL=6*60*60*1000;
+function checkAutoSync(){
+  if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_INTERVAL) syncApify();
+  else updateSyncStatus();
+}
+setInterval(()=>{updateSyncStatus();if(data.lastSyncTime&&Date.now()-data.lastSyncTime>=AUTO_SYNC_INTERVAL)syncApify();},60000);
 
 
 function renderBonos(){
