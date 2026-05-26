@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -673,18 +672,95 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
   });
 })();
 
-const ADMIN_PASS = "clargy-admin-2025";
-const ADMIN_PASS2 = "avellaneda-2025";
+
+// ═══════════════════════════════════
+// MULTI-BRAND CONFIG
+// ═══════════════════════════════════
+const BRAND_ID = new URLSearchParams(window.location.search).get('brand') || 'cleargy';
+const BRAND_CONFIGS = {
+  cleargy: {
+    name:'Cleargy Protein', collection:'cleargy',
+    adminPass:'clargy-admin-2025', adminPass2:'avellaneda-2025',
+    accent:'#1a3a8f', accentLight:'#2a52c9', bg:'#0a0e1a', cardBg:'#111827',
+    shadow:'26,58,143',
+    creators:{
+      creadora2:{name:'Vane Contreras',avatar:'VC',color:'#2a8fd4',phone:'5491168213265'},
+      creadora3:{name:'María Leal',avatar:'ML',color:'#0d9488',phone:'5491130837262'},
+      creadora4:{name:'Daniela Baldassin',avatar:'DB',color:'#d97706',phone:'5493462573927'},
+      creadora6:{name:'More Porto',avatar:'MP',color:'#db2777',phone:'5491132887601'},
+      creadora7:{name:'Jessica Grant',avatar:'JG',color:'#0891b2',phone:'5492317627240'},
+    }
+  },
+  casaenorden: {
+    name:'Casa en Orden', collection:'casaenorden',
+    adminPass:'casaenorden-admin-2025', adminPass2:'casaenorden-2025',
+    accent:'#8b5e2e', accentLight:'#a8763a', bg:'#1a0e05', cardBg:'#1f1208',
+    shadow:'139,94,46',
+    creators:{
+      creadora1:{name:'Creadora 1',avatar:'C1',color:'#8b5e2e',phone:''},
+      creadora2:{name:'Creadora 2',avatar:'C2',color:'#a8763a',phone:''},
+      creadora3:{name:'Creadora 3',avatar:'C3',color:'#c49a6c',phone:''},
+      creadora4:{name:'Creadora 4',avatar:'C4',color:'#6b4020',phone:''},
+      creadora5:{name:'Creadora 5',avatar:'C5',color:'#8b5e2e',phone:''},
+    }
+  },
+  casaperfecta: {
+    name:'Casa Perfecta', collection:'casaperfecta',
+    adminPass:'casaperfecta-admin-2025', adminPass2:'casaperfecta-2025',
+    accent:'#2d4a35', accentLight:'#4a7c59', bg:'#050f08', cardBg:'#0a1a0e',
+    shadow:'45,74,53',
+    creators:{
+      creadora1:{name:'Creadora 1',avatar:'C1',color:'#2d4a35',phone:''},
+      creadora2:{name:'Creadora 2',avatar:'C2',color:'#4a7c59',phone:''},
+      creadora3:{name:'Creadora 3',avatar:'C3',color:'#2d4a35',phone:''},
+      creadora4:{name:'Creadora 4',avatar:'C4',color:'#4a7c59',phone:''},
+      creadora5:{name:'Creadora 5',avatar:'C5',color:'#2d4a35',phone:''},
+      creadora6:{name:'Creadora 6',avatar:'C6',color:'#4a7c59',phone:''},
+      creadora7:{name:'Creadora 7',avatar:'C7',color:'#2d4a35',phone:''},
+      creadora8:{name:'Creadora 8',avatar:'C8',color:'#4a7c59',phone:''},
+      creadora9:{name:'Creadora 9',avatar:'C9',color:'#2d4a35',phone:''},
+      creadora10:{name:'Creadora 10',avatar:'CA',color:'#4a7c59',phone:''},
+    }
+  },
+  miluz: {
+    name:'MiLuz', collection:'miluz',
+    adminPass:'miluz-admin-2025', adminPass2:'miluz-2025',
+    accent:'#111111', accentLight:'#333333', bg:'#0a0a0a', cardBg:'#151515',
+    shadow:'17,17,17',
+    creators:{
+      creadora1:{name:'Creadora 1',avatar:'C1',color:'#111111',phone:''},
+      creadora2:{name:'Creadora 2',avatar:'C2',color:'#333333',phone:''},
+      creadora3:{name:'Creadora 3',avatar:'C3',color:'#555555',phone:''},
+      creadora4:{name:'Creadora 4',avatar:'C4',color:'#111111',phone:''},
+      creadora5:{name:'Creadora 5',avatar:'C5',color:'#333333',phone:''},
+    }
+  }
+};
+const BRAND = BRAND_CONFIGS[BRAND_ID] || BRAND_CONFIGS.cleargy;
+window.BRAND_COLLECTION = BRAND.collection;
+(function(){
+  const r = document.documentElement.style;
+  r.setProperty('--blue', BRAND.accent);
+  r.setProperty('--blue-light', BRAND.accentLight);
+})();
+document.addEventListener('DOMContentLoaded',function(){
+  document.title = BRAND.name + ' — Admin';
+  const el = document.querySelector('.logo-text');
+  if(el) el.textContent = BRAND.name;
+});
+
+const ADMIN_PASS = BRAND.adminPass;
+const ADMIN_PASS2 = BRAND.adminPass2;
 const APIFY_TOKEN = "apify_api_z6pzNYSLE6NNndj5d0NLc0fH6Xerqk1R7yV5";
-const COLORS = {creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora6:"#db2777",creadora7:"#0891b2"};
-const NAMES = {creadora2:"Vane Contreras",creadora3:"María Leal",creadora4:"Daniela Baldassin",creadora6:"More Porto",creadora7:"Jessica Grant"};
-const AVATARS = {creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora6:"MP",creadora7:"JG"};
-const CREATORS = ["creadora2","creadora3","creadora4","creadora6","creadora7"];
+const COLORS = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.color]));
+const NAMES = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.name]));
+const AVATARS = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.avatar]));
+const CREATORS = Object.keys(BRAND.creators);
 const WHATICKET_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJyZWFkOndoYXRzYXBwcyIsImNyZWF0ZTptZXNzYWdlcyJdLCJjb21wYW55SWQiOiI1ZmI1NjZmNi00NzRhLTQ5ZmUtOWZlNi0wNTllYTU2MjM4OWYiLCJpYXQiOjE3Nzk3NDI4NTB9.eRL0gFvve6LJUClTfAuuvrGedBySjgfO2LPWs5070P0";
 const WHATICKET_CONNECTION = "ca448a0f-b10e-4088-8ce2-ef78810cf7d2";
 const ADMIN_PHONE = "5491123538064";
-const PHONES = {creadora2:"5491168213265",creadora3:"5491130837262",creadora4:"5493462573927",creadora6:"5491132887601",creadora7:"5492317627240"};
-const CAMPAIGN_START = {creadora2:"2026-05-25",creadora3:"2026-05-25",creadora4:"2026-05-25",creadora6:"2026-05-25",creadora7:"2026-05-25"};
+const PHONES = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.phone||'']));
+const CAMPAIGN_START = Object.fromEntries(Object.keys(BRAND.creators).map(k=>[k,"2026-05-25"]));
 const SALARY = 650000;
 const COMISION_POR_VENTA = 2500;
 const MIN_VIDEOS = 150;
@@ -1862,7 +1938,7 @@ loadConfig();
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const DATA_DOC = doc(db, "cleargy", "main");
+    const DATA_DOC = doc(db, window.BRAND_COLLECTION || "cleargy", "main");
 
     window._fbSave = async (data) => {
       try { await setDoc(DATA_DOC, {data: JSON.stringify(data)}); }
