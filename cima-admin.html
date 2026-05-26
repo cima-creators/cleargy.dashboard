@@ -1225,12 +1225,12 @@ async function notifyNoVideos(){
   const btn=document.getElementById("wp-notify-btn");
   btn.textContent="Enviando...";btn.disabled=true;
   const sinVideos=Object.keys(PHONES).filter(c=>{
-    const cant=(data.videos||[]).filter(v=>v.creator===c).length;
-    return cant<5;
+    if(!PHONES[c]) return false;
+    return getVideosOnDay(c,0)<5;
   });
   if(sinVideos.length===0){showToast("✅ Todas tienen 5 videos");btn.textContent="📲 Avisar sin videos";btn.disabled=false;return;}
   const messages=sinVideos.map(c=>{
-    const cant=(data.videos||[]).filter(v=>v.creator===c).length;
+    const cant=getVideosOnDay(c,0);
     const faltan=5-cant;
     return{number:PHONES[c],name:NAMES[c],
       body:"Hola "+NAMES[c].split(" ")[0]+"! 🌟 ¿Cómo vas? Te escribimos desde Cleargy porque todavía "+(faltan===5?"no subiste ningún video hoy":(faltan===1?"te falta 1 video":"te faltan "+faltan+" videos"))+". Ya sabés que el límite es las 21hs y queremos que llegues con todo 💪 ¡Cualquier cosa nos avisás!"};
@@ -1247,11 +1247,11 @@ async function notifyNoVideos(){
 }
 
 async function sendAdminReport(){
-  const hoy=Object.keys(PHONES).filter(c=>(data.videos||[]).filter(v=>v.creator===c).length<5);
+  const hoy=Object.keys(PHONES).filter(c=>getVideosOnDay(c,0)<5);
   const racha=Object.keys(PHONES).filter(c=>getVideosOnDay(c,0)===0&&getVideosOnDay(c,1)===0);
   if(hoy.length===0&&racha.length===0)return;
   let msg="📊 *Reporte Cleargy — "+new Date().toLocaleDateString("es-AR")+"*\n\n";
-  if(hoy.length>0){msg+="⚠️ *Sin 5 videos hoy:*\n";hoy.forEach(c=>{const cant=(data.videos||[]).filter(v=>v.creator===c).length;msg+="• "+NAMES[c]+" ("+cant+"/5)\n";});msg+="\n";}
+  if(hoy.length>0){msg+="⚠️ *Sin 5 videos hoy:*\n";hoy.forEach(c=>{const cant=getVideosOnDay(c,0);msg+="• "+NAMES[c]+" ("+cant+"/5)\n";});msg+="\n";}
   if(racha.length>0){msg+="🔴 *Racha — 2 días sin subir:*\n";racha.forEach(c=>{msg+="• "+NAMES[c]+"\n";});}
   try{
     await fetch("https://api.whaticket.com/api/v1/messages",{method:"POST",
