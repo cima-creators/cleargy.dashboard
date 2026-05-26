@@ -672,18 +672,95 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
   });
 })();
 
-const ADMIN_PASS = "clargy-admin-2025";
-const ADMIN_PASS2 = "avellaneda-2025";
+
+// ═══════════════════════════════════
+// MULTI-BRAND CONFIG
+// ═══════════════════════════════════
+const BRAND_ID = new URLSearchParams(window.location.search).get('brand') || 'cleargy';
+const BRAND_CONFIGS = {
+  cleargy: {
+    name:'Cleargy Protein', collection:'cleargy',
+    adminPass:'clargy-admin-2025', adminPass2:'avellaneda-2025',
+    accent:'#1a3a8f', accentLight:'#2a52c9', bg:'#0a0e1a', cardBg:'#111827',
+    shadow:'26,58,143',
+    creators:{
+      creadora2:{name:'Vane Contreras',avatar:'VC',color:'#2a8fd4',phone:'5491168213265'},
+      creadora3:{name:'María Leal',avatar:'ML',color:'#0d9488',phone:'5491130837262'},
+      creadora4:{name:'Daniela Baldassin',avatar:'DB',color:'#d97706',phone:'5493462573927'},
+      creadora6:{name:'More Porto',avatar:'MP',color:'#db2777',phone:'5491132887601'},
+      creadora7:{name:'Jessica Grant',avatar:'JG',color:'#0891b2',phone:'5492317627240'},
+    }
+  },
+  casaenorden: {
+    name:'Casa en Orden', collection:'casaenorden',
+    adminPass:'casaenorden-admin-2025', adminPass2:'casaenorden-2025',
+    accent:'#8b5e2e', accentLight:'#a8763a', bg:'#1a0e05', cardBg:'#1f1208',
+    shadow:'139,94,46',
+    creators:{
+      creadora1:{name:'Creadora 1',avatar:'C1',color:'#8b5e2e',phone:''},
+      creadora2:{name:'Creadora 2',avatar:'C2',color:'#a8763a',phone:''},
+      creadora3:{name:'Creadora 3',avatar:'C3',color:'#c49a6c',phone:''},
+      creadora4:{name:'Creadora 4',avatar:'C4',color:'#6b4020',phone:''},
+      creadora5:{name:'Creadora 5',avatar:'C5',color:'#8b5e2e',phone:''},
+    }
+  },
+  casaperfecta: {
+    name:'Casa Perfecta', collection:'casaperfecta',
+    adminPass:'casaperfecta-admin-2025', adminPass2:'casaperfecta-2025',
+    accent:'#2d4a35', accentLight:'#4a7c59', bg:'#050f08', cardBg:'#0a1a0e',
+    shadow:'45,74,53',
+    creators:{
+      creadora1:{name:'Creadora 1',avatar:'C1',color:'#2d4a35',phone:''},
+      creadora2:{name:'Creadora 2',avatar:'C2',color:'#4a7c59',phone:''},
+      creadora3:{name:'Creadora 3',avatar:'C3',color:'#2d4a35',phone:''},
+      creadora4:{name:'Creadora 4',avatar:'C4',color:'#4a7c59',phone:''},
+      creadora5:{name:'Creadora 5',avatar:'C5',color:'#2d4a35',phone:''},
+      creadora6:{name:'Creadora 6',avatar:'C6',color:'#4a7c59',phone:''},
+      creadora7:{name:'Creadora 7',avatar:'C7',color:'#2d4a35',phone:''},
+      creadora8:{name:'Creadora 8',avatar:'C8',color:'#4a7c59',phone:''},
+      creadora9:{name:'Creadora 9',avatar:'C9',color:'#2d4a35',phone:''},
+      creadora10:{name:'Creadora 10',avatar:'CA',color:'#4a7c59',phone:''},
+    }
+  },
+  miluz: {
+    name:'MiLuz', collection:'miluz',
+    adminPass:'miluz-admin-2025', adminPass2:'miluz-2025',
+    accent:'#111111', accentLight:'#333333', bg:'#0a0a0a', cardBg:'#151515',
+    shadow:'17,17,17',
+    creators:{
+      creadora1:{name:'Creadora 1',avatar:'C1',color:'#111111',phone:''},
+      creadora2:{name:'Creadora 2',avatar:'C2',color:'#333333',phone:''},
+      creadora3:{name:'Creadora 3',avatar:'C3',color:'#555555',phone:''},
+      creadora4:{name:'Creadora 4',avatar:'C4',color:'#111111',phone:''},
+      creadora5:{name:'Creadora 5',avatar:'C5',color:'#333333',phone:''},
+    }
+  }
+};
+const BRAND = BRAND_CONFIGS[BRAND_ID] || BRAND_CONFIGS.cleargy;
+window.BRAND_COLLECTION = BRAND.collection;
+(function(){
+  const r = document.documentElement.style;
+  r.setProperty('--blue', BRAND.accent);
+  r.setProperty('--blue-light', BRAND.accentLight);
+})();
+document.addEventListener('DOMContentLoaded',function(){
+  document.title = BRAND.name + ' — Admin';
+  const el = document.querySelector('.logo-text');
+  if(el) el.textContent = BRAND.name;
+});
+
+const ADMIN_PASS = BRAND.adminPass;
+const ADMIN_PASS2 = BRAND.adminPass2;
 const APIFY_TOKEN = "apify_api_z6pzNYSLE6NNndj5d0NLc0fH6Xerqk1R7yV5";
-const COLORS = {creadora2:"#2a8fd4",creadora3:"#0d9488",creadora4:"#d97706",creadora6:"#db2777",creadora7:"#0891b2"};
-const NAMES = {creadora2:"Vane Contreras",creadora3:"María Leal",creadora4:"Daniela Baldassin",creadora6:"More Porto",creadora7:"Jessica Grant"};
-const AVATARS = {creadora2:"VC",creadora3:"ML",creadora4:"DB",creadora6:"MP",creadora7:"JG"};
-const CREATORS = ["creadora2","creadora3","creadora4","creadora6","creadora7"];
+const COLORS = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.color]));
+const NAMES = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.name]));
+const AVATARS = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.avatar]));
+const CREATORS = Object.keys(BRAND.creators);
 const WHATICKET_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJyZWFkOndoYXRzYXBwcyIsImNyZWF0ZTptZXNzYWdlcyJdLCJjb21wYW55SWQiOiI1ZmI1NjZmNi00NzRhLTQ5ZmUtOWZlNi0wNTllYTU2MjM4OWYiLCJpYXQiOjE3Nzk3NDI4NTB9.eRL0gFvve6LJUClTfAuuvrGedBySjgfO2LPWs5070P0";
 const WHATICKET_CONNECTION = "ca448a0f-b10e-4088-8ce2-ef78810cf7d2";
 const ADMIN_PHONE = "5491123538064";
-const PHONES = {creadora2:"5491168213265",creadora3:"5491130837262",creadora4:"5493462573927",creadora6:"5491132887601",creadora7:"5492317627240"};
-const CAMPAIGN_START = {creadora2:"2026-05-05",creadora3:"2026-05-05",creadora4:"2026-05-05",creadora6:null,creadora7:null};
+const PHONES = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.phone||'']));
+const CAMPAIGN_START = Object.fromEntries(Object.keys(BRAND.creators).map(k=>[k,"2026-05-25"]));
 const SALARY = 650000;
 const COMISION_POR_VENTA = 2500;
 const MIN_VIDEOS = 150;
@@ -778,7 +855,7 @@ function nav(el){
   if(v==="comprobantes"){renderComprobantes();}
 }
 
-function getCampaignDay(){const start=data.campaignStart?new Date(data.campaignStart):new Date("2025-06-01");const now=new Date();const d=Math.floor((now-start)/(1000*60*60*24))+1;return Math.min(Math.max(d,1),30);}
+function getCampaignDay(){const s=data.campaignStart||"2026-05-25";const[sy,sm,sd]=s.split("-").map(Number);const start=new Date(sy,sm-1,sd);const now=new Date();const d=Math.floor((now-start)/(1000*60*60*24))+1;return Math.min(Math.max(d,1),30);}
 function fmtV(v){if(!v)return"0";if(v>=1000000)return(v/1000000).toFixed(1)+"M";if(v>=1000)return(v/1000).toFixed(0)+"K";return v.toString();}
 function fmtP(n){return"$"+Math.round(n).toLocaleString("es-AR");}
 function getWeek(day){return Math.ceil(day/7);}
@@ -803,7 +880,7 @@ function renderAll(){
     mergeExtraCreators();
     const day=getCampaignDay();
     const el=document.getElementById("h-day");
-    if(el) el.textContent=`Día ${day} de ${CAMPAIGN_DAYS}`;
+    if(el) el.textContent=`Día ${day}`;
     renderOverview();
     const pending=data.videos.filter(v=>v.status==="pending").length;
     const nbp=document.getElementById("nb-pending");
@@ -852,14 +929,14 @@ function renderOverview(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
         <div>
           <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.65;margin-bottom:6px;">DÍA DE CAMPAÑA</div>
-          <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${day} <span style="font-size:26px;opacity:.5;">/ ${CAMPAIGN_DAYS}</span></div>
+          <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${day}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.65;margin-bottom:6px;">VENTAS TOTALES</div>
           <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${totalVentas}</div>
         </div>
       </div>
-      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;opacity:.6;margin-bottom:8px;">VIDEOS: ${totalVids} / 150</div>
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;opacity:.6;margin-bottom:8px;">VIDEOS: ${totalVids} / 750</div>
       <div style="background:rgba(255,255,255,.2);border-radius:6px;height:8px;">
         <div style="background:white;height:100%;width:${vidPct}%;border-radius:6px;transition:width .4s;"></div>
       </div>
@@ -899,14 +976,18 @@ function renderOverview(){
 function videoRow(v, compact=false){
   const cols=compact?{cat:false,metrics:true,nota:false,plat:false}:vidCols;
   const metricsStr=[(v.views?fmtV(v.views)+" views":"—"),(v.ttViews?fmtV(v.ttViews)+" TT":"")].filter(Boolean).join(" · ");
-  const copyBtn = v.linkIg
-    ? `<a href="${v.linkIg.startsWith('http')?v.linkIg:'https://'+v.linkIg}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">📸 Ver IG</a>`
-    : v.linkTt
-    ? `<a href="${v.linkTt.startsWith('http')?v.linkTt:'https://'+v.linkTt}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">🎵 Ver TT</a>`
-    : `<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`;
+  const igBtn = v.linkIg
+    ? `<a href="${v.linkIg.startsWith('http')?v.linkIg:'https://'+v.linkIg}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">📸 IG</a>`
+    : "";
+  const ttBtn = v.linkTt
+    ? `<a href="${v.linkTt.startsWith('http')?v.linkTt:'https://'+v.linkTt}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">🎵 TT</a>`
+    : "";
+  const copyBtn = (igBtn||ttBtn) ? igBtn+" "+ttBtn : `<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`;
+  const startStr = (CAMPAIGN_START[v.creator]||"2026-05-25");
+  const calcDay = v.date ? Math.max(1,Math.floor((new Date(v.date)-new Date(startStr))/(86400000))+1) : (v.day||1);
   return`<tr>
     <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:26px;height:26px;border-radius:50%;background:${COLORS[v.creator]}22;border:1px solid ${COLORS[v.creator]};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${COLORS[v.creator]}">${AVATARS[v.creator]}</div><span style="font-size:12px;">${NAMES[v.creator].split(' ')[0]}</span></div></td>
-    <td style="font-family:'DM Mono';font-size:11px;white-space:nowrap;">${v.date?new Date(v.date).toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"}):"—"} · D${v.day}</td>
+    <td style="font-family:'DM Mono';font-size:11px;white-space:nowrap;">${v.date?new Date(v.date).toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"}):"—"} · D${calcDay}</td>
     ${cols.plat?`<td style="font-size:11px;white-space:nowrap;">${v.linkIg&&v.linkTt?'📸🎵':v.linkIg?'📸':'🎵'}</td>`:""}
     ${cols.cat?`<td style="font-size:11px;color:var(--muted);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cat}</td>`:""}
     <td style="white-space:nowrap;">${copyBtn}</td>
@@ -1128,10 +1209,9 @@ function updateSyncStatus(){
 
 const AUTO_SYNC_MS=6*60*60*1000;
 const AUTO_WP_MS=24*60*60*1000;
-const ADMIN_PHONE="5491123538064";
 
 function checkAutoSync(){
-  if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_MS) syncApify();
+  if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_MS){setTimeout(()=>{syncApify();syncTikTok();},3000);}
   else updateSyncStatus();
 }
 
@@ -1182,7 +1262,7 @@ async function sendAdminReport(){
 
 setInterval(()=>{
   updateSyncStatus();
-  if(data.lastSyncTime&&Date.now()-data.lastSyncTime>=AUTO_SYNC_MS) syncApify();
+  if(data.lastSyncTime&&Date.now()-data.lastSyncTime>=AUTO_SYNC_MS){syncApify();syncTikTok();}
   const h=new Date().getHours();
   if(h===18&&(!data.lastWpNotify||Date.now()-data.lastWpNotify>=AUTO_WP_MS)) notifyNoVideos();
   if(h===21&&(!data.lastAdminReport||Date.now()-data.lastAdminReport>=AUTO_WP_MS)){data.lastAdminReport=Date.now();saveData();sendAdminReport();}
@@ -1481,7 +1561,7 @@ function loadConfig(){
   }
 }
 function getCampaignDayDynamic(){
-  const start = data.campaignStart ? new Date(data.campaignStart) : new Date("2025-06-01");
+  const start = data.campaignStart ? new Date(data.campaignStart) : new Date(2026,4,25);
   const now = new Date();
   const diff = Math.floor((now - start)/(1000*60*60*24))+1;
   return Math.min(Math.max(diff,1),30);
@@ -1858,7 +1938,7 @@ loadConfig();
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const DATA_DOC = doc(db, "cleargy", "main");
+    const DATA_DOC = doc(db, window.BRAND_COLLECTION || "cleargy", "main");
 
     window._fbSave = async (data) => {
       try { await setDoc(DATA_DOC, {data: JSON.stringify(data)}); }
