@@ -809,11 +809,11 @@ async function loadData(){
     const fbData = await window._fbLoad();
     if(fbData){ data=fbData; return; }
   }
-  const s=localStorage.getItem("clargy_data");
+  const s=localStorage.getItem(BRAND_ID+"_data");
   if(s)data=JSON.parse(s);
 }
 function saveData(){
-  localStorage.setItem("clargy_data",JSON.stringify(data));
+  localStorage.setItem(BRAND_ID+"_data",JSON.stringify(data));
   if(window._fbSave) window._fbSave(data);
 }
 
@@ -832,7 +832,7 @@ function setOverviewPeriod(days,el){
 }
 
 function enterAdmin(){
-  localStorage.setItem("clargy_admin_session","1");
+  localStorage.setItem(BRAND_ID+"_admin_session","1");
   document.getElementById("login-screen").style.display="none";
   document.getElementById("admin-app").style.display="flex";
   loadData().then(()=>{renderAll();renderVideos();checkAutoSync();});
@@ -865,7 +865,7 @@ function doAdminLogin(){
 }
 
 function adminLogout(){
-  localStorage.removeItem("clargy_admin_session");
+  localStorage.removeItem(BRAND_ID+"_admin_session");
   location.reload();
 }
 
@@ -1870,7 +1870,7 @@ loadConfig();
 
 // Auto-login admin si hay sesión guardada
 (function(){
-  if(localStorage.getItem("clargy_admin_session")==="1"){
+  if(localStorage.getItem(BRAND_ID+"_admin_session")==="1"){
     document.addEventListener("DOMContentLoaded", function(){
       enterAdmin();
     });
@@ -1974,7 +1974,7 @@ loadConfig();
 
     window._fbSave = async (data) => {
       try { await setDoc(DATA_DOC, {data: JSON.stringify(data)}); }
-      catch(e){ console.error("FB save:", e); localStorage.setItem("clargy_data", JSON.stringify(data)); }
+      catch(e){ console.error("FB save:", e); localStorage.setItem(BRAND_ID+"_data", JSON.stringify(data)); }
     };
 
     window._fbLoad = async () => {
