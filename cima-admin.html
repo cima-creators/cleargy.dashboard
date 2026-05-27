@@ -2024,6 +2024,19 @@ loadConfig();
     });
 
     window.dispatchEvent(new CustomEvent("firebase-ready"));
+
+    // Carga directa: evita race condition con el evento firebase-ready
+    (async () => {
+      const fbData = await window._fbLoad();
+      if(fbData && typeof data !== 'undefined') data = fbData;
+      if(typeof renderAll === 'function') renderAll();
+      if(typeof renderVideos === 'function') renderVideos();
+      window._fbListen((newData)=>{
+        if(typeof data !== 'undefined') data = newData;
+        if(typeof renderAll === 'function') renderAll();
+        if(typeof renderVideos === 'function') renderVideos();
+      });
+    })();
   </script>
 
 </body>
