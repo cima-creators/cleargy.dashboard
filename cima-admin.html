@@ -982,11 +982,16 @@ function renderOverview(){
   const _vidPct=Math.min(100,Math.round((totalVids/_goal)*100));
   document.getElementById("overview-hero").innerHTML=`
     <div style="background:var(--blue);border-radius:20px;padding:24px 22px;color:white;">
-      <div style="margin-bottom:20px;">
-        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.65;margin-bottom:6px;">DÍA DE CAMPAÑA</div>
-        <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${day}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+        <div>
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.65;margin-bottom:6px;">DÍA DE CAMPAÑA</div>
+          <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${day}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.65;margin-bottom:6px;">TOTAL VIDEOS</div>
+          <div style="font-family:'Nunito';font-size:52px;font-weight:900;line-height:1;letter-spacing:-2px;">${totalVids}</div>
+        </div>
       </div>
-      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;opacity:.6;margin-bottom:8px;">VIDEOS: ${totalVids} / ${_goal}</div>
       <div style="background:rgba(255,255,255,.2);border-radius:6px;height:8px;">
         <div style="background:white;height:100%;width:${_vidPct}%;border-radius:6px;transition:width .4s;"></div>
       </div>
