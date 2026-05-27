@@ -805,9 +805,22 @@ let data = {
   videos:[],ideas:[],semanaActual:1,
 };
 
-// Migración one-time: rescata datos del key viejo "clargy_data" para Cleargy
-if(BRAND_ID==="cleargy" && !localStorage.getItem("cleargy_data") && localStorage.getItem("clargy_data")){
-  localStorage.setItem("cleargy_data", localStorage.getItem("clargy_data"));
+// Rescate: si el key viejo "clargy_data" tiene más videos que el nuevo "cleargy_data", lo restaura
+if(BRAND_ID==="cleargy"){
+  try{
+    const _oldRaw=localStorage.getItem("clargy_data");
+    if(_oldRaw){
+      const _oldD=JSON.parse(_oldRaw);
+      const _newRaw=localStorage.getItem("cleargy_data");
+      const _newD=_newRaw?JSON.parse(_newRaw):null;
+      const _oldVids=(_oldD&&_oldD.videos)?_oldD.videos.length:0;
+      const _newVids=(_newD&&_newD.videos)?_newD.videos.length:0;
+      if(_oldVids>_newVids){
+        localStorage.setItem("cleargy_data",_oldRaw);
+        console.log("[RESCUE] Restaurados "+_oldVids+" videos desde clargy_data");
+      }
+    }
+  }catch(e){}
 }
 
 let _fbDataLoaded = false;
