@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cleargy — Admin</title>
+<title>Admin Panel</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -1265,7 +1265,7 @@ async function notifyNoVideos(){
     const cant=getVideosOnDay(c,0);
     const faltan=5-cant;
     return{number:PHONES[c],name:NAMES[c],
-      body:"Hola "+NAMES[c].split(" ")[0]+"! 🌟 ¿Cómo vas? Te escribimos desde Cleargy porque todavía "+(faltan===5?"no subiste ningún video hoy":(faltan===1?"te falta 1 video":"te faltan "+faltan+" videos"))+". Ya sabés que el límite es las 21hs y queremos que llegues con todo 💪 ¡Cualquier cosa nos avisás!"};
+      body:"Hola "+NAMES[c].split(" ")[0]+"! 🌟 ¿Cómo vas? Te escribimos desde "+BRAND.name+" porque todavía "+(faltan===5?"no subiste ningún video hoy":(faltan===1?"te falta 1 video":"te faltan "+faltan+" videos"))+". Ya sabés que el límite es las 21hs y queremos que llegues con todo 💪 ¡Cualquier cosa nos avisás!"};
   });
   try{
     const res=await fetch("https://api.whaticket.com/api/v1/messages",{method:"POST",
@@ -1282,7 +1282,7 @@ async function sendAdminReport(){
   const hoy=Object.keys(PHONES).filter(c=>getVideosOnDay(c,0)<5);
   const racha=Object.keys(PHONES).filter(c=>getVideosOnDay(c,0)===0&&getVideosOnDay(c,1)===0);
   if(hoy.length===0&&racha.length===0)return;
-  let msg="📊 *Reporte Cleargy — "+new Date().toLocaleDateString("es-AR")+"*\n\n";
+  let msg="📊 *Reporte "+BRAND.name+" — "+new Date().toLocaleDateString("es-AR")+"*\n\n";
   if(hoy.length>0){msg+="⚠️ *Sin 5 videos hoy:*\n";hoy.forEach(c=>{const cant=getVideosOnDay(c,0);msg+="• "+NAMES[c]+" ("+cant+"/5)\n";});msg+="\n";}
   if(racha.length>0){msg+="🔴 *Racha — 2 días sin subir:*\n";racha.forEach(c=>{msg+="• "+NAMES[c]+"\n";});}
   try{
