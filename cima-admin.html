@@ -677,7 +677,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 const BRAND_ID = new URLSearchParams(window.location.search).get('brand') || 'cleargy';
 const BRAND_CONFIGS = {
   cleargy: {
-    name:'Cleargy Protein', collection:'cleargy',
+    name:'Cleargy Protein', collection:'cleargy', defaultCampaignStart:'2026-05-25',
     adminPass:'clargy-admin-2025', adminPass2:'avellaneda-2025',
     accent:'#1a3a8f', accentLight:'#2a52c9', bg:'#cde8f5', surface2:'#eaf4fb', border:'#b8d8ee',
     text:'#0d1f4f', muted:'#6080a0', shadow:'26,58,143', loginBg:'linear-gradient(135deg,#dbeeff 0%,#c5dff0 50%,#a8cee5 100%)',
@@ -909,7 +909,7 @@ function nav(el){
   if(v==="comprobantes"){renderComprobantes();}
 }
 
-function getCampaignDay(){if(!data.campaignStart)return 0;const[sy,sm,sd]=data.campaignStart.split("-").map(Number);const start=new Date(sy,sm-1,sd);const now=new Date();const d=Math.floor((now-start)/(1000*60*60*24))+1;return Math.min(Math.max(d,1),30);}
+function getCampaignDay(){const s=data.campaignStart||BRAND.defaultCampaignStart||null;if(!s)return 0;const[sy,sm,sd]=s.split("-").map(Number);const start=new Date(sy,sm-1,sd);const now=new Date();const d=Math.floor((now-start)/(1000*60*60*24))+1;return Math.min(Math.max(d,1),30);}
 function fmtV(v){if(!v)return"0";if(v>=1000000)return(v/1000000).toFixed(1)+"M";if(v>=1000)return(v/1000).toFixed(0)+"K";return v.toString();}
 function fmtP(n){return"$"+Math.round(n).toLocaleString("es-AR");}
 function getWeek(day){return Math.ceil(day/7);}
