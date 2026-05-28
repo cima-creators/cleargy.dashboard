@@ -864,7 +864,6 @@ function enterAdmin(){
   renderAll(); renderVideos(); checkAutoSync();
   // Un solo listener que se activa cuando Firebase está listo
   function startAdminListen(){
-    _fbDataLoaded=true;
     window._fbListen((newData)=>{
       data = newData;
       _fbDataLoaded=true;
