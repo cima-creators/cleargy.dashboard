@@ -824,6 +824,7 @@ if(BRAND_ID==="cleargy"){
 }
 
 let _fbDataLoaded = false;
+window._markFbLoaded = function(){ _fbDataLoaded = true; };
 
 async function loadData(){
   if(window._fbLoad){
@@ -857,10 +858,17 @@ function enterAdmin(){
   localStorage.setItem(BRAND_ID+"_admin_session","1");
   document.getElementById("login-screen").style.display="none";
   document.getElementById("admin-app").style.display="flex";
-  loadData().then(()=>{renderAll();renderVideos();checkAutoSync();});
+  // Render inicial con localStorage mientras Firebase carga
+  const _ls=localStorage.getItem(BRAND_ID+"_data");
+  if(_ls){ try{ data=JSON.parse(_ls); }catch(e){} }
+  renderAll(); renderVideos(); checkAutoSync();
+  // Un solo listener que se activa cuando Firebase está listo
   function startAdminListen(){
+    _fbDataLoaded=true;
     window._fbListen((newData)=>{
       data = newData;
+      _fbDataLoaded=true;
+      localStorage.setItem(BRAND_ID+"_data",JSON.stringify(data));
       renderAll();
       renderVideos();
       const activeView = document.querySelector('.view.active');
@@ -2051,17 +2059,15 @@ loadConfig();
 
     window.dispatchEvent(new CustomEvent("firebase-ready"));
 
-    // Carga directa: evita race condition con el evento firebase-ready
+    // Carga inicial desde Firebase (sin listener duplicado)
     (async () => {
       const fbData = await window._fbLoad();
-      if(fbData && typeof data !== 'undefined'){ data = fbData; window._fbDataLoaded = true; if(typeof _fbDataLoaded!=='undefined') _fbDataLoaded=true; }
-      if(typeof renderAll === 'function') renderAll();
-      if(typeof renderVideos === 'function') renderVideos();
-      window._fbListen((newData)=>{
-        if(typeof data !== 'undefined'){ data = newData; window._fbDataLoaded = true; if(typeof _fbDataLoaded!=='undefined') _fbDataLoaded=true; }
+      if(fbData && typeof data !== 'undefined'){
+        data = fbData;
+        if(window._markFbLoaded) window._markFbLoaded();
         if(typeof renderAll === 'function') renderAll();
         if(typeof renderVideos === 'function') renderVideos();
-      });
+      }
     })();
   </script>
 

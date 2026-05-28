@@ -823,11 +823,9 @@ function enterAdmin(){
   loadData().then(()=>{renderAll();renderVideos();checkAutoSync();});
   function startAdminListen(){
     window._fbListen((newData)=>{
-      // Solo sobreescribir si Firebase tiene igual o más videos
-      const fbVids=(newData.videos||[]).length;
-      const curVids=(data.videos||[]).length;
-      if(fbVids<curVids && curVids>0){ saveData(); return; }
       data = newData;
+      _fbDataLoaded = true;
+      localStorage.setItem("clargy_data", JSON.stringify(data));
       renderAll();
       renderVideos();
       const activeView = document.querySelector('.view.active');
