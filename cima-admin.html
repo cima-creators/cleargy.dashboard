@@ -977,12 +977,23 @@ function getVideosInPeriod(creator, days){
   });
 }
 
+const _TZ_AR="America/Argentina/Buenos_Aires";
+function argToday(daysAgo=0){
+  return new Date(Date.now()-daysAgo*864e5).toLocaleDateString("sv",{timeZone:_TZ_AR});
+}
+function argDate(iso){
+  if(!iso)return"";
+  return new Date(iso).toLocaleDateString("sv",{timeZone:_TZ_AR});
+}
+
 function renderOverview(){
   const day=getCampaignDay();
   const dateEl=document.getElementById("overview-date");
-  if(dateEl) dateEl.textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  if(dateEl) dateEl.textContent=new Date().toLocaleDateString("es-AR",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:_TZ_AR});
 
-  const cutoff=new Date(Date.now()-overviewPeriod*24*60*60*1000);
+  const cutoff=overviewPeriod===1
+    ? new Date(argToday()+"T00:00:00-03:00")
+    : new Date(Date.now()-overviewPeriod*24*60*60*1000);
   const periodLabel=overviewPeriod===1?"hoy":overviewPeriod===3?"3 días":overviewPeriod===7?"7 días":"30 días";
   const videosEnPeriodo=data.videos.filter(v=>v.date&&new Date(v.date)>=cutoff);
   const totalVids=data.videos.length;
@@ -1080,10 +1091,10 @@ function videoRow(v, compact=false){
 function renderStatusPanel(){
   const el=document.getElementById("status-panel");
   if(!el)return;
-  const today=new Date().toISOString().slice(0,10);
+  const today=argToday();
   el.innerHTML=CREATORS.map(c=>{
     const total=(data.videos||[]).filter(v=>v.creator===c).length;
-    const hoy=(data.videos||[]).filter(v=>v.creator===c&&(v.date||"").startsWith(today)).length;
+    const hoy=(data.videos||[]).filter(v=>v.creator===c&&argDate(v.date)===today).length;
     const racha=getVideosOnDay(c,0)===0&&getVideosOnDay(c,1)===0;
     const pct=Math.min(100,Math.round(total/5*100));
     const color=COLORS[c]||"#6366f1";
@@ -1289,9 +1300,8 @@ function checkAutoSync(){
 }
 
 function getVideosOnDay(creator,daysAgo){
-  const d=new Date();d.setDate(d.getDate()-daysAgo);
-  const key=d.toISOString().slice(0,10);
-  return(data.videos||[]).filter(v=>v.creator===creator&&(v.date||"").startsWith(key)).length;
+  const key=argToday(daysAgo);
+  return(data.videos||[]).filter(v=>v.creator===creator&&argDate(v.date)===key).length;
 }
 
 async function notifyNoVideos(){
