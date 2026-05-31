@@ -308,8 +308,10 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="view-title">Videos</div>
         <div class="view-sub">Revisá, puntuá y aprobá el contenido</div>
         <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <button id="apify-sync-btn" class="hbtn" onclick="syncApify()" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;border:none;padding:10px 18px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(131,58,180,.3);">📸 Sync IG</button>
-          <button id="tt-sync-btn" class="hbtn" onclick="syncTikTok()" style="background:linear-gradient(135deg,#010101,#69c9d0);color:white;border:none;padding:10px 18px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);">🎵 Sync TikTok</button>
+          <button id="apify-sync-btn" class="hbtn" onclick="syncApify()" title="Solo videos de las últimas 48h" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:white;border:none;padding:10px 18px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(131,58,180,.3);">📸 Sync IG</button>
+          <button id="tt-sync-btn" class="hbtn" onclick="syncTikTok()" title="Solo videos de las últimas 48h" style="background:linear-gradient(135deg,#010101,#69c9d0);color:white;border:none;padding:10px 18px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3);">🎵 Sync TikTok</button>
+          <button id="apify-full-btn" class="hbtn" onclick="syncApify(true)" title="Todos los videos" style="background:#555;color:white;border:none;padding:10px 14px;border-radius:12px;font-family:'Nunito';font-weight:700;font-size:12px;cursor:pointer;opacity:.8;">📸 todo</button>
+          <button id="tt-full-btn" class="hbtn" onclick="syncTikTok(true)" title="Todos los videos" style="background:#555;color:white;border:none;padding:10px 14px;border-radius:12px;font-family:'Nunito';font-weight:700;font-size:12px;cursor:pointer;opacity:.8;">🎵 todo</button>
           <button id="wp-notify-btn" onclick="notifyNoVideos()" style="background:linear-gradient(135deg,#25d366,#128c7e);color:white;border:none;padding:10px 18px;border-radius:12px;font-family:'Nunito';font-weight:800;font-size:13px;cursor:pointer;box-shadow:0 4px 14px rgba(37,211,102,.3);">📲 Avisar sin videos</button>
           <span id="sync-status" style="font-size:11px;color:#aaa;font-family:'DM Mono';"></span>
         </div>
@@ -1176,16 +1178,17 @@ function adminDeleteVideo(id){
   saveData();renderAll();renderVideos();showToast("Video eliminado");
 }
 
-async function syncApify(){
-  const btn=document.getElementById("apify-sync-btn");
+async function syncApify(full=false){
+  const btn=document.getElementById(full?"apify-full-btn":"apify-sync-btn");
   btn.textContent="Sincronizando...";btn.disabled=true;
 
-  // Normalizar links: siempre con https://
-  const rawLinks=[...new Set(data.videos.map(v=>v.linkIg).filter(l=>l&&l.includes("instagram.com")))];
+  const cutoff=full?0:Date.now()-48*60*60*1000;
+  const pool=(data.videos||[]).filter(v=>full||!v.date||new Date(v.date).getTime()>=cutoff);
+  const rawLinks=[...new Set(pool.map(v=>v.linkIg).filter(l=>l&&l.includes("instagram.com")))];
   const links=rawLinks.map(l=>l.startsWith('http')?l:'https://'+l);
   if(links.length===0){
-    showToast("No hay links de Instagram cargados");
-    btn.textContent="🔄 Sync Instagram";btn.disabled=false;
+    showToast(full?"No hay links de Instagram":"No hay videos recientes (48h) con IG");
+    btn.textContent=full?"📸 Sync IG todo":"📸 Sync IG";btn.disabled=false;
     return;
   }
 
@@ -1240,15 +1243,17 @@ async function syncApify(){
     showToast("❌ Error: "+e.message);
     console.error("Apify error:",e);
   }
-  btn.textContent="📸 Sync IG";btn.disabled=false;
+  btn.textContent=full?"📸 Sync IG todo":"📸 Sync IG";btn.disabled=false;
   data.lastSyncTime=Date.now();saveData();updateSyncStatus();
 }
 
-async function syncTikTok(){
-  const btn=document.getElementById("tt-sync-btn");
+async function syncTikTok(full=false){
+  const btn=document.getElementById(full?"tt-full-btn":"tt-sync-btn");
   btn.textContent="Sincronizando...";btn.disabled=true;
-  const links=[...new Set((data.videos||[]).map(v=>v.linkTt).filter(l=>l&&l.includes("tiktok.com")))];
-  if(links.length===0){showToast("No hay links de TikTok");btn.textContent="🎵 Sync TikTok";btn.disabled=false;return;}
+  const cutoff=full?0:Date.now()-48*60*60*1000;
+  const pool=(data.videos||[]).filter(v=>full||!v.date||new Date(v.date).getTime()>=cutoff);
+  const links=[...new Set(pool.map(v=>v.linkTt).filter(l=>l&&l.includes("tiktok.com")))];
+  if(links.length===0){showToast(full?"No hay links de TikTok":"No hay videos recientes (48h) con TikTok");btn.textContent=full?"🎵 Sync TT todo":"🎵 Sync TikTok";btn.disabled=false;return;}
   try{
     const startRes=await fetch(
       `https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs?token=${APIFY_TOKEN}`,
@@ -1279,7 +1284,7 @@ async function syncTikTok(){
     if(updated>0){saveData();renderAll();renderVideos();}
     showToast(updated>0?`✓ ${updated} TikToks actualizados`:"TikTok OK — 0 matches");
   }catch(e){showToast("❌ TikTok error: "+e.message);console.error(e);}
-  btn.textContent="🎵 Sync TikTok";btn.disabled=false;
+  btn.textContent=full?"🎵 Sync TT todo":"🎵 Sync TikTok";btn.disabled=false;
 }
 
 function updateSyncStatus(){
@@ -1287,11 +1292,11 @@ function updateSyncStatus(){
   if(!el)return;
   if(!data.lastSyncTime){el.textContent="sin sync";return;}
   const mins=Math.round((Date.now()-data.lastSyncTime)/60000);
-  const next=360-mins;
+  const next=720-mins;
   el.textContent=`sync hace ${mins<60?mins+"min":Math.floor(mins/60)+"hs"} · próximo en ${next>0?(next<60?next+"min":Math.floor(next/60)+"hs"):"ahora"}`;
 }
 
-const AUTO_SYNC_MS=6*60*60*1000;
+const AUTO_SYNC_MS=12*60*60*1000;
 const AUTO_WP_MS=24*60*60*1000;
 
 function checkAutoSync(){
