@@ -866,7 +866,7 @@ function setOverviewPeriod(days,el){
 }
 
 function enterAdmin(){
-  localStorage.setItem(BRAND_ID+"_admin_session","1");
+  localStorage.setItem(BRAND_ID+"_admin_session", window.adminRole||"superadmin");
   document.getElementById("login-screen").style.display="none";
   document.getElementById("admin-app").style.display="flex";
   // Render inicial con localStorage mientras Firebase carga
@@ -1932,7 +1932,9 @@ loadConfig();
 
 // Auto-login admin si hay sesión guardada
 (function(){
-  if(localStorage.getItem(BRAND_ID+"_admin_session")==="1"){
+  const sess=localStorage.getItem(BRAND_ID+"_admin_session");
+  if(sess==="1"||sess==="superadmin"||sess==="brand"){
+    window.adminRole=(sess==="brand")?"brand":"superadmin";
     document.addEventListener("DOMContentLoaded", function(){
       enterAdmin();
     });
