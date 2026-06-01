@@ -1359,7 +1359,7 @@ setInterval(()=>{
 
 function renderBonos(){
   const bonoTypes=[
-    {key:"ventas",label:"🏆 Más ventas semana",desc:"Ganadora: la que más vendió esta semana. Premio: +20% de su total semanal.",calcAmount:(c)=>{const v=data.ventas[c]||0;const vids=data.videos.filter(x=>x.creator===c).length;const base=Math.round(650000*(vids/150));return Math.round((base+v*2500)*0.20);}},
+    {key:"ventas",label:"🏆 Más ventas semana",desc:"Ganadora: la que más vendió esta semana. Mínimo 5 ventas para calificar. Premio: +20% de su total semanal.",calcAmount:(c)=>{const v=data.ventas[c]||0;const vids=data.videos.filter(x=>x.creator===c).length;const base=Math.round(650000*(vids/150));return Math.round((base+v*2500)*0.20);}},
     {key:"viral",label:"🔥 Video más viral",desc:"El video con más views de la semana. Premio: $40.000.",amount:40000},
     {key:"racha",label:"📅 Racha completa",desc:"Subió los 5 videos todos los días de la semana. Premio: $30.000.",amount:30000},
     {key:"10k",label:"⚡ Video +10K views",desc:"Cada video que supere 10.000 views. Premio: $10.000 por video.",amount:10000},
