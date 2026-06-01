@@ -1079,7 +1079,7 @@ function videoRow(v, compact=false){
     <td style="white-space:nowrap;">${copyBtn}</td>
     ${cols.metrics?`<td style="font-family:'DM Mono';font-size:10px;color:var(--muted);white-space:nowrap;">${metricsStr}</td>`:""}
     <td><span class="badge badge-${v.status}">${v.status==="approved"?"✓ Ok":v.status==="rejected"?"✗":"⏳"}</span></td>
-    ${cols.nota?`<td><input type="text" value="${v.adminNote||''}" placeholder="Nota..." onchange="setAdminNote('${v.id}',this.value)" style="background:var(--surface2);border:1px solid var(--border);padding:4px 8px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:120px;color:var(--text);outline:none;"></td>`:""}
+    ${cols.nota?`<td style="min-width:140px;">${v.notes?`<div style="font-size:10px;font-family:'DM Mono';color:var(--muted);background:var(--surface2);border-left:2px solid var(--border2);padding:3px 7px;border-radius:0 6px 6px 0;margin-bottom:5px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${v.notes}">🏷 ${v.notes}</div>`:""}<input type="text" value="${v.adminNote||''}" placeholder="Tu nota..." onchange="setAdminNote('${v.id}',this.value)" style="background:rgba(42,82,201,.06);border:1px solid rgba(42,82,201,.25);padding:4px 8px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:130px;color:var(--text);outline:none;"></td>`:""}
     <td><div class="action-row" style="flex-wrap:nowrap;">
       <button class="abtn abtn-approve" onclick="setStatus('${v.id}','approved')">✓</button>
       <button class="abtn abtn-reject" onclick="setStatus('${v.id}','rejected')">✗</button>
