@@ -897,9 +897,9 @@ function enterAdmin(){
 
 function doAdminLogin(){
   const inputPass=document.getElementById("a-pass").value;
-  if(inputPass===ADMIN_PASS||inputPass===ADMIN_PASS2){
-    enterAdmin();
-  }else{document.getElementById("a-err").classList.add("show");}
+  if(inputPass===ADMIN_PASS){ window.adminRole='superadmin'; enterAdmin(); }
+  else if(inputPass===ADMIN_PASS2){ window.adminRole='brand'; enterAdmin(); }
+  else{ document.getElementById("a-err").classList.add("show"); }
 }
 
 function adminLogout(){
@@ -1079,7 +1079,11 @@ function videoRow(v, compact=false){
     <td style="white-space:nowrap;">${copyBtn}</td>
     ${cols.metrics?`<td style="font-family:'DM Mono';font-size:10px;color:var(--muted);white-space:nowrap;">${metricsStr}</td>`:""}
     <td><span class="badge badge-${v.status}">${v.status==="approved"?"✓ Ok":v.status==="rejected"?"✗":"⏳"}</span></td>
-    ${cols.nota?`<td style="min-width:140px;">${v.notes?`<div style="font-size:10px;font-family:'DM Mono';color:var(--muted);background:var(--surface2);border-left:2px solid var(--border2);padding:3px 7px;border-radius:0 6px 6px 0;margin-bottom:5px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${v.notes}">🏷 ${v.notes}</div>`:""}<input type="text" value="${v.adminNote||''}" placeholder="Tu nota..." onchange="setAdminNote('${v.id}',this.value)" style="background:rgba(42,82,201,.06);border:1px solid rgba(42,82,201,.25);padding:4px 8px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:130px;color:var(--text);outline:none;"></td>`:""}
+    ${cols.nota?`<td style="min-width:150px;vertical-align:top;padding-top:8px;">
+      ${v.notes?`<div style="font-size:10px;font-family:'DM Mono';color:var(--muted);background:var(--surface2);border-left:2px solid var(--border2);padding:3px 7px;border-radius:0 6px 6px 0;margin-bottom:5px;max-width:145px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${v.notes}">🏷 ${v.notes}</div>`:""}
+      ${(window.adminRole==='brand'||v.brandNote)?`<input type="text" value="${v.brandNote||''}" placeholder="Nota marca..." onchange="setAdminNote('${v.id}',this.value)" ${window.adminRole!=='brand'?'readonly':''} style="background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.3);padding:3px 7px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:140px;color:var(--text);outline:none;margin-bottom:4px;display:block;" title="Nota del dueño de marca">`:""}
+      ${(window.adminRole==='superadmin'||v.adminNote)?`<input type="text" value="${v.adminNote||''}" placeholder="Tu nota..." onchange="setAdminNote('${v.id}',this.value)" ${window.adminRole!=='superadmin'?'readonly':''} style="background:rgba(42,82,201,.06);border:1px solid rgba(42,82,201,.25);padding:3px 7px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:140px;color:var(--text);outline:none;display:block;" title="Nota del admin">`:""}
+    </td>`:""}
     <td><div class="action-row" style="flex-wrap:nowrap;">
       <button class="abtn abtn-approve" onclick="setStatus('${v.id}','approved')">✓</button>
       <button class="abtn abtn-reject" onclick="setStatus('${v.id}','rejected')">✗</button>
@@ -1157,14 +1161,14 @@ function setStatus(id,status){
 function setAdminNote(id, note){
   const v=data.videos.find(x=>x.id==id);
   if(!v) return;
-  const prev=v.adminNote||"";
-  v.adminNote=note.trim();
-  // Notificación al creador solo si hay texto nuevo y cambió
-  if(v.adminNote && v.adminNote!==prev){
+  const field = (window.adminRole==='brand') ? 'brandNote' : 'adminNote';
+  const prev=v[field]||"";
+  v[field]=note.trim();
+  if(v[field] && v[field]!==prev){
     if(!data.notifs) data.notifs=[];
     data.notifs.push({
       id:Date.now(),tipo:"info",to:v.creator,
-      msg:`📝 <strong>Nota sobre tu video (Día ${v.day}):</strong><br>${v.adminNote}`,
+      msg:`📝 <strong>Nota sobre tu video (Día ${v.day}):</strong><br>${v[field]}`,
       date:new Date().toISOString(),read:[]
     });
   }
