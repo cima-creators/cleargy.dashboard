@@ -870,8 +870,8 @@ function enterAdmin(){
   document.getElementById("login-screen").style.display="none";
   document.getElementById("admin-app").style.display="flex";
   // Render inicial con localStorage mientras Firebase carga
-  const _ls=localStorage.getItem(BRAND_ID+"_data");
-  if(_ls){ try{ data=JSON.parse(_ls); }catch(e){} }
+  // Siempre cargar desde Firebase — nunca usar localStorage como fuente principal
+  localStorage.removeItem(BRAND_ID+"_data");
   renderAll(); renderVideos(); checkAutoSync();
   // Un solo listener que se activa cuando Firebase está listo
   function startAdminListen(){
