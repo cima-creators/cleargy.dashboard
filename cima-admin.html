@@ -2037,7 +2037,24 @@ loadConfig();
     const DATA_DOC = doc(db, window.BRAND_COLLECTION || "cleargy", "main");
 
     window._fbSave = async (data) => {
-      try { await setDoc(DATA_DOC, {data: JSON.stringify(data)}); }
+      try {
+        // Leer Firebase antes de guardar para no perder videos subidos por otros
+        const current = await getDoc(DATA_DOC);
+        if(current.exists()){
+          try {
+            const currentData = JSON.parse(current.data().data);
+            const currentVideos = currentData.videos || [];
+            const newVideos = data.videos || [];
+            const merged = [...newVideos];
+            const newIds = new Set(newVideos.map(v => v.id));
+            for(const v of currentVideos){
+              if(!newIds.has(v.id)) merged.push(v);
+            }
+            data = {...data, videos: merged};
+          } catch(e) {}
+        }
+        await setDoc(DATA_DOC, {data: JSON.stringify(data)});
+      }
       catch(e){ console.error("FB save:", e); localStorage.setItem(BRAND_ID+"_data", JSON.stringify(data)); }
     };
 
