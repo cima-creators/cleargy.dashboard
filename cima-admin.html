@@ -318,9 +318,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="filters">
           <select class="fsel" id="vf-creator" onchange="renderVideos()">
             <option value="ALL">Todas</option>
-            <option value="creadora1">Nahue Argañaraz</option><option value="creadora2">Vane Contreras</option>
-            <option value="creadora3">María Leal</option><option value="creadora4">Daniela Baldassin</option>
-            <option value="creadora5">Facu Aguirre</option><option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
           </select>
           <select class="fsel" id="vf-status" onchange="renderVideos()">
             <option value="ALL">Todos</option>
@@ -364,12 +361,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="filters">
           <select class="fsel" id="vir-creator" onchange="renderViral()">
             <option value="ALL">Todas las creadoras</option>
-            <option value="creadora1">Nahue Argañaraz</option>
-            <option value="creadora2">Vane Contreras</option>
-            <option value="creadora3">María Leal</option>
-            <option value="creadora4">Daniela Baldassin</option>
-            <option value="creadora5">Facu Aguirre</option>
-            <option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
           </select>
           <select class="fsel" id="vir-minviews" onchange="renderViral()">
             <option value="0">Todos los videos</option>
@@ -475,12 +466,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="filters">
           <select class="fsel" id="comp-creator" onchange="renderComprobantes()">
             <option value="ALL">Todas las creadoras</option>
-            <option value="creadora1">Nahue Argañaraz</option>
-            <option value="creadora2">Vane Contreras</option>
-            <option value="creadora3">María Leal</option>
-            <option value="creadora4">Daniela Baldassin</option>
-            <option value="creadora5">Facu Aguirre</option>
-            <option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
           </select>
           <select class="fsel" id="comp-tipo" onchange="renderComprobantes()">
             <option value="ALL">Todos los tipos</option>
@@ -531,10 +516,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="fgroup full"><div class="flabel">Para</div>
         <select class="fi" id="notif-to">
           <option value="ALL">Todas las creadoras</option>
-          <option value="creadora1">Creadora 1</option><option value="creadora2">Creadora 2</option>
-          <option value="creadora3">Creadora 3</option><option value="creadora4">Creadora 4</option>
-          <option value="creadora5">Facu Aguirre</option>
-          <option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
         </select>
       </div>
     </div>
@@ -593,12 +574,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
     <div style="display:flex;flex-direction:column;gap:12px;">
       <div><div class="flabel" style="margin-bottom:6px;">Creadora</div>
         <select class="fi" id="comp-c">
-          <option value="creadora1">Nahue Argañaraz</option>
-          <option value="creadora2">Vane Contreras</option>
-          <option value="creadora3">María Leal</option>
-          <option value="creadora4">Daniela Baldassin</option>
-          <option value="creadora5">Facu Aguirre</option>
-          <option value="creadora6">More Porto</option><option value="creadora7">Jessica Grant</option>
         </select>
       </div>
       <div><div class="flabel" style="margin-bottom:6px;">Tipo</div>
@@ -751,6 +726,21 @@ const BRAND_CONFIGS = {
 };
 const BRAND = BRAND_CONFIGS[BRAND_ID] || BRAND_CONFIGS.cleargy;
 window.BRAND_COLLECTION = BRAND.collection;
+
+// Rellena todos los selectores de creadoras desde BRAND.creators
+(function populateCreatorSelects(){
+  const opts = Object.entries(BRAND.creators).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
+  const withAll = Object.entries(BRAND.creators).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
+  document.addEventListener('DOMContentLoaded', function(){
+    ['vf-creator','vir-creator','comp-creator','notif-to'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) el.innerHTML += withAll;
+    });
+    const compC = document.getElementById('comp-c');
+    if(compC) compC.innerHTML = opts;
+  });
+})();
+
 (function(){
   const r = document.documentElement.style;
   r.setProperty('--blue', BRAND.accent);
