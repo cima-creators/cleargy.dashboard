@@ -274,8 +274,8 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="nitem" data-view="mensajes" onclick="nav(this)"><div class="ndot" style="background:var(--blue-light)"></div>Mensajes <span class="nbadge" id="nb-msgs">0</span></div>
         <div class="slabel">Finanzas</div>
         <div class="nitem" data-view="shopify" onclick="nav(this)"><div class="ndot" style="background:#16a34a"></div>Ventas Shopify <span class="nbadge" id="nb-shopify">0</span></div>
-        <div class="nitem" data-view="finanzas" onclick="nav(this)"><div class="ndot" style="background:var(--gold)"></div>Pagos</div>
-        <div class="nitem" data-view="comprobantes" onclick="nav(this)"><div class="ndot" style="background:#0d9488"></div>Comprobantes</div>
+        <div class="nitem" data-view="finanzas" onclick="nav(this)" id="nav-finanzas"><div class="ndot" style="background:var(--gold)"></div>Pagos</div>
+        <div class="nitem" data-view="comprobantes" onclick="nav(this)" id="nav-comprobantes"><div class="ndot" style="background:#0d9488"></div>Comprobantes</div>
         <div class="slabel">Config</div>
         <div class="nitem" data-view="config" onclick="nav(this)"><div class="ndot" style="background:var(--muted)"></div>Configuración</div>
       </div>
@@ -862,6 +862,11 @@ function enterAdmin(){
   // Render inicial con localStorage mientras Firebase carga
   // Siempre cargar desde Firebase — nunca usar localStorage como fuente principal
   localStorage.removeItem(BRAND_ID+"_data");
+  // Ocultar Pagos y Comprobantes para el rol brand
+  if(window.adminRole==='brand'){
+    document.getElementById('nav-finanzas').style.display='none';
+    document.getElementById('nav-comprobantes').style.display='none';
+  }
   renderAll(); renderVideos(); checkAutoSync();
   // Un solo listener que se activa cuando Firebase está listo
   function startAdminListen(){
