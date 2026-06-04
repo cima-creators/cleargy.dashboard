@@ -1174,10 +1174,11 @@ function setAdminNote(id, note){
   showToast("Nota guardada");
 }
 
-function adminDeleteVideo(id){
+async function adminDeleteVideo(id){
   if(!confirm("⚠️ Vas a perder este archivo permanentemente. ¿Eliminarlo?"))return;
   data.videos=data.videos.filter(v=>v.id!=id);
-  saveData();renderAll();renderVideos();showToast("Video eliminado");
+  renderAll();renderVideos();showToast("Video eliminado");
+  if(window._fbDeleteVideo) await window._fbDeleteVideo(id);
 }
 
 async function syncApify(full=false){
@@ -2032,26 +2033,36 @@ loadConfig();
     const db = getFirestore(app);
     const DATA_DOC = doc(db, window.BRAND_COLLECTION || "cleargy", "main");
 
+    let _lastFbData = null;
+    const _deletedIds = new Set();
+
     window._fbSave = async (data) => {
       try {
-        // Leer Firebase antes de guardar para no perder videos subidos por otros
-        const current = await getDoc(DATA_DOC);
-        if(current.exists()){
-          try {
-            const currentData = JSON.parse(current.data().data);
-            const currentVideos = currentData.videos || [];
-            const newVideos = data.videos || [];
-            const merged = [...newVideos];
-            const newIds = new Set(newVideos.map(v => v.id));
-            for(const v of currentVideos){
-              if(!newIds.has(v.id)) merged.push(v);
-            }
-            data = {...data, videos: merged};
-          } catch(e) {}
+        const currentVideos = (_lastFbData && _lastFbData.videos) || [];
+        const newVideos = data.videos || [];
+        const merged = [...newVideos];
+        const newIds = new Set(newVideos.map(v => String(v.id)));
+        for(const v of currentVideos){
+          if(!newIds.has(String(v.id)) && !_deletedIds.has(String(v.id))) merged.push(v);
         }
+        data = {...data, videos: merged};
+        _lastFbData = data;
         await setDoc(DATA_DOC, {data: JSON.stringify(data)});
       }
       catch(e){ console.error("FB save:", e); localStorage.setItem(BRAND_ID+"_data", JSON.stringify(data)); }
+    };
+
+    window._fbDeleteVideo = async (id) => {
+      _deletedIds.add(String(id));
+      if(_lastFbData) _lastFbData.videos = (_lastFbData.videos||[]).filter(v=>String(v.id)!==String(id));
+      try {
+        const current = await getDoc(DATA_DOC);
+        if(!current.exists()) return;
+        const fbData = JSON.parse(current.data().data);
+        fbData.videos = fbData.videos.filter(v => String(v.id) !== String(id));
+        _lastFbData = fbData;
+        await setDoc(DATA_DOC, {data: JSON.stringify(fbData)});
+      } catch(e){ console.error("FB delete:", e); }
     };
 
     window._fbLoad = async () => {
@@ -2065,7 +2076,11 @@ loadConfig();
     window._fbListen = (callback) => {
       return onSnapshot(DATA_DOC, (snap) => {
         if(snap.exists()){
-          try{ callback(JSON.parse(snap.data().data)); }catch(e){}
+          try{
+            const parsed = JSON.parse(snap.data().data);
+            _lastFbData = parsed;
+            callback(parsed);
+          }catch(e){}
         }
       });
     };
