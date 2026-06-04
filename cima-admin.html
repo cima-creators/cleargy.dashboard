@@ -324,6 +324,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
             <option value="pending">Pendientes</option>
             <option value="approved">Aprobados</option>
             <option value="rejected">Rechazados</option>
+            <option value="featured">⭐ Destacados</option>
           </select>
           <input type="date" class="fsel" id="vf-date-from" onchange="renderVideos()" title="Desde">
           <input type="date" class="fsel" id="vf-date-to" onchange="renderVideos()" title="Hasta">
@@ -1129,7 +1130,8 @@ function renderVideos(){
     return new Date(b.date)-new Date(a.date);
   });
   if(cf!=="ALL") vids=vids.filter(v=>v.creator===cf);
-  if(sf!=="ALL") vids=vids.filter(v=>v.status===sf);
+  if(sf==="featured") vids=vids.filter(v=>v.featured||v.featuredAt);
+  else if(sf!=="ALL") vids=vids.filter(v=>v.status===sf);
   if(dateFrom) vids=vids.filter(v=>v.date&&v.date.slice(0,10)>=dateFrom);
   if(dateTo)   vids=vids.filter(v=>v.date&&v.date.slice(0,10)<=dateTo);
 
