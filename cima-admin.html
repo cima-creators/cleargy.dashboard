@@ -1282,9 +1282,16 @@ async function syncTikTok(full=false){
     const getCode=url=>{const m=(url||"").match(/video\/(\d+)/);return m?m[1]:"";}
     let updated=0;
     posts.forEach(post=>{
-      const code=getCode(post.webVideoUrl||post.id||"");
-      const vid=(data.videos||[]).find(v=>code&&(v.linkTt||"").includes(code));
-      if(vid){vid.ttViews=post.playCount||post.viewCount||0;updated++;}
+      const code=getCode(post.webVideoUrl||"");
+      const inputUrl=(post.input?.postURLs||[post.input?.postURL||""])[0]||"";
+      const vid=(data.videos||[]).find(v=>{
+        if(!v.linkTt) return false;
+        if(code && v.linkTt.includes(code)) return true;
+        const storedCode=getCode(v.linkTt);
+        if(storedCode && code && storedCode===code) return true;
+        return inputUrl && v.linkTt===inputUrl;
+      });
+      if(vid){const ttV=post.playCount||post.viewCount||0;if(ttV>0){vid.ttViews=ttV;vid.views=Math.max(vid.views||0,ttV);}updated++;}
     });
     if(updated>0){saveData();renderAll();renderVideos();}
     showToast(updated>0?`✓ ${updated} TikToks actualizados`:"TikTok OK — 0 matches");
