@@ -1539,7 +1539,10 @@ function submitEditVideo(){
   v.likes = parseInt(document.getElementById("edit-likes").value)||0;
   v.shares = parseInt(document.getElementById("edit-shares").value)||0;
   v.saves = parseInt(document.getElementById("edit-saves").value)||0;
+  const wasFeatured = v.featured;
   v.featured = document.getElementById("edit-featured").checked;
+  if(v.featured && !wasFeatured) v.featuredAt = new Date().toISOString();
+  if(!v.featured) delete v.featuredAt;
   saveData(); renderAll(); renderVideos();
   document.getElementById("edit-overlay").classList.remove("open");
   showToast("✓ Video actualizado");
