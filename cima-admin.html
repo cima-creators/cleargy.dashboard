@@ -876,6 +876,7 @@ function enterAdmin(){
       data = newData;
       _fbDataLoaded=true;
       localStorage.setItem(BRAND_ID+"_data",JSON.stringify(data));
+      autoAssignBonos();
       renderAll();
       renderVideos();
       const activeView = document.querySelector('.view.active');
@@ -1242,7 +1243,7 @@ async function syncApify(full=false){
       }
     });
 
-    if(updated>0){saveData();renderAll();renderVideos();}
+    if(updated>0){autoAssignBonos();saveData();renderAll();renderVideos();}
     showToast(updated>0?`✓ ${updated} videos actualizados`:`Apify OK — ${posts.length} posts encontrados, 0 matches. Revisá consola.`);
   }catch(e){
     showToast("❌ Error: "+e.message);
@@ -1300,7 +1301,7 @@ async function syncTikTok(full=false){
       if(!vid && idx<links.length) vid=linkToVid.get(links[idx]);
       if(vid){const ttV=post.playCount||post.videoPlayCount||post.stats?.playCount||post.viewCount||0;if(ttV>0){vid.ttViews=ttV;vid.views=Math.max(vid.views||0,ttV);}updated++;}
     });
-    if(updated>0){saveData();renderAll();renderVideos();}
+    if(updated>0){autoAssignBonos();saveData();renderAll();renderVideos();}
     showToast(updated>0?`✓ ${updated} TikToks actualizados`:"TikTok OK — 0 matches");
   }catch(e){showToast("❌ TikTok error: "+e.message);console.error(e);}
   btn.textContent=full?"🎵 Sync TT todo":"🎵 Sync TikTok";btn.disabled=false;
@@ -1575,6 +1576,43 @@ function restarBono(creator, amount){
 function resetBono(creator){
   if(!confirm("¿Resetear todos los bonos de "+NAMES[creator]+"?")) return;
   data.bonos[creator]=0; saveData(); renderBonos(); showToast("Bonos reseteados");
+}
+
+// ═══════════════════════════════════
+// AUTO-BONOS
+// ═══════════════════════════════════
+function autoAssignBonos(){
+  if(!data.videos||!data.bonos) return;
+  if(!data.bonoGranted) data.bonoGranted={};
+  if(!data.bonoGranted['10k']) data.bonoGranted['10k']=[];
+  if(!data.bonoGranted['100k']) data.bonoGranted['100k']=[];
+
+  let changed=false;
+
+  // $10.000 por cada video con 10k+ views
+  for(const v of data.videos){
+    const vid=String(v.id);
+    if((v.views||0)>=10000 && !data.bonoGranted['10k'].includes(vid)){
+      if(!data.bonos[v.creator]) data.bonos[v.creator]=0;
+      data.bonos[v.creator]+=10000;
+      data.bonoGranted['10k'].push(vid);
+      changed=true;
+      console.log(`[AutoBono] 10k → ${v.creator} | video ${vid} | ${v.views} views`);
+    }
+  }
+
+  // $75.000 por primer video con 100k+ views (1 por creadora)
+  for(const v of data.videos){
+    if((v.views||0)>=100000 && !data.bonoGranted['100k'].includes(v.creator)){
+      if(!data.bonos[v.creator]) data.bonos[v.creator]=0;
+      data.bonos[v.creator]+=75000;
+      data.bonoGranted['100k'].push(v.creator);
+      changed=true;
+      console.log(`[AutoBono] 100k → ${v.creator} | video ${v.id} | ${v.views} views`);
+    }
+  }
+
+  if(changed){ saveData(); if(document.getElementById('view-bonos')?.classList.contains('active')) renderBonos(); }
 }
 
 // ═══════════════════════════════════
