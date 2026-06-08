@@ -1467,15 +1467,16 @@ function renderViral(){
       <div style="width:36px;height:36px;border-radius:50%;background:${COLORS[v.creator]}22;border:2px solid ${COLORS[v.creator]};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:${COLORS[v.creator]};flex-shrink:0;">${AVATARS[v.creator]}</div>
       <div class="viral-info" style="flex:1;">
         <div class="viral-creator-name">${NAMES[v.creator].split(' ')[0]} · <span style="font-weight:600;color:var(--muted);">Día ${v.day}</span></div>
-        <div class="viral-meta">${v.cat} · ${v.platform==="ig"?"📸 IG":v.platform==="tt"?"🎵 TT":"📸🎵"}</div>
+        <div class="viral-meta">${v.cat}</div>
         <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
-          ${v.linkIg?`<a href="${v.linkIg.startsWith('http')?v.linkIg:'https://'+v.linkIg}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">📸 Ver IG</a>`:""}
+          ${v.linkIg?`<a href="${v.linkIg.startsWith('http')?v.linkIg:'https://'+v.linkIg}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid rgba(131,58,180,.3);color:#833ab4;background:rgba(131,58,180,.06);text-decoration:none;">📸 IG</a>`:""}
+          ${v.linkTt?`<a href="${v.linkTt.startsWith('http')?v.linkTt:'https://'+v.linkTt}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid rgba(0,0,0,.2);color:#010101;background:rgba(0,0,0,.05);text-decoration:none;">🎵 TT</a>`:""}
           ${v.driveLink?`<a href="${v.driveLink}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid rgba(13,148,136,.3);color:#0d9488;background:rgba(13,148,136,.05);text-decoration:none;">⬇ Drive</a>`:""}
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div class="viral-views ${viewsClass}">${fmtV(v.views)}</div>
-        <div style="font-size:8px;font-family:'DM Mono';color:var(--muted);margin-top:1px;">views</div>
+        ${v.ttViews&&v.linkIg&&v.linkTt?`<div style="font-size:8px;font-family:'DM Mono';color:var(--muted);margin-top:1px;">📸${fmtV(v.views)} · 🎵${fmtV(v.ttViews)}</div>`:`<div style="font-size:8px;font-family:'DM Mono';color:var(--muted);margin-top:1px;">${v.linkTt&&!v.linkIg?'🎵 TikTok':v.linkIg&&!v.linkTt?'📸 IG':'views'}</div>`}
         <span class="viral-badge-pill ${badgeClass}">${badgeLabel}</span>
       </div>
     </div>`;
