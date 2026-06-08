@@ -1377,6 +1377,16 @@ setInterval(()=>{
 
 
 function renderBonos(){
+  const isMonday = new Date().getDay()===1;
+  const mondayBanner = isMonday ? `
+    <div style="background:rgba(245,158,11,.08);border:1.5px solid rgba(245,158,11,.35);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+      <span style="font-size:22px;">🔥</span>
+      <div>
+        <div style="font-size:12px;font-weight:800;color:#d97706;">Es lunes — asignar bono viral de la semana</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Revisá <strong>Videos Virales</strong> y asigná el bono de $40.000 a la ganadora de esta semana</div>
+      </div>
+    </div>` : '';
+
   const bonoTypes=[
     {key:"ventas",label:"🏆 Más ventas semana",desc:"Ganadora: la que más vendió esta semana. Mínimo 5 ventas para calificar. Premio: $40.000.",amount:40000},
     {key:"viral",label:"🔥 Video más viral",desc:"El video con más views de la semana. Premio: $40.000.",amount:40000},
@@ -1421,7 +1431,7 @@ function renderBonos(){
       </div>
     </div>`).join('');
 
-  document.getElementById("bonos-admin-body").innerHTML = resetRow + bonoCards + `
+  document.getElementById("bonos-admin-body").innerHTML = mondayBanner + resetRow + bonoCards + `
     <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:20px 0 12px;">Bonos acumulados por creadora</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
       ${CREATORS.map(c=>`<div style="background:white;border-radius:var(--radius-sm);padding:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;">
@@ -1753,10 +1763,12 @@ function renderFinanzas(){
     const vids10k = myVids.filter(v=>granted10k.includes(String(v.id)));
     // Videos 100k
     const got100k = (data.bonoGranted['100k']||[]).includes(c);
-    // Racha completa
-    const gotRacha = (data.bonoGranted['racha']||[]).includes(c);
+    // Racha completa (soporta múltiples)
+    const rachaCount = (data.bonoGranted['rachaCount']||{})[c] || ((data.bonoGranted['racha']||[]).includes(c)?1:0);
+    // Viral semanal (soporta múltiples)
+    const viralCount = (data.bonoGranted['viralCount']||{})[c] || 0;
 
-    return {c, vids, base, comVentas, bonos, total, pagado, deuda, vids10k, got100k, gotRacha};
+    return {c, vids, base, comVentas, bonos, total, pagado, deuda, vids10k, got100k, rachaCount, viralCount};
   });
 
   document.getElementById("finanzas-resumen").innerHTML = `
@@ -1783,8 +1795,11 @@ function renderFinanzas(){
             ${r.got100k?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
               <span>🚀 Bono 100K (1er video)</span><span style="font-weight:700;color:#ef4444;">$75.000</span>
             </div>`:''}
-            ${r.gotRacha?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
-              <span>📅 Racha completa</span><span style="font-weight:700;color:#8b5cf6;">$30.000</span>
+            ${r.rachaCount>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
+              <span>📅 Racha completa${r.rachaCount>1?' × '+r.rachaCount:''}</span><span style="font-weight:700;color:#8b5cf6;">${fmtP(r.rachaCount*30000)}</span>
+            </div>`:''}
+            ${r.viralCount>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
+              <span>🔥 Video viral${r.viralCount>1?' × '+r.viralCount:''}</span><span style="font-weight:700;color:#d97706;">${fmtP(r.viralCount*40000)}</span>
             </div>`:''}
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-xs);background:${r.deuda>0?"rgba(232,93,38,.06)":"rgba(26,58,143,.06)"};">
@@ -1855,7 +1870,18 @@ function assignBono(creator, key, amount){
   if(!data.bonosGanados) data.bonosGanados={};
   if(!data.bonosGanados[creator]) data.bonosGanados[creator]={};
   data.bonosGanados[creator][key]=true;
-  saveData();renderBonos();
+  // Rastrear cantidad para racha y viral (soporta múltiples)
+  if(key==='racha'||key==='viral'){
+    if(!data.bonoGranted) data.bonoGranted={};
+    const countKey=key+'Count';
+    if(!data.bonoGranted[countKey]) data.bonoGranted[countKey]={};
+    data.bonoGranted[countKey][creator]=(data.bonoGranted[countKey][creator]||0)+1;
+    if(key==='racha' && !(data.bonoGranted['racha']||[]).includes(creator)){
+      if(!data.bonoGranted['racha']) data.bonoGranted['racha']=[];
+      data.bonoGranted['racha'].push(creator);
+    }
+  }
+  saveData();renderBonos();renderFinanzas();
   showToast("✓ Bono asignado a "+NAMES[creator].split(' ')[0]);
 }
 function resetCreadoraBonos(creator){
