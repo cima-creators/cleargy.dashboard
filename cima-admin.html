@@ -2136,7 +2136,17 @@ loadConfig();
 
     let _lastFbData = null;
     const _deletedIds = new Set();
-    const BACKUP_DOC = doc(db, BRAND_COLLECTION, 'backup');
+
+    // 5 backups rotativos
+    const BACKUP_SLOTS = 5;
+    const _backupDocs = Array.from({length:BACKUP_SLOTS},(_,i)=>doc(db,BRAND_COLLECTION,`backup_${i}`));
+    let _backupSlot = 0;
+
+    // Tab activa: solo escribe si el usuario usó la app en los últimos 30 min
+    let _lastActivity = Date.now();
+    ['click','keydown','touchstart','scroll'].forEach(ev=>
+      document.addEventListener(ev, ()=>{ _lastActivity=Date.now(); }, {passive:true}));
+    const _tabIsActive = ()=> Date.now()-_lastActivity < 30*60*1000;
 
     function _mergeVideos(base, incoming){
       const merged = [...incoming];
@@ -2152,11 +2162,42 @@ loadConfig();
         const currentVideos = (_lastFbData && _lastFbData.videos) || [];
         const newVideos = data.videos || [];
         data = {...data, videos: _mergeVideos(currentVideos, newVideos)};
-        // Guardar backup antes de sobreescribir
-        if(_lastFbData){
-          try{ await setDoc(BACKUP_DOC, {data: JSON.stringify(_lastFbData), savedAt: new Date().toISOString()}); }
-          catch(be){ console.warn('Backup failed:', be); }
+
+        // Version lock: si Firebase cambió mientras trabajábamos, releer y merguear primero
+        const fbSnap = await getDoc(DATA_DOC);
+        if(fbSnap.exists()){
+          const fbLive = JSON.parse(fbSnap.data().data);
+          const liveVer = fbLive._version||0;
+          const ourVer  = (_lastFbData&&_lastFbData._version)||0;
+          if(liveVer > ourVer){
+            // Alguien guardó mientras tanto — merguear con la versión más reciente
+            data = {...fbLive, videos: _mergeVideos(fbLive.videos||[], data.videos||[])};
+            const bonos = {...(data.bonos||{})};
+            for(const [c,v] of Object.entries(fbLive.bonos||{})){
+              if((bonos[c]||0)<v) bonos[c]=v;
+            }
+            data.bonos = bonos;
+            console.warn(`[FB] Race condition detectada (local v${ourVer} vs Firebase v${liveVer}) — merge aplicado`);
+          }
         }
+
+        // Incrementar versión
+        data._version = ((_lastFbData&&_lastFbData._version)||0) + 1;
+
+        // Backup rotativo antes de sobreescribir
+        if(_lastFbData){
+          const slot = _backupSlot % BACKUP_SLOTS;
+          _backupSlot = (slot+1) % BACKUP_SLOTS;
+          try{
+            await setDoc(_backupDocs[slot], {
+              data: JSON.stringify(_lastFbData),
+              savedAt: new Date().toISOString(),
+              videoCount: (_lastFbData.videos||[]).length,
+              slot
+            });
+          } catch(be){ console.warn('Backup slot',slot,'failed:',be); }
+        }
+
         _lastFbData = data;
         await setDoc(DATA_DOC, {data: JSON.stringify(data)});
       }
@@ -2165,11 +2206,19 @@ loadConfig();
 
     window._fbRestoreBackup = async () => {
       try {
-        const snap = await getDoc(BACKUP_DOC);
-        if(!snap.exists()){ showToast('No hay backup disponible'); return; }
-        const bk = JSON.parse(snap.data().data);
-        const bkAt = snap.data().savedAt || '?';
-        if(!confirm(`Restaurar backup del ${bkAt}?\n\nEsto sobreescribirá los datos actuales con el backup.`)) return;
+        // Leer los 5 slots y mostrar opciones
+        const snaps = await Promise.all(_backupDocs.map(d=>getDoc(d)));
+        const available = snaps
+          .map((s,i)=>s.exists()?{slot:i, savedAt:s.data().savedAt, videoCount:s.data().videoCount, data:s.data().data}:null)
+          .filter(Boolean)
+          .sort((a,b)=>b.savedAt.localeCompare(a.savedAt));
+        if(!available.length){ showToast('No hay backups disponibles'); return; }
+        const opts = available.map((b,i)=>`${i+1}. ${b.savedAt.replace('T',' ').slice(0,16)} — ${b.videoCount} videos`).join('\n');
+        const choice = parseInt(prompt(`¿Qué backup restaurar?\n\n${opts}\n\nIngresá el número:`));
+        if(!choice||choice<1||choice>available.length){ showToast('Cancelado'); return; }
+        const chosen = available[choice-1];
+        if(!confirm(`Restaurar backup del ${chosen.savedAt}?\nTenía ${chosen.videoCount} videos.`)) return;
+        const bk = JSON.parse(chosen.data);
         _lastFbData = bk;
         await setDoc(DATA_DOC, {data: JSON.stringify(bk)});
         showToast('✅ Backup restaurado — ' + (bk.videos||[]).length + ' videos');
@@ -2202,19 +2251,20 @@ loadConfig();
         if(snap.exists()){
           try{
             let parsed = JSON.parse(snap.data().data);
-            // Protección: si llegan menos videos, hacer merge — salvo que sea una deduplicación intencional (dedupeAt más reciente)
             const incomingDedupeAt = parsed.dedupeAt||0;
-            const cachedDedupeAt = (_lastFbData&&_lastFbData.dedupeAt)||0;
+            const cachedDedupeAt  = (_lastFbData&&_lastFbData.dedupeAt)||0;
             const isIntentionalDedup = incomingDedupeAt > cachedDedupeAt;
-            if(!isIntentionalDedup && _lastFbData && (parsed.videos||[]).length < (_lastFbData.videos||[]).length - 3){
+
+            // Merge solo si: tab activa + no es dedup intencional + llegaron menos videos
+            if(!isIntentionalDedup && _tabIsActive() && _lastFbData &&
+               (parsed.videos||[]).length < (_lastFbData.videos||[]).length - 3){
               parsed = {...parsed, videos: _mergeVideos(_lastFbData.videos||[], parsed.videos||[])};
-              // Conservar bonos más altos
               const bonos = {...(parsed.bonos||{})};
               for(const [c,v] of Object.entries(_lastFbData.bonos||{})){
                 if((bonos[c]||0) < v) bonos[c] = v;
               }
               parsed.bonos = bonos;
-              showToast('⚠️ Merge automático aplicado — se detectaron menos videos en Firebase');
+              showToast('⚠️ Merge aplicado — menos videos detectados');
               setTimeout(()=>{ if(window._fbSave) window._fbSave(parsed); }, 500);
             }
             _lastFbData = parsed;
