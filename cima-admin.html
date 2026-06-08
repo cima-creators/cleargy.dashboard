@@ -2179,13 +2179,56 @@ loadConfig();
       document.addEventListener(ev, ()=>{ _lastActivity=Date.now(); }, {passive:true}));
     const _tabIsActive = ()=> Date.now()-_lastActivity < 30*60*1000;
 
+    function _dedupeVideos(videos){
+      const seenId = new Set();
+      const seenTt = new Map(); // url → index in out
+      const seenIg = new Map();
+      const out = [];
+      for(const v of videos){
+        const id  = String(v.id||'');
+        const tt  = (v.linkTt||'').trim();
+        const ig  = (v.linkIg||'').trim();
+        const dupIdx = (tt && seenTt.has(tt)) ? seenTt.get(tt)
+                     : (ig && seenIg.has(ig)) ? seenIg.get(ig)
+                     : seenId.has(id)          ? (() => { const i = out.findIndex(x=>String(x.id)===id); return i; })()
+                     : -1;
+        if(dupIdx >= 0){
+          // Merge: conservar max views, preferir links completos
+          const ex = out[dupIdx];
+          out[dupIdx] = {
+            ...ex, ...Object.fromEntries(Object.entries(v).filter(([,val])=>val && !ex[Object.keys(ex).find(k=>k===Object.keys(v).find(k2=>k2===Object.keys(v)[0]))])),
+            views: Math.max(ex.views||0, v.views||0),
+            ttViews: Math.max(ex.ttViews||0, v.ttViews||0),
+            igViews: Math.max(ex.igViews||0, v.igViews||0),
+            linkTt: ex.linkTt || v.linkTt || '',
+            linkIg: ex.linkIg || v.linkIg || '',
+          };
+          if(tt) seenTt.set(tt, dupIdx);
+          if(ig) seenIg.set(ig, dupIdx);
+        } else {
+          const idx = out.length;
+          out.push(v);
+          if(id)  seenId.add(id);
+          if(tt)  seenTt.set(tt, idx);
+          if(ig)  seenIg.set(ig, idx);
+        }
+      }
+      return out;
+    }
+
     function _mergeVideos(base, incoming){
       const merged = [...incoming];
       const inIds = new Set(incoming.map(v => String(v.id)));
+      const inTt  = new Set(incoming.map(v => (v.linkTt||'').trim()).filter(Boolean));
+      const inIg  = new Set(incoming.map(v => (v.linkIg||'').trim()).filter(Boolean));
       for(const v of base){
-        if(!inIds.has(String(v.id)) && !_deletedIds.has(String(v.id))) merged.push(v);
+        const id = String(v.id);
+        const tt = (v.linkTt||'').trim();
+        const ig = (v.linkIg||'').trim();
+        const alreadyIn = inIds.has(id) || (tt && inTt.has(tt)) || (ig && inIg.has(ig));
+        if(!alreadyIn && !_deletedIds.has(id)) merged.push(v);
       }
-      return merged;
+      return _dedupeVideos(merged);
     }
 
     window._fbSave = async (data) => {
@@ -2229,6 +2272,8 @@ loadConfig();
           } catch(be){ console.warn('Backup slot',slot,'failed:',be); }
         }
 
+        // Última defensa: dedup por URL antes de guardar
+        data.videos = _dedupeVideos(data.videos||[]);
         _lastFbData = data;
         await setDoc(DATA_DOC, {data: JSON.stringify(data)});
       }
