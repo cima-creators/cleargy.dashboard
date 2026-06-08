@@ -256,6 +256,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
     <div class="header-actions">
       <button class="hbtn" onclick="openNotif()">✉ Mensaje</button>
       <button class="hbtn" onclick="openAddIdea()">+ Idea</button>
+      <button class="hbtn" onclick="if(window._fbRestoreBackup)window._fbRestoreBackup()" title="Restaurar último backup guardado" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);">↩ Backup</button>
       <button class="hbtn" onclick="adminLogout()" title="Cerrar sesión" style="opacity:.7;">⏏ Salir</button>
     </div>
   </div>
@@ -2090,21 +2091,44 @@ loadConfig();
 
     let _lastFbData = null;
     const _deletedIds = new Set();
+    const BACKUP_DOC = doc(db, BRAND_COLLECTION, 'backup');
+
+    function _mergeVideos(base, incoming){
+      const merged = [...incoming];
+      const inIds = new Set(incoming.map(v => String(v.id)));
+      for(const v of base){
+        if(!inIds.has(String(v.id)) && !_deletedIds.has(String(v.id))) merged.push(v);
+      }
+      return merged;
+    }
 
     window._fbSave = async (data) => {
       try {
         const currentVideos = (_lastFbData && _lastFbData.videos) || [];
         const newVideos = data.videos || [];
-        const merged = [...newVideos];
-        const newIds = new Set(newVideos.map(v => String(v.id)));
-        for(const v of currentVideos){
-          if(!newIds.has(String(v.id)) && !_deletedIds.has(String(v.id))) merged.push(v);
+        data = {...data, videos: _mergeVideos(currentVideos, newVideos)};
+        // Guardar backup antes de sobreescribir
+        if(_lastFbData){
+          try{ await setDoc(BACKUP_DOC, {data: JSON.stringify(_lastFbData), savedAt: new Date().toISOString()}); }
+          catch(be){ console.warn('Backup failed:', be); }
         }
-        data = {...data, videos: merged};
         _lastFbData = data;
         await setDoc(DATA_DOC, {data: JSON.stringify(data)});
       }
       catch(e){ console.error("FB save:", e); localStorage.setItem(BRAND_ID+"_data", JSON.stringify(data)); }
+    };
+
+    window._fbRestoreBackup = async () => {
+      try {
+        const snap = await getDoc(BACKUP_DOC);
+        if(!snap.exists()){ showToast('No hay backup disponible'); return; }
+        const bk = JSON.parse(snap.data().data);
+        const bkAt = snap.data().savedAt || '?';
+        if(!confirm(`Restaurar backup del ${bkAt}?\n\nEsto sobreescribirá los datos actuales con el backup.`)) return;
+        _lastFbData = bk;
+        await setDoc(DATA_DOC, {data: JSON.stringify(bk)});
+        showToast('✅ Backup restaurado — ' + (bk.videos||[]).length + ' videos');
+      } catch(e){ showToast('❌ Error restaurando: ' + e.message); }
     };
 
     window._fbDeleteVideo = async (id) => {
@@ -2132,7 +2156,20 @@ loadConfig();
       return onSnapshot(DATA_DOC, (snap) => {
         if(snap.exists()){
           try{
-            const parsed = JSON.parse(snap.data().data);
+            let parsed = JSON.parse(snap.data().data);
+            // Protección: si llegan menos videos que los que tenemos, hacer merge
+            if(_lastFbData && (parsed.videos||[]).length < (_lastFbData.videos||[]).length - 3){
+              parsed = {...parsed, videos: _mergeVideos(_lastFbData.videos||[], parsed.videos||[])};
+              // Conservar bonos más altos
+              const bonos = {...(parsed.bonos||{})};
+              for(const [c,v] of Object.entries(_lastFbData.bonos||{})){
+                if((bonos[c]||0) < v) bonos[c] = v;
+              }
+              parsed.bonos = bonos;
+              showToast('⚠️ Merge automático aplicado — se detectaron menos videos en Firebase');
+              // Guardar la versión mergeada
+              setTimeout(()=>{ if(window._fbSave) window._fbSave(parsed); }, 500);
+            }
             _lastFbData = parsed;
             callback(parsed);
           }catch(e){}
