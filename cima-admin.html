@@ -1471,7 +1471,7 @@ function renderViral(){
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div class="viral-views ${viewsClass}">${fmtV(v.views)}</div>
-        ${v.ttViews&&v.linkIg&&v.linkTt?`<div style="font-size:8px;font-family:'DM Mono';color:var(--muted);margin-top:1px;">📸${fmtV(v.views)} · 🎵${fmtV(v.ttViews)}</div>`:`<div style="font-size:8px;font-family:'DM Mono';color:var(--muted);margin-top:1px;">${v.linkTt&&!v.linkIg?'🎵 TikTok':v.linkIg&&!v.linkTt?'📸 IG':'views'}</div>`}
+        <div style="font-size:8px;font-family:'DM Mono';color:var(--muted);margin-top:1px;">${(v.ttViews||0)>=(v.views||0)&&v.ttViews?'🎵 TikTok':v.linkIg?'📸 Instagram':'views'}</div>
         <span class="viral-badge-pill ${badgeClass}">${badgeLabel}</span>
       </div>
     </div>`;
