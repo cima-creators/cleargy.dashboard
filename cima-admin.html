@@ -1281,14 +1281,11 @@ async function syncTikTok(full=false){
     if(status!=="SUCCEEDED") throw new Error("TikTok run terminó con: "+status);
     const posts=(await (await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`)).json());
     const getCode=url=>{const m=(url||"").match(/video\/(\d+)/);return m?m[1]:"";}
-    // Build input-URL → video map for index-based fallback (handles short URLs like vt.tiktok.com)
-    const linkToVid=new Map();
-    pool.forEach(v=>{if(v.linkTt&&links.includes(v.linkTt))linkToVid.set(v.linkTt,v);});
     let updated=0;
-    posts.forEach((post,idx)=>{
+    posts.forEach((post)=>{
       const code=getCode(post.webVideoUrl||"");
       const inputUrl=(post.input?.postURLs||[post.input?.postURL||""])[0]||"";
-      let vid=(data.videos||[]).find(v=>{
+      const vid=(data.videos||[]).find(v=>{
         if(!v.linkTt) return false;
         if(code && v.linkTt.includes(code)) return true;
         const storedCode=getCode(v.linkTt);
@@ -1297,8 +1294,6 @@ async function syncTikTok(full=false){
         if(post.webVideoUrl && v.linkTt===post.webVideoUrl) return true;
         return false;
       });
-      // Fallback: match by index (for short URLs like vt.tiktok.com that have no video ID)
-      if(!vid && idx<links.length) vid=linkToVid.get(links[idx]);
       if(vid){const ttV=post.playCount||post.videoPlayCount||post.stats?.playCount||post.viewCount||0;if(ttV>0){vid.ttViews=ttV;vid.views=Math.max(vid.views||0,ttV);}updated++;}
     });
     if(updated>0){autoAssignBonos();saveData();renderAll();renderVideos();}
