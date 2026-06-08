@@ -1765,10 +1765,12 @@ function renderFinanzas(){
     const got100k = (data.bonoGranted['100k']||[]).includes(c);
     // Racha completa (soporta múltiples)
     const rachaCount = (data.bonoGranted['rachaCount']||{})[c] || ((data.bonoGranted['racha']||[]).includes(c)?1:0);
-    // Viral semanal (soporta múltiples)
-    const viralCount = (data.bonoGranted['viralCount']||{})[c] || 0;
+    // Viral semanal (soporta múltiples) — fallback a bonosGanados si viralCount no está seteado
+    const viralCount = (data.bonoGranted['viralCount']||{})[c] || (((data.bonosGanados||{})[c]||{})['viral']?1:0);
+    // Más ventas semana
+    const ventasCount = (data.bonoGranted['ventasCount']||{})[c] || (((data.bonosGanados||{})[c]||{})['ventas']?1:0);
 
-    return {c, vids, base, comVentas, bonos, total, pagado, deuda, vids10k, got100k, rachaCount, viralCount};
+    return {c, vids, base, comVentas, bonos, total, pagado, deuda, vids10k, got100k, rachaCount, viralCount, ventasCount};
   });
 
   document.getElementById("finanzas-resumen").innerHTML = `
@@ -1795,11 +1797,14 @@ function renderFinanzas(){
             ${r.got100k?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
               <span>🚀 Bono 100K (1er video)</span><span style="font-weight:700;color:#ef4444;">$75.000</span>
             </div>`:''}
-            ${r.rachaCount>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
-              <span>📅 Racha completa${r.rachaCount>1?' × '+r.rachaCount:''}</span><span style="font-weight:700;color:#8b5cf6;">${fmtP(r.rachaCount*30000)}</span>
+            ${r.rachaCount>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);align-items:center;">
+              <span>📅 Racha completa</span><div style="display:flex;align-items:center;gap:4px;">${r.rachaCount>1?`<span style="font-size:9px;background:#8b5cf620;color:#8b5cf6;border-radius:8px;padding:1px 5px;font-weight:800;">×${r.rachaCount}</span>`:''}<span style="font-weight:700;color:#8b5cf6;">${fmtP(r.rachaCount*30000)}</span></div>
             </div>`:''}
-            ${r.viralCount>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);">
-              <span>🔥 Video viral${r.viralCount>1?' × '+r.viralCount:''}</span><span style="font-weight:700;color:#d97706;">${fmtP(r.viralCount*40000)}</span>
+            ${r.viralCount>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);align-items:center;">
+              <span>🔥 Video viral</span><div style="display:flex;align-items:center;gap:4px;">${r.viralCount>1?`<span style="font-size:9px;background:#d9770620;color:#d97706;border-radius:8px;padding:1px 5px;font-weight:800;">×${r.viralCount}</span>`:''}<span style="font-weight:700;color:#d97706;">${fmtP(r.viralCount*40000)}</span></div>
+            </div>`:''}
+            ${r.ventasCount>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);align-items:center;">
+              <span>🏆 Más ventas semana</span><div style="display:flex;align-items:center;gap:4px;">${r.ventasCount>1?`<span style="font-size:9px;background:#16a34a20;color:#16a34a;border-radius:8px;padding:1px 5px;font-weight:800;">×${r.ventasCount}</span>`:''}<span style="font-weight:700;color:#16a34a;">${fmtP(r.ventasCount*40000)}</span></div>
             </div>`:''}
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-xs);background:${r.deuda>0?"rgba(232,93,38,.06)":"rgba(26,58,143,.06)"};">
@@ -1870,8 +1875,8 @@ function assignBono(creator, key, amount){
   if(!data.bonosGanados) data.bonosGanados={};
   if(!data.bonosGanados[creator]) data.bonosGanados[creator]={};
   data.bonosGanados[creator][key]=true;
-  // Rastrear cantidad para racha y viral (soporta múltiples)
-  if(key==='racha'||key==='viral'){
+  // Rastrear cantidad para racha, viral y ventas (soporta múltiples)
+  if(key==='racha'||key==='viral'||key==='ventas'){
     if(!data.bonoGranted) data.bonoGranted={};
     const countKey=key+'Count';
     if(!data.bonoGranted[countKey]) data.bonoGranted[countKey]={};
