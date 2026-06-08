@@ -870,10 +870,11 @@ function enterAdmin(){
     document.getElementById('nav-comprobantes').style.display='none';
     document.getElementById('nav-bonos').style.display='none';
   }
-  renderAll(); renderVideos(); checkAutoSync();
+  renderAll(); renderVideos();
   // Un solo listener que se activa cuando Firebase está listo
   function startAdminListen(){
     window._fbListen((newData)=>{
+      const isFirstLoad = !_fbDataLoaded;
       data = newData;
       _fbDataLoaded=true;
       localStorage.setItem(BRAND_ID+"_data",JSON.stringify(data));
@@ -890,6 +891,8 @@ function enterAdmin(){
         if(id==='view-finanzas') renderFinanzas();
         if(id==='view-comprobantes') renderComprobantes();
       }
+      // Auto-sync solo en la primera carga y solo si pasaron 24hs
+      if(isFirstLoad) checkAutoSync();
     });
   }
   if(window._fbListen) startAdminListen();
@@ -1308,11 +1311,11 @@ function updateSyncStatus(){
   if(!el)return;
   if(!data.lastSyncTime){el.textContent="sin sync";return;}
   const mins=Math.round((Date.now()-data.lastSyncTime)/60000);
-  const next=720-mins;
+  const next=1440-mins;
   el.textContent=`sync hace ${mins<60?mins+"min":Math.floor(mins/60)+"hs"} · próximo en ${next>0?(next<60?next+"min":Math.floor(next/60)+"hs"):"ahora"}`;
 }
 
-const AUTO_SYNC_MS=12*60*60*1000;
+const AUTO_SYNC_MS=24*60*60*1000;
 const AUTO_WP_MS=24*60*60*1000;
 
 function checkAutoSync(){
