@@ -1236,7 +1236,7 @@ async function syncApify(full=false){
         const views=post.videoPlayCount||post.videoViewCount||post.playCount||post.viewsCount||post.video_view_count||0;
         const likes=post.likesCount||post.like_count||0;
         const comments=post.commentsCount||post.comment_count||0;
-        if(views>0) vid.views=views;
+        if(views>0){vid.igViews=views;vid.views=Math.max(vid.views||0,views);}
         if(likes>0) vid.likes=likes;
         if(comments>0) vid.comments=comments;
         updated++;
@@ -1471,7 +1471,9 @@ function renderViral(){
       </div>
       <div style="text-align:right;flex-shrink:0;">
         <div class="viral-views ${viewsClass}">${fmtV(v.views)}</div>
-        <div style="font-size:8px;font-family:'DM Mono';color:var(--muted);margin-top:1px;">${(v.ttViews||0)>=(v.views||0)&&v.ttViews?'🎵 TikTok':v.linkIg?'📸 Instagram':'views'}</div>
+        <div style="font-size:9px;font-family:'DM Mono';color:var(--muted);margin-top:2px;line-height:1.5;">
+          ${[v.igViews?`📸 ${fmtV(v.igViews)}`:(v.linkIg?`📸 —`:''),v.ttViews?`🎵 ${fmtV(v.ttViews)}`:(v.linkTt?`🎵 —`:'')].filter(Boolean).join(' · ')}
+        </div>
         <span class="viral-badge-pill ${badgeClass}">${badgeLabel}</span>
       </div>
     </div>`;
