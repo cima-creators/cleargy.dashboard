@@ -2330,29 +2330,53 @@ loadConfig();
         callback({..._stateData, videos: _videosData});
       };
 
-      const unsubState = onSnapshot(DATA_DOC, {includeMetadataChanges: false},
-        (snap) => {
-          if(!snap.exists()) return;
-          try{
-            const {videos: _, ...state} = JSON.parse(snap.data().data);
-            _stateData = state;
-            _stateReady = true;
+      // Listener de estado con auto-reintento (mismo patrón que el de videos)
+      let unsubState = null;
+      let _stateRetryTimer = null;
+      const attachState = () => {
+        unsubState = onSnapshot(DATA_DOC, {includeMetadataChanges: false},
+          (snap) => {
+            if(!snap.exists()) return;
+            try{
+              const {videos: _, ...state} = JSON.parse(snap.data().data);
+              _stateData = state;
+              _stateReady = true;
+              fire();
+            } catch(e){ console.error('state parse error:', e); }
+          },
+          (err) => {
+            console.error('state onSnapshot error:', err);
+            _stateRetryTimer = setTimeout(attachState, 5000);
+          }
+        );
+      };
+      attachState();
+
+      // Listener de videos con auto-reintento: si muere (ej. permiso denegado
+      // porque el login anónimo aún no estaba listo), se re-attachea solo
+      let unsubVideos = null;
+      let _videosRetryTimer = null;
+      const attachVideos = () => {
+        unsubVideos = onSnapshot(VIDEOS_COL, {includeMetadataChanges: false},
+          (snap) => {
+            _videosData = snap.docs.map(d => d.data());
+            _videosReady = true;
             fire();
-          } catch(e){ console.error('state parse error:', e); }
-        },
-        (err) => { console.error('state onSnapshot error:', err); }
-      );
+          },
+          (err) => {
+            console.error('videos onSnapshot error:', err);
+            _videosRetryTimer = setTimeout(attachVideos, 5000);
+          }
+        );
+      };
+      attachVideos();
 
-      const unsubVideos = onSnapshot(VIDEOS_COL, {includeMetadataChanges: false},
-        (snap) => {
-          _videosData = snap.docs.map(d => d.data());
-          _videosReady = true;
-          fire();
-        },
-        (err) => { console.error('videos onSnapshot error:', err); }
-      );
-
-      return () => { try{unsubState();}catch(e){} try{unsubVideos();}catch(e){} };
+      return () => {
+        try{ if(unsubState) unsubState(); }catch(e){}
+        try{ if(unsubVideos) unsubVideos(); }catch(e){}
+        if(_stateRetryTimer) clearTimeout(_stateRetryTimer);
+        if(_videosRetryTimer) clearTimeout(_videosRetryTimer);
+      };
     };
 
     // Listener para ventas Shopify
