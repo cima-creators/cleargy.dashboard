@@ -1549,6 +1549,9 @@ function autoAssignBonos(){
       if(!data.bonos[v.creator]) data.bonos[v.creator]=0;
       data.bonos[v.creator]+=10000;
       data.bonoGranted['10k'].push(vid);
+      if(!data.bonosGanados) data.bonosGanados={};
+      if(!data.bonosGanados[v.creator]) data.bonosGanados[v.creator]={};
+      data.bonosGanados[v.creator]['10k']=true;
       changed=true;
       console.log(`[AutoBono] 10k → ${v.creator} | video ${vid} | ${v.views} views`);
     }
@@ -1560,6 +1563,9 @@ function autoAssignBonos(){
       if(!data.bonos[v.creator]) data.bonos[v.creator]=0;
       data.bonos[v.creator]+=75000;
       data.bonoGranted['100k'].push(v.creator);
+      if(!data.bonosGanados) data.bonosGanados={};
+      if(!data.bonosGanados[v.creator]) data.bonosGanados[v.creator]={};
+      data.bonosGanados[v.creator]['100k']=true;
       changed=true;
     }
   }
@@ -1593,6 +1599,9 @@ function autoAssignBonos(){
       if(!data.bonos[c]) data.bonos[c]=0;
       data.bonos[c]+=(bloques-pagados)*30000;
       data.bonoGranted['racha'][c]=bloques;
+      if(!data.bonosGanados) data.bonosGanados={};
+      if(!data.bonosGanados[c]) data.bonosGanados[c]={};
+      data.bonosGanados[c]['racha']=true;
       changed=true;
       console.log(`[AutoBono] racha 7 días → ${c}: ${bloques-pagados} bloque(s) nuevos`);
     }
