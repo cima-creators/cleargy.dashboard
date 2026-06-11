@@ -841,8 +841,10 @@ async function loadData(){
     const fbData = await window._fbLoad();
     if(fbData){ data=fbData; _fbDataLoaded=true; return; }
   }
+  // Fallback de localStorage: SOLO LECTURA — jamás habilita guardados
+  // (un guardado con datos viejos/locales pisaría el estado real de Firebase)
   const s=localStorage.getItem(BRAND_ID+"_data");
-  if(s){ data=JSON.parse(s); _fbDataLoaded=true; }
+  if(s){ data=JSON.parse(s); }
 }
 function saveData(){
   if(!_fbDataLoaded) return;
@@ -2293,7 +2295,7 @@ loadConfig();
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, setDoc, deleteDoc, onSnapshot, getDoc, getDocs, collection, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -2357,7 +2359,8 @@ loadConfig();
     window._fbSave = async (data) => {
       try {
         const {videos: _v, ...stateOnly} = data;
-        stateOnly._version = (stateOnly._version||0) + 1;
+        const versionLocal = (stateOnly._version||0);
+        stateOnly._version = versionLocal + 1;
         // Cap de notifs: el doc principal tiene límite de 1MB en Firestore
         if(Array.isArray(stateOnly.notifs) && stateOnly.notifs.length > 150) stateOnly.notifs = stateOnly.notifs.slice(-150);
 
@@ -2376,9 +2379,28 @@ loadConfig();
           } catch(be){ console.warn('Backup slot', slot, 'failed:', be); }
         }
 
+        // Guardia anti-pisada: si OTRA pestaña ya guardó una versión más nueva, NO sobreescribir
         _stateData = stateOnly;
-        await setDoc(DATA_DOC, {data: JSON.stringify(stateOnly)});
-      } catch(e){ console.error('FB save:', e); localStorage.setItem(BRAND_ID+'_data', JSON.stringify(data)); }
+        await runTransaction(db, async (t) => {
+          const snap = await t.get(DATA_DOC);
+          if(snap.exists()){
+            try {
+              const remota = JSON.parse(snap.data().data)._version||0;
+              if(remota > versionLocal){
+                throw new Error('STALE_STATE');
+              }
+            } catch(pe){ if(String(pe.message)==='STALE_STATE') throw pe; }
+          }
+          t.set(DATA_DOC, {data: JSON.stringify(stateOnly)});
+        });
+      } catch(e){
+        if(String(e.message)==='STALE_STATE'){
+          console.warn('[FB save] Otra pestaña guardó datos más nuevos — recargando estado en vez de pisar');
+          if(typeof showToast==='function') showToast('⚠️ Datos actualizados en otra pestaña — recargá la página', 6000);
+          return;
+        }
+        console.error('FB save:', e); localStorage.setItem(BRAND_ID+'_data', JSON.stringify(data));
+      }
     };
 
     window._fbRestoreBackup = async () => {
