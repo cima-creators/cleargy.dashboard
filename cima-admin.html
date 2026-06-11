@@ -710,7 +710,7 @@ const BRAND_CONFIGS = {
     }
   },
   miluz: {
-    name:'MiLuz', collection:'miluz',
+    name:'MiLuz', collection:'miluz', defaultCampaignStart:'2026-06-10',
     adminPass:'miluz-admin-2025', adminPass2:'miluz-2025',
     accent:'#111111', accentLight:'#333333', bg:'#f0f0f0', surface2:'#e8e8e8', border:'#d0d0d0',
     text:'#111111', muted:'#666666', shadow:'17,17,17', loginBg:'linear-gradient(135deg,#f0f0f0 0%,#e0e0e0 50%,#d0d0d0 100%)',
@@ -796,7 +796,8 @@ const WHATICKET_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJyZW
 const WHATICKET_CONNECTION = "ca448a0f-b10e-4088-8ce2-ef78810cf7d2";
 const ADMIN_PHONE = "5491123538064";
 const PHONES = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.phone||'']));
-const CAMPAIGN_START = Object.fromEntries(Object.keys(BRAND.creators).map(k=>[k,"2026-05-25"]));
+// Inicio de campaña por creadora: 1) fecha individual configurada, 2) inicio de la marca, 3) fallback
+function campaignStartFor(c){ return ((data&&data.startDates)||{})[c] || BRAND.defaultCampaignStart || "2026-05-25"; }
 const SALARY = 650000;
 const COMISION_POR_VENTA = 2500;
 const MIN_VIDEOS = 150;
@@ -1077,7 +1078,7 @@ function videoRow(v, compact=false){
     ? `<a href="${escUrl(v.linkTt)}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">🎵 TT</a>`
     : "";
   const copyBtn = (igBtn||ttBtn) ? igBtn+" "+ttBtn : `<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`;
-  const startStr = (CAMPAIGN_START[v.creator]||"2026-05-25");
+  const startStr = campaignStartFor(v.creator);
   const calcDay = v.date ? Math.max(1,Math.floor((new Date(v.date)-new Date(startStr))/(86400000))+1) : (v.day||1);
   return`<tr>
     <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:26px;height:26px;border-radius:50%;background:${COLORS[v.creator]}22;border:1px solid ${COLORS[v.creator]};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:${COLORS[v.creator]}">${AVATARS[v.creator]}</div><span style="font-size:12px;">${NAMES[v.creator].split(' ')[0]}</span></div></td>
@@ -1421,7 +1422,7 @@ function renderBonos(){
   const bonoTypes=[
     {key:"ventas",label:"🏆 Más ventas semana",desc:"Ganadora: la que más vendió esta semana. Mínimo 5 ventas para calificar. Premio: $40.000.",amount:40000},
     {key:"viral",label:"🔥 Video más viral",desc:"El video con más views de la semana. Premio: $40.000.",amount:40000},
-    {key:"racha",label:"📅 Racha completa",desc:"Subió los 5 videos todos los días de la semana. Premio: $30.000.",amount:30000},
+    {key:"racha",label:"📅 Racha completa",desc:"5 videos por día durante 7 días seguidos. Premio: $30.000 por cada racha (automático).",amount:30000},
     {key:"10k",label:"⚡ Video +10K views",desc:"Cada video que supere 10.000 views. Premio: $10.000 por video.",amount:10000},
     {key:"100k",label:"🚀 Primer video 100K",desc:"Primer video en superar 100.000 views en la campaña. Premio: $75.000.",amount:75000},
     {key:"top30",label:"🏅 Top ventas día 30",desc:"Más ventas totales al finalizar la campaña. Premio: $200.000.",amount:200000},
@@ -1655,16 +1656,37 @@ function autoAssignBonos(){
     }
   }
 
-  // $30.000 racha completa — automático para creadoras con 35+ videos en campaña
-  if(!data.bonoGranted['racha']) data.bonoGranted['racha']=[];
-  const vidCount={};
-  for(const v of data.videos){ if(v.creator) vidCount[v.creator]=(vidCount[v.creator]||0)+1; }
-  for(const [c,n] of Object.entries(vidCount)){
-    if(n>=35 && !data.bonoGranted['racha'].includes(c)){
+  // $30.000 por CADA racha de 7 días consecutivos con 5+ videos/día (repetible, bloques sin solapar)
+  if(!data.bonoGranted['racha']) data.bonoGranted['racha']={};
+  // Migración del formato viejo (array de creadoras pagadas por la regla "35+ videos"):
+  // se les acredita 1 bloque para no pagarles dos veces el primero
+  if(Array.isArray(data.bonoGranted['racha'])){
+    const old=data.bonoGranted['racha'];
+    data.bonoGranted['racha']={};
+    old.forEach(c=>{ data.bonoGranted['racha'][c]=1; });
+  }
+  const porDia={}; // creadora -> {fecha: cantidad de videos}
+  for(const v of data.videos){
+    if(!v.creator||!v.date) continue;
+    const k=argDate(v.date);
+    if(!porDia[v.creator]) porDia[v.creator]={};
+    porDia[v.creator][k]=(porDia[v.creator][k]||0)+1;
+  }
+  for(const c of Object.keys(porDia)){
+    const diasOk=Object.keys(porDia[c]).filter(d=>porDia[c][d]>=5).sort();
+    let bloques=0, racha=0, prev=null;
+    for(const d of diasOk){
+      racha = (prev && (new Date(d)-new Date(prev))===86400000) ? racha+1 : 1;
+      prev=d;
+      if(racha===7){ bloques++; racha=0; prev=null; } // bloque completo → el siguiente arranca de cero
+    }
+    const pagados=data.bonoGranted['racha'][c]||0;
+    if(bloques>pagados){
       if(!data.bonos[c]) data.bonos[c]=0;
-      data.bonos[c]+=30000;
-      data.bonoGranted['racha'].push(c);
+      data.bonos[c]+=(bloques-pagados)*30000;
+      data.bonoGranted['racha'][c]=bloques;
       changed=true;
+      console.log(`[AutoBono] racha 7 días → ${c}: ${bloques-pagados} bloque(s) nuevos`);
     }
   }
 
@@ -1795,8 +1817,10 @@ function renderFinanzas(){
     const vids10k = myVids.filter(v=>granted10k.includes(String(v.id)));
     // Videos 100k
     const got100k = (data.bonoGranted['100k']||[]).includes(c);
-    // Racha completa (soporta múltiples)
-    const rachaCount = (data.bonoGranted['rachaCount']||{})[c] || ((data.bonoGranted['racha']||[]).includes(c)?1:0);
+    // Racha completa (soporta múltiples) — formato nuevo {creadora:n} o legacy array
+    const _racha = data.bonoGranted['racha'];
+    const rachaAuto = Array.isArray(_racha) ? (_racha.includes(c)?1:0) : ((_racha||{})[c]||0);
+    const rachaCount = (data.bonoGranted['rachaCount']||{})[c] || rachaAuto;
     // Viral semanal (soporta múltiples) — fallback a bonosGanados si viralCount no está seteado
     const viralCount = (data.bonoGranted['viralCount']||{})[c] || (((data.bonosGanados||{})[c]||{})['viral']?1:0);
     // Más ventas semana
@@ -1913,9 +1937,13 @@ function assignBono(creator, key, amount){
     const countKey=key+'Count';
     if(!data.bonoGranted[countKey]) data.bonoGranted[countKey]={};
     data.bonoGranted[countKey][creator]=(data.bonoGranted[countKey][creator]||0)+1;
-    if(key==='racha' && !(data.bonoGranted['racha']||[]).includes(creator)){
-      if(!data.bonoGranted['racha']) data.bonoGranted['racha']=[];
-      data.bonoGranted['racha'].push(creator);
+    if(key==='racha'){
+      // Acreditar el bloque también en el tracker automático (formato {creadora:n}) para que el auto no lo vuelva a pagar
+      if(!data.bonoGranted['racha']||Array.isArray(data.bonoGranted['racha'])){
+        const old=Array.isArray(data.bonoGranted['racha'])?data.bonoGranted['racha']:[];
+        data.bonoGranted['racha']={}; old.forEach(x=>{data.bonoGranted['racha'][x]=1;});
+      }
+      data.bonoGranted['racha'][creator]=(data.bonoGranted['racha'][creator]||0)+1;
     }
   }
   saveData();renderBonos();renderFinanzas();
