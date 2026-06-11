@@ -795,8 +795,15 @@ const WHATICKET_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJyZW
 const WHATICKET_CONNECTION = "ca448a0f-b10e-4088-8ce2-ef78810cf7d2";
 const ADMIN_PHONE = "5491123538064";
 const PHONES = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.phone||'']));
-// Inicio de campaña por creadora: 1) fecha individual configurada, 2) inicio de la marca, 3) fallback
-function campaignStartFor(c){ return ((data&&data.startDates)||{})[c] || BRAND.defaultCampaignStart || "2026-05-25"; }
+// Inicio de campaña por creadora: 1) fecha de SU PRIMER video, 2) fecha configurada a mano, 3) inicio de marca
+function campaignStartFor(c){
+  const vids = ((data&&data.videos)||[]).filter(v=>v.creator===c && v.date);
+  if(vids.length){
+    const min = vids.reduce((a,v)=>v.date<a?v.date:a, vids[0].date);
+    return argDate(min);
+  }
+  return ((data&&data.startDates)||{})[c] || BRAND.defaultCampaignStart || "2026-05-25";
+}
 const SALARY = 650000;
 const COMISION_POR_VENTA = 2500;
 const MIN_VIDEOS = 150;
@@ -1297,8 +1304,20 @@ async function notifyNoVideos(){
 async function sendAdminReport(){
   const hoy=Object.keys(PHONES).filter(c=>getVideosOnDay(c,0)<5);
   const racha=Object.keys(PHONES).filter(c=>getVideosOnDay(c,0)===0&&getVideosOnDay(c,1)===0);
-  if(hoy.length===0&&racha.length===0)return;
+  // Quincenas recién cerradas (día 15-17 o 30-32 desde SU video 1) → recordatorio de pago
+  const quincenasListas=[];
+  CREATORS.forEach(c=>{
+    const startMs=new Date(campaignStartFor(c)+"T00:00:00").getTime();
+    const dia=Math.floor((Date.now()-startMs)/86400000)+1;
+    const myVids=(data.videos||[]).filter(v=>v.creator===c&&v.date);
+    if(!myVids.length) return;
+    const enQ=(d0,d1)=>myVids.filter(v=>{const d=Math.floor((new Date(v.date).getTime()-startMs)/86400000)+1;return d>=d0&&d<=d1;}).length;
+    if(dia>=15&&dia<=17) quincenasListas.push({c,q:'Q1',n:enQ(1,15)});
+    if(dia>=30&&dia<=32) quincenasListas.push({c,q:'Q2',n:enQ(16,30)});
+  });
+  if(hoy.length===0&&racha.length===0&&quincenasListas.length===0)return;
   let msg="📊 *Reporte "+BRAND.name+" — "+new Date().toLocaleDateString("es-AR")+"*\n\n";
+  if(quincenasListas.length>0){msg+="💰 *Quincenas para pagar:*\n";quincenasListas.forEach(x=>{msg+="• "+NAMES[x.c]+" cerró "+x.q+" con "+x.n+"/75 videos "+(x.n>=75?"✅":"⚠️")+"\n";});msg+="\n";}
   if(hoy.length>0){msg+="⚠️ *Sin 5 videos hoy:*\n";hoy.forEach(c=>{const cant=getVideosOnDay(c,0);msg+="• "+NAMES[c]+" ("+cant+"/5)\n";});msg+="\n";}
   if(racha.length>0){msg+="🔴 *Racha — 2 días sin subir:*\n";racha.forEach(c=>{msg+="• "+NAMES[c]+"\n";});}
   try{
@@ -1608,6 +1627,50 @@ function autoAssignBonos(){
     }
   }
 
+  // ── Bonos SEMANALES automáticos (lunes a lunes): más ventas (mín. 5) y video más viral, $40.000 c/u ──
+  // Solo semanas que cierran desde weeklySince (las anteriores ya se pagaron a mano)
+  if(!data.bonoGranted.weekly) data.bonoGranted.weekly={};
+  if(!data.bonoGranted.weeklySince){
+    const nm=new Date(argToday()+"T00:00:00");
+    nm.setDate(nm.getDate() + (((8-nm.getDay())%7)||7)); // próximo lunes
+    data.bonoGranted.weeklySince = nm.toLocaleDateString("sv");
+    changed=true;
+  }
+  const _since = new Date(data.bonoGranted.weeklySince+"T00:00:00");
+  const _otorgarSemanal = (c, key, wkey, etiqueta) => {
+    data.bonos[c]=(data.bonos[c]||0)+40000;
+    data.bonoGranted.weekly[wkey+"_"+key]=c;
+    if(!data.bonoGranted[key+"Count"]) data.bonoGranted[key+"Count"]={};
+    data.bonoGranted[key+"Count"][c]=(data.bonoGranted[key+"Count"][c]||0)+1;
+    if(!data.bonosGanados) data.bonosGanados={};
+    if(!data.bonosGanados[c]) data.bonosGanados[c]={};
+    data.bonosGanados[c][key]=true;
+    if(!data.notifs) data.notifs=[];
+    data.notifs.push({id:Date.now()+Math.random(), tipo:"bono", to:c, msg:"🏆 ¡Ganaste el bono semanal de "+etiqueta+"! Se acreditaron $40.000 💰", date:new Date().toISOString(), read:[]});
+    changed=true;
+    console.log("[AutoBono] semanal "+key+" → "+c+" ("+wkey+")");
+  };
+  for(let back=1; back<=8; back++){
+    const fin=new Date(argToday()+"T00:00:00");
+    fin.setDate(fin.getDate() - ((fin.getDay()+6)%7) - 7*(back-1)); // lunes que cierra la semana evaluada
+    if(fin < _since) break;
+    const ini=new Date(fin); ini.setDate(ini.getDate()-7);
+    const wkey=ini.toLocaleDateString("sv");
+    // Más ventas de la semana (mínimo 5 para calificar)
+    if(!data.bonoGranted.weekly[wkey+"_ventas"] && (window.salesData||[]).length){
+      const cuenta={};
+      (window.salesData||[]).forEach(s=>{ if(!s.date||!s.creator) return; const d=new Date(s.date); if(d>=ini&&d<fin) cuenta[s.creator]=(cuenta[s.creator]||0)+1; });
+      const top=Object.entries(cuenta).sort((a,b)=>b[1]-a[1]);
+      if(top.length && top[0][1]>=5 && (top.length<2||top[0][1]>top[1][1])) _otorgarSemanal(top[0][0],"ventas",wkey,"ventas");
+    }
+    // Video más viral de la semana (entre los subidos esa semana)
+    if(!data.bonoGranted.weekly[wkey+"_viral"]){
+      const delaSemana=(data.videos||[]).filter(v=>{ if(!v.date||!v.creator) return false; const d=new Date(v.date); return d>=ini&&d<fin; });
+      const top=[...delaSemana].sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0))[0];
+      if(top && (Number(top.views)||0)>0) _otorgarSemanal(top.creator,"viral",wkey,"video más viral");
+    }
+  }
+
   if(changed){ saveData(); if(document.getElementById('view-bonos')?.classList.contains('active')) renderBonos(); }
 }
 
@@ -1863,7 +1926,10 @@ function renderFinanzas(){
             <span style="font-size:11px;font-weight:700;color:${r.deuda>0?"var(--accent2)":"var(--blue)"};">${r.deuda>0?"⚠️ Pendiente":"✓ Al día"}</span>
           </div>
           <div style="border-top:1px solid var(--surface2);margin-top:8px;padding-top:8px;">
-            <div style="font-size:9px;font-family:'DM Mono';letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Pagos quincenales</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <span style="font-size:9px;font-family:'DM Mono';letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;">Pagos quincenales</span>
+              <span style="font-size:9px;font-family:'DM Mono';color:var(--muted);">📅 video 1: ${r.vids>0?new Date(campaignStartFor(r.c)+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})+' · día '+Math.max(1,r.diaHoy):'sin videos aún'}</span>
+            </div>
             ${[['Q1 · días 1-15', r.q1, r.diaHoy>=15], ['Q2 · días 16-30', r.q2, r.diaHoy>=30]].map(([lbl,q,cerrada])=>`
             <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:5px;">
               <div>
