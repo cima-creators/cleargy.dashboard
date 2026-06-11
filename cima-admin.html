@@ -255,7 +255,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openNotif()">✉ Mensaje</button>
-      <button class="hbtn" onclick="openAddIdea()">+ Idea</button>
       <button class="hbtn" onclick="if(window._fbRestoreBackup)window._fbRestoreBackup()" title="Restaurar último backup guardado" style="background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);">↩ Backup</button>
       <button class="hbtn" onclick="adminLogout()" title="Cerrar sesión" style="opacity:.7;">⏏ Salir</button>
     </div>
@@ -271,7 +270,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div class="nitem" data-view="bonos" onclick="nav(this)" id="nav-bonos"><div class="ndot" style="background:var(--accent2)"></div>Bonos</div>
         <div class="nitem" data-view="viral" onclick="nav(this)"><div class="ndot" style="background:#0d9488)"></div>Videos Virales</div>
         <div class="slabel">Comunicación</div>
-        <div class="nitem" data-view="ideas" onclick="nav(this)"><div class="ndot" style="background:#7c3aed"></div>Ideas</div>
         <div class="nitem" data-view="mensajes" onclick="nav(this)"><div class="ndot" style="background:var(--blue-light)"></div>Mensajes <span class="nbadge" id="nb-msgs">0</span></div>
         <div class="slabel">Finanzas</div>
         <div class="nitem" data-view="shopify" onclick="nav(this)"><div class="ndot" style="background:#16a34a"></div>Ventas Shopify <span class="nbadge" id="nb-shopify">0</span></div>
@@ -787,7 +785,6 @@ document.addEventListener('DOMContentLoaded',function(){
 
 const ADMIN_PASS = BRAND.adminPass;
 const ADMIN_PASS2 = BRAND.adminPass2;
-const APIFY_TOKEN = "apify_api_z6pzNYSLE6NNndj5d0NLc0fH6Xerqk1R7yV5";
 const COLORS = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.color]));
 const NAMES = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.name]));
 const AVATARS = Object.fromEntries(Object.entries(BRAND.creators).map(([k,v])=>[k,v.avatar]));
@@ -1044,15 +1041,25 @@ function renderOverview(){
     <div class="scard"><div class="sc-label">Virales</div><div class="sc-val" style="color:#7c3aed">${viral}</div><div class="sc-sub">+10K views</div></div>
   `;
 
-  document.getElementById("creator-grid").innerHTML=CREATORS.map(c=>{
-    const vids=data.videos.filter(v=>v.creator===c);
-    const ventas=data.ventas[c]||0;
+  // Ranking: mejor a peor — 1º ventas, 2º views totales, 3º cantidad de videos
+  const _statsDe = c => {
+    const vids = data.videos.filter(v=>v.creator===c);
+    return {vids, ventas: data.ventas[c]||0, views: vids.reduce((a,v)=>a+(v.views||0),0)};
+  };
+  const _ordenadas = [...CREATORS].sort((a,b)=>{
+    const A=_statsDe(a), B=_statsDe(b);
+    if(B.ventas!==A.ventas) return B.ventas-A.ventas;
+    if(B.views!==A.views) return B.views-A.views;
+    return B.vids.length-A.vids.length;
+  });
+  document.getElementById("creator-grid").innerHTML=_ordenadas.map((c,_rank)=>{
+    const {vids, ventas, views}=_statsDe(c);
     const pct=Math.min(100,Math.round(vids.length/VIDEO_GOAL*100));
     return`<div class="creator-card" onclick="document.getElementById('vf-creator').value='${c}';nav(document.querySelector('[data-view=videos]'))">
-      <div class="cc-avatar" style="background:${COLORS[c]}18;border:2px solid ${COLORS[c]};color:${COLORS[c]};">${AVATARS[c]}</div>
+      <div class="cc-avatar" style="background:${COLORS[c]}18;border:2px solid ${COLORS[c]};color:${COLORS[c]};">${_rank<3?['🥇','🥈','🥉'][_rank]+' ':''}${AVATARS[c]}</div>
       <div class="cc-info">
         <div class="cc-name">${NAMES[c].split(' ')[0]}</div>
-        <div class="cc-meta">${vids.length} videos · ${ventas} ventas</div>
+        <div class="cc-meta">${ventas} ventas · ${fmtV(views)} views · ${vids.length} videos</div>
         <div style="height:3px;background:var(--surface2);border-radius:3px;margin-top:6px;overflow:hidden;">
           <div style="height:100%;width:${pct}%;background:${COLORS[c]};border-radius:3px;transition:width .4s;"></div>
         </div>
@@ -1207,136 +1214,30 @@ async function adminDeleteVideo(id){
   }, 4000);
 }
 
-async function syncApify(full=false){
-  const btn=document.getElementById(full?"apify-full-btn":"apify-sync-btn");
-  btn.textContent="Sincronizando...";btn.disabled=true;
-
-  const cutoff=full?0:Date.now()-48*60*60*1000;
-  const pool=(data.videos||[]).filter(v=>full||!v.date||new Date(v.date).getTime()>=cutoff);
-  const rawLinks=[...new Set(pool.map(v=>v.linkIg).filter(l=>l&&l.includes("instagram.com")))];
-  const links=rawLinks.map(l=>l.startsWith('http')?l:'https://'+l);
-  if(links.length===0){
-    showToast(full?"No hay links de Instagram":"No hay videos recientes (48h) con IG");
-    btn.textContent=full?"📸 Sync IG todo":"📸 Sync IG";btn.disabled=false;
-    return;
-  }
-
+// ═══════════════════════════════════
+// SYNC EN LA NUBE — el token de Apify vive en el servidor (Secret Manager),
+// y el sync automático corre todos los días a las 23hs aunque nadie abra el panel.
+// ═══════════════════════════════════
+const SYNC_ENDPOINT = "https://us-central1-cleargy-creators.cloudfunctions.net/syncNow";
+let _cloudSyncRunning = false;
+async function cloudSync(full, btnId, label){
+  if(_cloudSyncRunning){ showToast("Ya hay un sync en curso..."); return; }
+  _cloudSyncRunning = true;
+  const btn=document.getElementById(btnId);
+  if(btn){btn.textContent="Sincronizando...";btn.disabled=true;}
   try{
-    const startRes=await fetch(
-      `https://api.apify.com/v2/acts/apify~instagram-scraper/runs?token=${APIFY_TOKEN}`,
-      {method:"POST",headers:{"Content-Type":"application/json"},
-       body:JSON.stringify({directUrls:links,resultsType:"posts",resultsLimit:links.length})}
-    );
-    const startJson=await startRes.json();
-    const runId=startJson.data?.id;
-    const datasetId=startJson.data?.defaultDatasetId;
-    if(!runId) throw new Error("No se pudo iniciar el run: "+JSON.stringify(startJson));
-
-    showToast(`⏳ Procesando ${links.length} videos...`);
-
-    let status="RUNNING",attempts=0;
-    while((status==="RUNNING"||status==="READY")&&attempts<40){
-      await new Promise(r=>setTimeout(r,4000));
-      const sr=await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`);
-      const sj=await sr.json();
-      status=sj.data?.status;
-      attempts++;
-    }
-    if(status!=="SUCCEEDED") throw new Error("Run terminó con estado: "+status);
-
-    const dr=await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`);
-    const posts=await dr.json();
-
-    console.log("Apify posts:", posts.length, posts[0]); // debug
-
-    const getCode=url=>{const m=(url||"").match(/\/(p|reel|tv)\/([A-Za-z0-9_-]+)/);return m?m[2].toLowerCase():"";}
-    let updated=0;
-    posts.forEach(post=>{
-      const postCode=getCode(post.url||post.inputUrl||"");
-      const vid=data.videos.find(v=>postCode&&getCode(v.linkIg||"")===postCode);
-      if(vid){
-        // Intentar todos los campos posibles de views
-        const views=post.videoPlayCount||post.videoViewCount||post.playCount||post.viewsCount||post.video_view_count||0;
-        const likes=post.likesCount||post.like_count||0;
-        const comments=post.commentsCount||post.comment_count||0;
-        if(views>0){vid.igViews=views;vid.views=Math.max(vid.views||0,views);}
-        if(likes>0) vid.likes=likes;
-        if(comments>0) vid.comments=comments;
-        updated++;
-      }
-    });
-
-    if(updated>0){
-      // Persistir cada video actualizado en su doc individual
-      const updatedVids = data.videos.filter(v => { const c=getCode(v.linkIg||''); return c && posts.some(p => getCode(p.url||p.inputUrl||'') === c); });
-      if(window._fbUpdateVideo) updatedVids.forEach(v => window._fbUpdateVideo(v));
-      autoAssignBonos(); saveData(); renderAll(); renderVideos();
-    }
-    showToast(updated>0?`✓ ${updated} videos actualizados`:`Apify OK — ${posts.length} posts encontrados, 0 matches. Revisá consola.`);
-  }catch(e){
-    showToast("❌ Error: "+e.message);
-    console.error("Apify error:",e);
-  }
-  btn.textContent=full?"📸 Sync IG todo":"📸 Sync IG";btn.disabled=false;
-  data.lastSyncTime=Date.now();saveData();updateSyncStatus();
+    showToast("⏳ Sync en la nube (IG + TikTok) — puede tardar 1-3 min...", 6000);
+    const r=await fetch(`${SYNC_ENDPOINT}?key=cima-sync-x7k2m9&brand=${window.BRAND_COLLECTION}${full?"&full=1":""}`);
+    const j=await r.json();
+    showToast(j.ok?`✓ ${(j.resultados||[]).join(" · ")}`:"❌ Error en sync", 6000);
+    data.lastSyncTime=Date.now(); saveData(); updateSyncStatus();
+  }catch(e){ showToast("❌ Sync error: "+e.message, 6000); }
+  if(btn){btn.textContent=label;btn.disabled=false;}
+  _cloudSyncRunning = false;
 }
-
-async function syncTikTok(full=false){
-  const btn=document.getElementById(full?"tt-full-btn":"tt-sync-btn");
-  btn.textContent="Sincronizando...";btn.disabled=true;
-  const cutoff=full?0:Date.now()-48*60*60*1000;
-  const pool=(data.videos||[]).filter(v=>full||!v.date||new Date(v.date).getTime()>=cutoff);
-  const links=[...new Set(pool.map(v=>v.linkTt).filter(l=>l&&l.includes("tiktok.com")))];
-  if(links.length===0){showToast(full?"No hay links de TikTok":"No hay videos recientes (48h) con TikTok");btn.textContent=full?"🎵 Sync TT todo":"🎵 Sync TikTok";btn.disabled=false;return;}
-  try{
-    const startRes=await fetch(
-      `https://api.apify.com/v2/acts/clockworks~tiktok-scraper/runs?token=${APIFY_TOKEN}`,
-      {method:"POST",headers:{"Content-Type":"application/json"},
-       body:JSON.stringify({postURLs:links,resultsPerPage:links.length,shouldDownloadVideos:false,shouldDownloadCovers:false})}
-    );
-    const startJson=await startRes.json();
-    const runId=startJson.data?.id;
-    const datasetId=startJson.data?.defaultDatasetId;
-    if(!runId) throw new Error("No se pudo iniciar el run de TikTok");
-    showToast(`⏳ Procesando ${links.length} TikToks...`);
-    let status="RUNNING",attempts=0;
-    while((status==="RUNNING"||status==="READY")&&attempts<60){
-      await new Promise(r=>setTimeout(r,5000));
-      const sr=await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`);
-      status=(await sr.json()).data?.status;
-      attempts++;
-    }
-    if(status!=="SUCCEEDED") throw new Error("TikTok run terminó con: "+status);
-    const posts=(await (await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_TOKEN}`)).json());
-    const getCode=url=>{const m=(url||"").match(/video\/(\d+)/);return m?m[1]:"";}
-    let updated=0;
-    posts.forEach((post)=>{
-      const code=getCode(post.webVideoUrl||"");
-      const inputUrl=(post.input?.postURLs||[post.input?.postURL||""])[0]||"";
-      const vid=(data.videos||[]).find(v=>{
-        if(!v.linkTt) return false;
-        if(code && v.linkTt.includes(code)) return true;
-        const storedCode=getCode(v.linkTt);
-        if(storedCode && code && storedCode===code) return true;
-        if(inputUrl && v.linkTt===inputUrl) return true;
-        if(post.webVideoUrl && v.linkTt===post.webVideoUrl) return true;
-        return false;
-      });
-      if(vid){const ttV=post.playCount||post.videoPlayCount||post.stats?.playCount||post.viewCount||0;if(ttV>0){vid.ttViews=ttV;vid.views=Math.max(vid.views||0,ttV);}updated++;}
-    });
-    if(updated>0){
-      const getCodeTt = url=>{const m=(url||"").match(/video\/(\d+)/);return m?m[1]:"";}
-      const updatedTt = data.videos.filter(v => posts.some(p => {
-        const code = getCodeTt(p.webVideoUrl||'');
-        return code && v.linkTt && v.linkTt.includes(code);
-      }));
-      if(window._fbUpdateVideo) updatedTt.forEach(v => window._fbUpdateVideo(v));
-      autoAssignBonos(); saveData(); renderAll(); renderVideos();
-    }
-    showToast(updated>0?`✓ ${updated} TikToks actualizados`:"TikTok OK — 0 matches");
-  }catch(e){showToast("❌ TikTok error: "+e.message);console.error(e);}
-  btn.textContent=full?"🎵 Sync TT todo":"🎵 Sync TikTok";btn.disabled=false;
-}
+// El sync de nube hace IG y TikTok juntos; ambos botones disparan lo mismo
+async function syncApify(full=false){ return cloudSync(full, full?"apify-full-btn":"apify-sync-btn", full?"📸 Sync IG todo":"📸 Sync IG"); }
+async function syncTikTok(full=false){ return cloudSync(full, full?"tt-full-btn":"tt-sync-btn", full?"🎵 Sync TT todo":"🎵 Sync TikTok"); }
 
 function updateSyncStatus(){
   const el=document.getElementById("sync-status");
@@ -1351,7 +1252,7 @@ const AUTO_SYNC_MS=24*60*60*1000;
 const AUTO_WP_MS=24*60*60*1000;
 
 function checkAutoSync(){
-  if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_MS){setTimeout(()=>{syncApify();syncTikTok();},3000);}
+  if(!data.lastSyncTime||Date.now()-data.lastSyncTime>=AUTO_SYNC_MS){setTimeout(()=>{syncApify();},3000);}
   else updateSyncStatus();
 }
 
@@ -1401,7 +1302,7 @@ async function sendAdminReport(){
 
 setInterval(()=>{
   updateSyncStatus();
-  if(data.lastSyncTime&&Date.now()-data.lastSyncTime>=AUTO_SYNC_MS){syncApify();syncTikTok();}
+  if(data.lastSyncTime&&Date.now()-data.lastSyncTime>=AUTO_SYNC_MS){syncApify();}
   const h=new Date().getHours();
   if(h===18&&(!data.lastWpNotify||Date.now()-data.lastWpNotify>=AUTO_WP_MS)) notifyNoVideos();
   if(h===21&&(!data.lastAdminReport||Date.now()-data.lastAdminReport>=AUTO_WP_MS)){data.lastAdminReport=Date.now();saveData();sendAdminReport();}
@@ -1826,7 +1727,20 @@ function renderFinanzas(){
     // Más ventas semana
     const ventasCount = (data.bonoGranted['ventasCount']||{})[c] || (((data.bonosGanados||{})[c]||{})['ventas']?1:0);
 
-    return {c, vids, base, comVentas, bonos, total, pagado, deuda, vids10k, got100k, rachaCount, viralCount, ventasCount};
+    // Quincenas: pagos cada 15 días (Q1 = días 1-15, meta 75 videos; Q2 = días 16-30)
+    const startMs = new Date(campaignStartFor(c)+"T00:00:00").getTime();
+    const diaDe = fecha => Math.floor((new Date(fecha).getTime()-startMs)/86400000)+1;
+    const quincena = q => {
+      const d0=(q-1)*15+1, d1=q*15;
+      const qv = myVids.filter(v=>v.date && diaDe(v.date)>=d0 && diaDe(v.date)<=d1).length;
+      const qventas = (salesData||[]).filter(s=>s.creator===c && s.date && diaDe(s.date)>=d0 && diaDe(s.date)<=d1).length;
+      const qbase = Math.round(SALARY*Math.min(qv,75)/MIN_VIDEOS);
+      return {qv, qventas, sugerido: qbase + qventas*COMISION_POR_VENTA, completa: qv>=75};
+    };
+    const q1 = quincena(1), q2 = quincena(2);
+    const diaHoy = Math.floor((Date.now()-startMs)/86400000)+1;
+
+    return {c, vids, base, comVentas, bonos, total, pagado, deuda, vids10k, got100k, rachaCount, viralCount, ventasCount, q1, q2, diaHoy};
   });
 
   document.getElementById("finanzas-resumen").innerHTML = `
@@ -1865,6 +1779,21 @@ function renderFinanzas(){
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-xs);background:${r.deuda>0?"rgba(232,93,38,.06)":"rgba(26,58,143,.06)"};">
             <span style="font-size:11px;font-weight:700;color:${r.deuda>0?"var(--accent2)":"var(--blue)"};">${r.deuda>0?"⚠️ Pendiente":"✓ Al día"}</span>
+          </div>
+          <div style="border-top:1px solid var(--surface2);margin-top:8px;padding-top:8px;">
+            <div style="font-size:9px;font-family:'DM Mono';letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Pagos quincenales</div>
+            ${[['Q1 · días 1-15', r.q1, r.diaHoy>=15], ['Q2 · días 16-30', r.q2, r.diaHoy>=30]].map(([lbl,q,cerrada])=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:5px;">
+              <div>
+                <div style="font-size:10px;font-weight:800;color:var(--text);">${lbl} ${q.completa?'✅':cerrada?'⚠️':''}</div>
+                <div style="font-size:9px;font-family:'DM Mono';color:var(--muted);">${q.qv}/75 videos · ${q.qventas} ventas</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <span style="font-size:11px;font-weight:800;color:${q.completa||cerrada?'var(--accent)':'var(--muted)'};">$${q.sugerido.toLocaleString("es-AR")}</span>
+                ${(q.completa||cerrada)&&q.sugerido>0?`<button onclick="openPago('${r.c}',${q.sugerido})" title="Registrar pago de esta quincena" style="padding:4px 9px;background:var(--accent);color:white;border:none;border-radius:8px;font-family:'Nunito';font-size:10px;font-weight:800;cursor:pointer;">💰 Pagar</button>`:''}
+              </div>
+            </div>`).join('')}
+            <div style="font-size:8.5px;font-family:'DM Mono';color:var(--muted2);line-height:1.4;">Sugerido = base por videos de la quincena + ventas de la quincena. Los bonos van aparte (acumulados arriba).</div>
           </div>
           <button onclick="openPago('${r.c}',${r.deuda})" style="width:100%;margin-top:8px;padding:8px;background:var(--accent);color:white;border:none;border-radius:var(--radius-xs);font-family:'Nunito';font-size:12px;font-weight:700;cursor:pointer;">+ Registrar pago</button>
           <button onclick="resetPagosCreadora('${r.c}')" style="width:100%;margin-top:6px;padding:6px;background:none;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:'DM Mono';font-size:10px;color:var(--muted);cursor:pointer;">↺ Resetear pagos</button>
