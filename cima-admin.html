@@ -1562,9 +1562,11 @@ function autoAssignBonos(){
 
   let changed=false;
 
-  // $10.000 por cada video con 10k+ views
+  // $10.000 por cada video con 10k+ views (el video que ganó el bono de 100k NO cobra además este)
+  if(!data.bonoGranted['100k_video']) data.bonoGranted['100k_video']={};
   for(const v of data.videos){
     const vid=String(v.id);
+    if(data.bonoGranted['100k_video'][v.creator]===vid) continue;
     if((v.views||0)>=10000 && !data.bonoGranted['10k'].includes(vid)){
       if(!data.bonos[v.creator]) data.bonos[v.creator]=0;
       data.bonos[v.creator]+=10000;
@@ -1586,6 +1588,10 @@ function autoAssignBonos(){
       if(!data.bonosGanados) data.bonosGanados={};
       if(!data.bonosGanados[v.creator]) data.bonosGanados[v.creator]={};
       data.bonosGanados[v.creator]['100k']=true;
+      // Este video cobra SOLO el 100k: si ya había cobrado el 10k, se descuenta
+      data.bonoGranted['100k_video'][v.creator]=String(v.id);
+      const _ix=data.bonoGranted['10k'].indexOf(String(v.id));
+      if(_ix>=0){ data.bonoGranted['10k'].splice(_ix,1); data.bonos[v.creator]-=10000; }
       changed=true;
     }
   }
