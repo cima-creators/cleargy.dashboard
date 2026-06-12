@@ -1354,7 +1354,7 @@ function renderBonos(){
   const bonoTypes=[
     {key:"ventas",label:"🏆 Más ventas semana",desc:"Ganadora: la que más vendió esta semana. Mínimo 5 ventas para calificar. Premio: $40.000.",amount:40000},
     {key:"viral",label:"🔥 Video más viral",desc:"El video con más views de la semana. Premio: $40.000.",amount:40000},
-    {key:"racha",label:"📅 Racha completa",desc:"5 videos por día durante 7 días seguidos. Premio: $30.000 por cada racha (automático).",amount:30000},
+    {key:"racha",label:"📅 Racha completa",desc:"Cada 35 videos subidos (7 tandas de 5). Premio: $30.000 por bloque (automático).",amount:30000},
     {key:"10k",label:"⚡ Video +10K views",desc:"Cada video que supere 10.000 views. Premio: $10.000 por video.",amount:10000},
     {key:"100k",label:"🚀 Primer video 100K",desc:"Primer video en superar 100.000 views en la campaña. Premio: $75.000.",amount:75000},
     {key:"top30",label:"🏅 Top ventas día 30",desc:"Más ventas totales al finalizar la campaña. Premio: $200.000.",amount:200000},
@@ -1609,21 +1609,11 @@ function autoAssignBonos(){
     data.bonoGranted['racha']={};
     old.forEach(c=>{ data.bonoGranted['racha'][c]=1; });
   }
-  const porDia={}; // creadora -> {fecha: cantidad de videos}
-  for(const v of data.videos){
-    if(!v.creator||!v.date) continue;
-    const k=argDate(v.date);
-    if(!porDia[v.creator]) porDia[v.creator]={};
-    porDia[v.creator][k]=(porDia[v.creator][k]||0)+1;
-  }
-  for(const c of Object.keys(porDia)){
-    const diasOk=Object.keys(porDia[c]).filter(d=>porDia[c][d]>=5).sort();
-    let bloques=0, racha=0, prev=null;
-    for(const d of diasOk){
-      racha = (prev && (new Date(d)-new Date(prev))===86400000) ? racha+1 : 1;
-      prev=d;
-      if(racha===7){ bloques++; racha=0; prev=null; } // bloque completo → el siguiente arranca de cero
-    }
+  // Regla: un bloque de racha = 35 videos subidos (7 "días" de 5), sin exigir días consecutivos
+  const vidCount={};
+  for(const v of data.videos){ if(v.creator) vidCount[v.creator]=(vidCount[v.creator]||0)+1; }
+  for(const c of Object.keys(vidCount)){
+    const bloques=Math.floor(vidCount[c]/35);
     const pagados=data.bonoGranted['racha'][c]||0;
     if(bloques>pagados){
       if(!data.bonos[c]) data.bonos[c]=0;
