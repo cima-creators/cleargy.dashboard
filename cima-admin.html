@@ -914,9 +914,9 @@ function enterAdmin(){
 
 function doAdminLogin(){
   const inputPass=document.getElementById("a-pass").value;
-  if(inputPass===ADMIN_PASS){ window.adminRole='superadmin'; enterAdmin(); }
-  else if(inputPass===ADMIN_PASS2){ window.adminRole='brand'; enterAdmin(); }
-  else if(ADMIN_PASS3 && inputPass===ADMIN_PASS3){ window.adminRole='superadmin'; enterAdmin(); }
+  if(inputPass===ADMIN_PASS){ window.adminRole='superadmin'; window.adminUser='N'; enterAdmin(); }
+  else if(inputPass===ADMIN_PASS2){ window.adminRole='brand'; window.adminUser='M'; enterAdmin(); }
+  else if(ADMIN_PASS3 && inputPass===ADMIN_PASS3){ window.adminRole='superadmin'; window.adminUser='D'; enterAdmin(); }
   else{ document.getElementById("a-err").classList.add("show"); }
 }
 
@@ -1120,7 +1120,7 @@ function videoRow(v, compact=false){
     ${cols.nota?`<td style="min-width:150px;vertical-align:top;padding-top:8px;">
       ${v.notes?`<div style="font-size:10px;font-family:'DM Mono';color:var(--muted);background:var(--surface2);border-left:2px solid var(--border2);padding:3px 7px;border-radius:0 6px 6px 0;margin-bottom:5px;max-width:145px;word-break:break-word;line-height:1.4;">🏷 ${esc(v.notes)}</div>`:""}
       ${(window.adminRole==='brand'||v.brandNote)?`<input type="text" value="${esc(v.brandNote||'')}" placeholder="Nota marca..." onchange="setAdminNote('${v.id}',this.value)" ${window.adminRole!=='brand'?'readonly':''} style="background:rgba(217,119,6,.07);border:1px solid rgba(217,119,6,.3);padding:3px 7px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:140px;color:var(--text);outline:none;margin-bottom:4px;display:block;" title="Nota del dueño de marca">`:""}
-      ${(window.adminRole==='superadmin'||v.adminNote)?`<input type="text" value="${esc(v.adminNote||'')}" placeholder="Tu nota..." onchange="setAdminNote('${v.id}',this.value)" ${window.adminRole!=='superadmin'?'readonly':''} style="background:rgba(42,82,201,.06);border:1px solid rgba(42,82,201,.25);padding:3px 7px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:140px;color:var(--text);outline:none;display:block;" title="Nota del admin">`:""}
+      ${(window.adminRole==='superadmin'||v.adminNote)?`<div style="display:flex;align-items:center;gap:4px;">${v.adminNoteBy?`<span style="flex-shrink:0;font-size:9px;font-weight:800;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;color:#fff;background:${v.adminNoteBy==='D'?'#7c3aed':'#2a52c9'};" title="${v.adminNoteBy==='D'?'Dani':'Nacho'}">${v.adminNoteBy}</span>`:''}<input type="text" value="${esc(v.adminNote||'')}" placeholder="Tu nota..." onchange="setAdminNote('${v.id}',this.value)" ${window.adminRole!=='superadmin'?'readonly':''} style="background:rgba(42,82,201,.06);border:1px solid rgba(42,82,201,.25);padding:3px 7px;border-radius:var(--radius-xs);font-size:11px;font-family:'Nunito';width:${v.adminNoteBy?'122px':'140px'};color:var(--text);outline:none;" title="Nota del admin"></div>`:""}
     </td>`:""}
     <td><div class="action-row" style="flex-wrap:nowrap;">
       <button class="abtn abtn-approve" onclick="setStatus('${v.id}','approved')">✓</button>
@@ -1207,10 +1207,12 @@ function setAdminNote(id, note){
   const v=data.videos.find(x=>x.id==id);
   if(!v) return;
   const field = (window.adminRole==='brand') ? 'brandNote' : 'adminNote';
+  const byField = (field==='brandNote') ? 'brandNoteBy' : 'adminNoteBy';
   const prev=v[field]||"";
   v[field]=note.trim();
-  // Merge: escribe SOLO este campo de nota, jamás pisa estado/métricas/otra nota
-  if(window._fbPatchVideo) window._fbPatchVideo(id, {[field]: v[field]});
+  v[byField]=window.adminUser||''; // D=Dani, N=Nacho, M=Marca
+  // Merge: escribe SOLO este campo de nota + su autor, jamás pisa lo demás
+  if(window._fbPatchVideo) window._fbPatchVideo(id, {[field]: v[field], [byField]: v[byField]});
   else if(window._fbUpdateVideo) window._fbUpdateVideo(v);
   if(v[field] && v[field]!==prev){
     if(!data.notifs) data.notifs=[];
