@@ -2310,7 +2310,7 @@ loadConfig();
     // Caché persistente (IndexedDB): menos lecturas facturadas y resiliencia offline. Multi-tab safe.
     let db;
     try {
-      db = initializeFirestore(app, {localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})});
+      db = initializeFirestore(app, {localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}), experimentalAutoDetectLongPolling: true});
     } catch(e) {
       console.warn('Cache persistente no disponible, usando memoria:', e);
       db = getFirestore(app);
