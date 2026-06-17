@@ -1049,22 +1049,13 @@ function renderOverview(){
       <div style="display:flex;justify-content:space-between;font-family:'DM Mono';font-size:9px;opacity:.4;margin-top:5px;">
         <span>0</span><span>${_goal} videos</span>
       </div>
-      <div style="margin-top:18px;background:rgba(255,255,255,.14);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.7;">👀 VIEWS GENERADAS</div>
-          <div style="font-family:'Nunito';font-size:38px;font-weight:900;line-height:1.1;letter-spacing:-1px;">${fmtV(totalViews)}</div>
-        </div>
-        <div style="text-align:right;">
-          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;opacity:.55;">${periodLabel}</div>
-          <div style="font-family:'Nunito';font-size:20px;font-weight:800;opacity:.9;">+${fmtV(viewsPeriodo)}</div>
-        </div>
-      </div>
     </div>
   `;
 
   document.getElementById("admin-stats").innerHTML=`
     <div class="scard"><div class="sc-label">Videos · ${periodLabel}</div><div class="sc-val" style="color:#16a34a">${videosEnPeriodo.length}</div><div class="sc-sub">en el período</div></div>
     <div class="scard"><div class="sc-label">Total videos</div><div class="sc-val" style="color:#2a8fd4">${totalVids}</div><div class="sc-sub">en la campaña</div></div>
+    <div class="scard"><div class="sc-label">👀 Views generadas</div><div class="sc-val" style="color:#0d9488">${fmtV(totalViews)}</div><div class="sc-sub">+${fmtV(viewsPeriodo)} ${periodLabel}</div></div>
     <div class="scard"><div class="sc-label">Pendientes</div><div class="sc-val" style="color:#e85d26">${pending}</div><div class="sc-sub">sin aprobar</div></div>
     <div class="scard"><div class="sc-label">Virales</div><div class="sc-val" style="color:#7c3aed">${viral}</div><div class="sc-sub">+10K views</div></div>
   `;
