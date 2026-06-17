@@ -1020,6 +1020,8 @@ function renderOverview(){
   const totalVentas=CREATORS.reduce((a,c)=>a+(data.ventas[c]||0),0);
   const pending=data.videos.filter(v=>v.status==="pending").length;
   const viral=data.videos.filter(v=>v.views>=10000).length;
+  const totalViews=data.videos.reduce((a,v)=>a+viewsAcum(v),0);
+  const viewsPeriodo=videosEnPeriodo.reduce((a,v)=>a+viewsAcum(v),0);
   const VIDEO_GOAL=750;
 
   const vidPct = Math.min(100, Math.round(totalVids / 750 * 100));
@@ -1046,6 +1048,16 @@ function renderOverview(){
       </div>
       <div style="display:flex;justify-content:space-between;font-family:'DM Mono';font-size:9px;opacity:.4;margin-top:5px;">
         <span>0</span><span>${_goal} videos</span>
+      </div>
+      <div style="margin-top:18px;background:rgba(255,255,255,.14);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;opacity:.7;">👀 VIEWS GENERADAS</div>
+          <div style="font-family:'Nunito';font-size:38px;font-weight:900;line-height:1.1;letter-spacing:-1px;">${fmtV(totalViews)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;opacity:.55;">${periodLabel}</div>
+          <div style="font-family:'Nunito';font-size:20px;font-weight:800;opacity:.9;">+${fmtV(viewsPeriodo)}</div>
+        </div>
       </div>
     </div>
   `;
