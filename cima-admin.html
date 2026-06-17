@@ -1580,7 +1580,7 @@ function autoAssignBonos(){
   for(const v of data.videos){
     const vid=String(v.id);
     if(data.bonoGranted['100k_video'][v.creator]===vid) continue;
-    if((v.views||0)>=10000 && !data.bonoGranted['10k'].includes(vid)){
+    if((v.views||0)>=10000 && v.status==='approved' && !data.bonoGranted['10k'].includes(vid)){
       if(!data.bonos[v.creator]) data.bonos[v.creator]=0;
       data.bonos[v.creator]+=10000;
       data.bonoGranted['10k'].push(vid);
@@ -1594,7 +1594,7 @@ function autoAssignBonos(){
 
   // $75.000 por primer video con 100k+ views (1 por creadora)
   for(const v of data.videos){
-    if((v.views||0)>=100000 && !data.bonoGranted['100k'].includes(v.creator)){
+    if((v.views||0)>=100000 && v.status==='approved' && !data.bonoGranted['100k'].includes(v.creator)){
       if(!data.bonos[v.creator]) data.bonos[v.creator]=0;
       data.bonos[v.creator]+=75000;
       data.bonoGranted['100k'].push(v.creator);
@@ -1620,7 +1620,7 @@ function autoAssignBonos(){
   }
   // Regla: un bloque de racha = 35 videos subidos (7 "días" de 5), sin exigir días consecutivos
   const vidCount={};
-  for(const v of data.videos){ if(v.creator) vidCount[v.creator]=(vidCount[v.creator]||0)+1; }
+  for(const v of data.videos){ if(v.creator && v.status==='approved') vidCount[v.creator]=(vidCount[v.creator]||0)+1; }
   for(const c of Object.keys(vidCount)){
     const bloques=Math.floor(vidCount[c]/35);
     const pagados=data.bonoGranted['racha'][c]||0;
@@ -1859,7 +1859,8 @@ function renderFinanzas(){
 
   const rows = CREATORS.map(c => {
     const myVids = data.videos.filter(v=>v.creator===c);
-    const vids = myVids.length;
+    const myAprob = myVids.filter(v=>v.status==='approved'); // solo aprobados cuentan para pagar
+    const vids = myAprob.length;
     const base = Math.round(SALARY * (vids / MIN_VIDEOS));
     const comVentas = (data.ventas[c]||0)*COMISION_POR_VENTA;
     const bonos = (data.bonos[c]||0);
@@ -1886,7 +1887,7 @@ function renderFinanzas(){
     const diaDe = fecha => Math.floor((new Date(fecha).getTime()-startMs)/86400000)+1;
     const quincena = q => {
       const d0=(q-1)*15+1, d1=q*15;
-      const qv = myVids.filter(v=>v.date && diaDe(v.date)>=d0 && diaDe(v.date)<=d1).length;
+      const qv = myAprob.filter(v=>v.date && diaDe(v.date)>=d0 && diaDe(v.date)<=d1).length;
       const qventas = (salesData||[]).filter(s=>s.creator===c && s.date && diaDe(s.date)>=d0 && diaDe(s.date)<=d1).length;
       const qbase = Math.round(SALARY*Math.min(qv,75)/MIN_VIDEOS);
       return {qv, qventas, sugerido: qbase + qventas*COMISION_POR_VENTA, completa: qv>=75};
