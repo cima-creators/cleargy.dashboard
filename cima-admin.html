@@ -2572,7 +2572,11 @@ loadConfig();
           amount: typeof f.amount === 'number' ? f.amount : parseFloat(f.amount||0),
           date: f.date,
           product: f.product,
-          currency: f.currency
+          currency: f.currency,
+          hora: f.hora,
+          token: f.token,
+          coupon: f.coupon,
+          orderNumber: f.orderNumber
         };
       });
 
