@@ -2291,8 +2291,10 @@ loadConfig();
           <thead><tr style="border-bottom:1px solid var(--border);">
             <th style="padding:10px 14px;text-align:left;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">CREADORA</th>
             <th style="padding:10px 14px;text-align:left;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">PRODUCTO</th>
+            <th style="padding:10px 14px;text-align:center;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">CÓDIGO</th>
             <th style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">MONTO</th>
-            <th style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">FECHA</th>
+            <th style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">FECHA / HORA</th>
+            <th style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);">ORDEN / TOKEN</th>
           </tr></thead>
           <tbody>
             ${[...salesData].sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,50).map(s=>`
@@ -2302,8 +2304,10 @@ loadConfig();
                   <span style="font-size:12px;">${(NAMES[s.creator]||s.creator||'—').split(' ')[0]}</span>
                 </div></td>
                 <td style="padding:10px 14px;font-size:11px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.product||'—'}</td>
+                <td style="padding:10px 14px;text-align:center;">${s.coupon?`<span style="font-family:'DM Mono';font-size:10px;font-weight:700;color:#7c3aed;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);border-radius:8px;padding:2px 7px;">${s.coupon}</span>`:'<span style="font-size:10px;color:var(--muted2);opacity:.5;">UTM</span>'}</td>
                 <td style="padding:10px 14px;text-align:right;font-family:'Nunito';font-weight:800;font-size:13px;color:#16a34a;">${fmtP(s.amount||0)}</td>
-                <td style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:10px;color:var(--muted);">${(s.date||'').split('T')[0]}<br><span style="font-size:9px;opacity:.7;">${(s.date||'').split('T')[1]?.slice(0,5)||''}</span></td>
+                <td style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:10px;color:var(--muted);">${(s.date||'').split('T')[0]}<br><span style="font-size:9px;opacity:.7;">${s.hora||(s.date||'').split('T')[1]?.slice(0,5)||''}</span></td>
+                <td style="padding:10px 14px;text-align:right;font-family:'DM Mono';font-size:10px;color:var(--muted);white-space:nowrap;">${s.orderNumber?`#${s.orderNumber}`:'—'}${s.token?`<br><span title="${s.token}" onclick="navigator.clipboard.writeText('${s.token}');showToast('Token copiado 📋')" style="font-size:9px;opacity:.6;cursor:pointer;text-decoration:underline dotted;">${String(s.token).slice(0,10)}… 📋</span>`:''}</td>
               </tr>`).join('')}
           </tbody>
         </table>
