@@ -1158,7 +1158,10 @@ function escUrl(l){l=(l||'').trim();if(!l)return '';if(!/^https?:\/\//i.test(l))
 
 function videoRow(v, compact=false){
   const cols=compact?{cat:false,metrics:true,nota:false,plat:false}:vidCols;
-  const metricsStr=[(v.views?fmtV(v.views)+" views":"—"),(v.ttViews?fmtV(v.ttViews)+" TT":"")].filter(Boolean).join(" · ");
+  const _igv=Number(v.igViews)||0, _ttv=Number(v.ttViews)||0;
+  const metricsStr = (_igv||_ttv)
+    ? [_igv?("📸 "+fmtV(_igv)):"", _ttv?("🎵 "+fmtV(_ttv)):""].filter(Boolean).join(" + ") + ((_igv&&_ttv)?(" = "+fmtV(_igv+_ttv)):"")
+    : (v.views?fmtV(v.views)+" views":"—");
   const igBtn = v.linkIg
     ? `<a href="${escUrl(v.linkIg)}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">📸 IG</a>`
     : "";
@@ -1223,8 +1226,8 @@ function renderVideos(){
   const dateFrom=document.getElementById("vf-date-from")?.value;
   const dateTo=document.getElementById("vf-date-to")?.value;
   let vids=[...data.videos].sort((a,b)=>{
-    if(vsort==="views_desc") return (b.views||0)-(a.views||0);
-    if(vsort==="views_asc") return (a.views||0)-(b.views||0);
+    if(vsort==="views_desc") return viewsAcum(b)-viewsAcum(a);
+    if(vsort==="views_asc") return viewsAcum(a)-viewsAcum(b);
     return new Date(b.date)-new Date(a.date);
   });
   if(cf!=="ALL") vids=vids.filter(v=>v.creator===cf);
