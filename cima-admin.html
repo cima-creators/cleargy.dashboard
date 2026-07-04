@@ -1948,6 +1948,9 @@ function renderFinanzas(){
     return {c, vids, base, comVentas, bonos, total, pagado, deuda, vids10k, got100k, rachaCount, viralCount, ventasCount, q1, q2, diaHoy};
   });
 
+  // Orden: mayor deuda arriba (los $0 quedan al final)
+  rows.sort((a,b)=>b.deuda-a.deuda);
+
   document.getElementById("finanzas-resumen").innerHTML = `
     <div class="creator-grid">
       ${rows.map(r=>`
