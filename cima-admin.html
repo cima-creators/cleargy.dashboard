@@ -507,6 +507,10 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="fgroup"><div class="flabel">Shares</div><input class="fi" type="number" id="edit-shares"></div>
       <div class="fgroup"><div class="flabel">Saves</div><input class="fi" type="number" id="edit-saves"></div>
     </div>
+    <div class="fgroup" id="edit-product-group" style="display:none;">
+      <div class="flabel">📦 Producto</div>
+      <select class="fi" id="edit-product"><option value="">— Sin producto —</option></select>
+    </div>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
       <input type="checkbox" id="edit-featured" style="width:16px;height:16px;accent-color:var(--blue);">
       <label style="font-size:13px;font-weight:700;">⭐ Destacar este video</label>
@@ -785,6 +789,12 @@ window.BRAND_COLLECTION = BRAND.collection;
     if(vfp && BRAND.products){
       vfp.innerHTML = '<option value="ALL">📦 Todos los productos</option>' + BRAND.products.map(p=>`<option>${p}</option>`).join('');
       vfp.style.display = '';
+    }
+    const evp = document.getElementById('edit-product');
+    if(evp && BRAND.products){
+      evp.innerHTML = '<option value="">— Sin producto —</option>' + BRAND.products.map(p=>`<option>${p}</option>`).join('');
+      const epg = document.getElementById('edit-product-group');
+      if(epg) epg.style.display = '';
     }
   });
 })();
@@ -1593,6 +1603,7 @@ function openEditVideo(id){
   document.getElementById("edit-likes").value = v.likes||0;
   document.getElementById("edit-shares").value = v.shares||0;
   document.getElementById("edit-saves").value = v.saves||0;
+  const _evp=document.getElementById("edit-product"); if(_evp) _evp.value = v.producto||"";
   document.getElementById("edit-featured").checked = v.featured||false;
   document.getElementById("edit-overlay").classList.add("open");
 }
@@ -1607,8 +1618,10 @@ function submitEditVideo(){
   v.featured = document.getElementById("edit-featured").checked;
   if(v.featured && !wasFeatured) v.featuredAt = new Date().toISOString();
   if(!v.featured) delete v.featuredAt;
+  const _evp2=document.getElementById("edit-product");
+  if(_evp2 && BRAND.products){ v.producto = _evp2.value || ""; }
   // Merge: escribe SOLO las métricas editadas, nunca pisa la nota
-  if(window._fbPatchVideo) window._fbPatchVideo(v.id, {views:v.views, likes:v.likes, shares:v.shares, saves:v.saves, featured:v.featured, featuredAt:v.featuredAt||null});
+  if(window._fbPatchVideo) window._fbPatchVideo(v.id, {views:v.views, likes:v.likes, shares:v.shares, saves:v.saves, featured:v.featured, featuredAt:v.featuredAt||null, ...(BRAND.products?{producto:v.producto||""}:{})});
   else if(window._fbUpdateVideo) window._fbUpdateVideo(v);
   saveData(); renderAll(); renderVideos();
   document.getElementById("edit-overlay").classList.remove("open");
