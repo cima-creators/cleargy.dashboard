@@ -1435,7 +1435,7 @@ function renderBonos(){
   const bonoTypes=[
     {key:"ventas",label:"🏆 Más ventas semana",desc:"Ganadora: la que más vendió esta semana. Mínimo 5 ventas para calificar. Premio: $40.000.",amount:40000},
     {key:"viral",label:"🔥 Video más viral",desc:"El video con más views de la semana. Premio: $40.000.",amount:40000},
-    {key:"racha",label:"📅 Racha completa",desc:"Cada 35 videos subidos (7 tandas de 5). Premio: $30.000 por bloque (automático).",amount:30000},
+    {key:"racha",label:"📅 Racha completa",desc:"7 días seguidos subiendo sus 5 videos diarios. Premio: $30.000 por bloque (automático, repetible).",amount:30000},
     {key:"10k",label:"⚡ Video +10K views",desc:"Cada video que supere 10.000 views. Premio: $10.000 por video.",amount:10000},
     {key:"100k",label:"🚀 Primer video 100K",desc:"Primer video en superar 100.000 views en la campaña. Premio: $75.000.",amount:75000},
     {key:"top30",label:"🏅 Top ventas día 30",desc:"Más ventas totales al finalizar la campaña. Premio: $200.000.",amount:200000},
@@ -1695,11 +1695,23 @@ function autoAssignBonos(){
     data.bonoGranted['racha']={};
     old.forEach(c=>{ data.bonoGranted['racha'][c]=1; });
   }
-  // Regla: un bloque de racha = 35 videos subidos (7 "días" de 5), sin exigir días consecutivos
-  const vidCount={};
-  for(const v of data.videos){ if(v.creator && cuentaPago(v)) vidCount[v.creator]=(vidCount[v.creator]||0)+1; }
-  for(const c of Object.keys(vidCount)){
-    const bloques=Math.floor(vidCount[c]/35);
+  // Regla: un bloque de racha = 7 días CONSECUTIVOS con 5+ videos válidos por día (en tiempo y forma)
+  const _diasDe={};
+  for(const v of data.videos){
+    if(!v.creator || !v.date || !cuentaPago(v)) continue;
+    if(!_diasDe[v.creator]) _diasDe[v.creator]={};
+    const _d=argDate(v.date);
+    _diasDe[v.creator][_d]=(_diasDe[v.creator][_d]||0)+1;
+  }
+  for(const c of Object.keys(_diasDe)){
+    const _fechas=Object.keys(_diasDe[c]).filter(d=>_diasDe[c][d]>=5).sort();
+    let bloques=0, _strk=0, _prevT=null;
+    for(const f of _fechas){
+      const _t=new Date(f+"T00:00:00").getTime();
+      _strk=(_prevT!==null && _t-_prevT===86400000) ? _strk+1 : 1;
+      _prevT=_t;
+      if(_strk===7){ bloques++; _strk=0; _prevT=null; }
+    }
     const pagados=data.bonoGranted['racha'][c]||0;
     if(bloques>pagados){
       if(!data.bonos[c]) data.bonos[c]=0;
@@ -1749,11 +1761,11 @@ function autoAssignBonos(){
       const top=Object.entries(cuenta).sort((a,b)=>b[1]-a[1]);
       if(top.length && top[0][1]>=5 && (top.length<2||top[0][1]>top[1][1])) _otorgarSemanal(top[0][0],"ventas",wkey,"ventas");
     }
-    // Video más viral de la semana (entre los subidos esa semana)
+    // Video más viral de la semana (entre los subidos esa semana) — mínimo 10.000 views para calificar
     if(!data.bonoGranted.weekly[wkey+"_viral"]){
       const delaSemana=(data.videos||[]).filter(v=>{ if(!v.date||!v.creator) return false; const d=new Date(v.date); return d>=ini&&d<fin; });
-      const top=[...delaSemana].sort((a,b)=>(Number(b.views)||0)-(Number(a.views)||0))[0];
-      if(top && (Number(top.views)||0)>0) _otorgarSemanal(top.creator,"viral",wkey,"video más viral");
+      const top=[...delaSemana].sort((a,b)=>viewsAcum(b)-viewsAcum(a))[0];
+      if(top && viewsAcum(top)>=10000) _otorgarSemanal(top.creator,"viral",wkey,"video más viral");
     }
   }
 
