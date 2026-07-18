@@ -745,7 +745,7 @@ const BRAND_CONFIGS = {
     }
   },
   skinfinity: {
-    name:'Skinfinity', logoText:'SKINFINITY', collection:'skinfinity', defaultCampaignStart:'2026-07-02',
+    name:'Skinfinity', logoText:'SKINFINITY', collection:'skinfinity', defaultCampaignStart:'2026-07-02', dailyVideos:3, videoGoal:100, noRacha:true,
     logoImg:'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="260" height="80"><rect width="260" height="80" rx="10" fill="%23133327"/><text x="130" y="51" font-family="Georgia,serif" font-size="29" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="1.5">SKINFINITY</text></svg>',
     adminPass:'skinfinity-admin-2025', adminPass2:'skinfinity-2025', adminPass3:'dani-2026',
     accent:'#133327', accentLight:'#2a5a45', bg:'#eef5f1', surface2:'#e2ede7', border:'#c5dbd0',
@@ -760,7 +760,7 @@ const BRAND_CONFIGS = {
     }
   },
   promedics: {
-    name:'Promedics', logoText:'PROMEDIC', collection:'promedics', defaultCampaignStart:'2026-07-02',
+    name:'Promedics', logoText:'PROMEDIC', collection:'promedics', defaultCampaignStart:'2026-07-02', dailyVideos:3, videoGoal:100, noRacha:true,
     logoImg:'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="260" height="96"><rect width="260" height="96" rx="10" fill="%234E93B5"/><text x="130" y="54" font-family="Verdana,Arial,sans-serif" font-size="34" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="-1">promedic</text><text x="130" y="78" font-family="Verdana,Arial,sans-serif" font-size="11" fill="white" text-anchor="middle" letter-spacing="6">health treatment</text></svg>',
     adminPass:'promedics-admin-2025', adminPass2:'promedics-2025', adminPass3:'dani-2026',
     accent:'#3d7fa3', accentLight:'#4e93b5', bg:'#eef5f9', surface2:'#e2edf4', border:'#c5dbe8',
@@ -1085,7 +1085,7 @@ function renderOverview(){
   const viral=validos.filter(v=>v.views>=10000).length;
   const totalViews=validos.reduce((a,v)=>a+viewsAcum(v),0);
   const viewsPeriodo=videosEnPeriodo.reduce((a,v)=>a+viewsAcum(v),0);
-  const VIDEO_GOAL=750;
+  const VIDEO_GOAL=BRAND.videoGoal||750;
 
   const vidPct = Math.min(100, Math.round(totalVids / 750 * 100));
   const _goal=BRAND.goal||750;
@@ -1212,14 +1212,15 @@ function renderStatusPanel(){
     const total=(data.videos||[]).filter(v=>v.creator===c&&v.status!=='rejected').length;
     const hoy=(data.videos||[]).filter(v=>v.creator===c&&argDate(v.date)===today).length;
     const racha=getVideosOnDay(c,0)===0&&getVideosOnDay(c,1)===0;
-    const pct=Math.min(100,Math.round(total/5*100));
+    const _dv=BRAND.dailyVideos||5;
+    const pct=Math.min(100,Math.round(total/_dv*100));
     const color=COLORS[c]||"#6366f1";
     return`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
         <span style="font-family:'Nunito';font-weight:800;font-size:13px;color:${color}">${NAMES[c].split(" ")[0]}</span>
         <div style="display:flex;gap:6px;align-items:center;">
           ${racha?'<span style="background:#fee2e2;color:#dc2626;font-size:9px;font-family:\'DM Mono\';padding:2px 7px;border-radius:20px;font-weight:700;">RACHA</span>':""}
-          <span style="font-family:'DM Mono';font-size:11px;color:var(--muted);">${total}/5 total · ${hoy} hoy</span>
+          <span style="font-family:'DM Mono';font-size:11px;color:var(--muted);">${total}/${_dv} total · ${hoy} hoy</span>
         </div>
       </div>
       <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;">
@@ -1446,7 +1447,7 @@ function renderBonos(){
     ${CREATORS.map(c=>`<button onclick="resetCreadoraBonos('${c}')" style="padding:5px 12px;border-radius:20px;font-size:10px;font-family:'Nunito';font-weight:700;cursor:pointer;background:rgba(232,93,38,.06);border:1px solid rgba(232,93,38,.2);color:var(--accent2);">↺ ${NAMES[c].split(' ')[0]}</button>`).join('')}
   </div>`;
 
-  const bonoCards=bonoTypes.map(b=>`
+  const bonoCards=bonoTypes.filter(b=>!(BRAND.noRacha&&b.key==="racha")).map(b=>`
     <div style="background:white;border-radius:var(--radius);padding:20px;margin-bottom:12px;box-shadow:var(--shadow);">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">
         <div>
@@ -1703,8 +1704,8 @@ function autoAssignBonos(){
     const _d=argDate(v.date);
     _diasDe[v.creator][_d]=(_diasDe[v.creator][_d]||0)+1;
   }
-  for(const c of Object.keys(_diasDe)){
-    const _fechas=Object.keys(_diasDe[c]).filter(d=>_diasDe[c][d]>=5).sort();
+  if(!BRAND.noRacha) for(const c of Object.keys(_diasDe)){
+    const _fechas=Object.keys(_diasDe[c]).filter(d=>_diasDe[c][d]>=(BRAND.dailyVideos||5)).sort();
     let bloques=0, _strk=0, _prevT=null;
     for(const f of _fechas){
       const _t=new Date(f+"T00:00:00").getTime();
