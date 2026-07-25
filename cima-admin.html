@@ -745,7 +745,7 @@ const BRAND_CONFIGS = {
     }
   },
   skinfinity: {
-    name:'Skinfinity', logoText:'SKINFINITY', collection:'skinfinity', defaultCampaignStart:'2026-07-02', dailyVideos:3, videoGoal:100, noRacha:true,
+    name:'Skinfinity', logoText:'SKINFINITY', collection:'skinfinity', defaultCampaignStart:'2026-07-02', dailyVideos:3, videoGoal:100, noRacha:true, salary:500000, minVideos:100,
     logoImg:'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="260" height="80"><rect width="260" height="80" rx="10" fill="%23133327"/><text x="130" y="51" font-family="Georgia,serif" font-size="29" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="1.5">SKINFINITY</text></svg>',
     adminPass:'skinfinity-admin-2025', adminPass2:'skinfinity-2025', adminPass3:'dani-2026',
     accent:'#133327', accentLight:'#2a5a45', bg:'#eef5f1', surface2:'#e2ede7', border:'#c5dbd0',
@@ -861,9 +861,10 @@ function campaignStartFor(c){
   }
   return ((data&&data.startDates)||{})[c] || BRAND.defaultCampaignStart || "2026-05-25";
 }
-const SALARY = 650000;
+const SALARY = BRAND.salary || 650000;
 const COMISION_POR_VENTA = 2500;
-const MIN_VIDEOS = 150;
+const MIN_VIDEOS = BRAND.minVideos || 150;
+const QUINCENA_META = Math.round(MIN_VIDEOS/2); // meta de videos por quincena (mitad del objetivo)
 // Ventana de gracia: hasta el viernes 19/6 los pendientes cuentan; desde ahí, solo aprobados.
 // Los rechazados NUNCA cuentan.
 const GRACE_END = new Date('2026-06-19T00:00:00-03:00');
@@ -1403,7 +1404,7 @@ async function sendAdminReport(){
   });
   if(hoy.length===0&&racha.length===0&&quincenasListas.length===0)return;
   let msg="📊 *Reporte "+BRAND.name+" — "+new Date().toLocaleDateString("es-AR")+"*\n\n";
-  if(quincenasListas.length>0){msg+="💰 *Quincenas para pagar:*\n";quincenasListas.forEach(x=>{msg+="• "+NAMES[x.c]+" cerró "+x.q+" con "+x.n+"/75 videos "+(x.n>=75?"✅":"⚠️")+"\n";});msg+="\n";}
+  if(quincenasListas.length>0){msg+="💰 *Quincenas para pagar:*\n";quincenasListas.forEach(x=>{msg+="• "+NAMES[x.c]+" cerró "+x.q+" con "+x.n+"/"+QUINCENA_META+" videos "+(x.n>=QUINCENA_META?"✅":"⚠️")+"\n";});msg+="\n";}
   if(hoy.length>0){msg+="⚠️ *Sin 5 videos hoy:*\n";hoy.forEach(c=>{const cant=getVideosOnDay(c,0);msg+="• "+NAMES[c]+" ("+cant+"/5)\n";});msg+="\n";}
   if(racha.length>0){msg+="🔴 *Racha — 2 días sin subir:*\n";racha.forEach(c=>{msg+="• "+NAMES[c]+"\n";});}
   try{
@@ -1979,8 +1980,8 @@ function renderFinanzas(){
       const d0=(q-1)*15+1, d1=q*15;
       const qv = myAprob.filter(v=>v.date && diaDe(v.date)>=d0 && diaDe(v.date)<=d1).length;
       const qventas = (salesData||[]).filter(s=>s.creator===c && s.date && diaDe(s.date)>=d0 && diaDe(s.date)<=d1).length;
-      const qbase = Math.round(SALARY*Math.min(qv,75)/MIN_VIDEOS);
-      return {qv, qventas, sugerido: qbase + qventas*COMISION_POR_VENTA, completa: qv>=75};
+      const qbase = Math.round(SALARY*Math.min(qv,QUINCENA_META)/MIN_VIDEOS);
+      return {qv, qventas, sugerido: qbase + qventas*COMISION_POR_VENTA, completa: qv>=QUINCENA_META};
     };
     const q1 = quincena(1), q2 = quincena(2);
     const diaHoy = Math.floor((Date.now()-startMs)/86400000)+1;
@@ -2037,7 +2038,7 @@ function renderFinanzas(){
             <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:5px;">
               <div>
                 <div style="font-size:10px;font-weight:800;color:var(--text);">${lbl} ${q.completa?'✅':cerrada?'⚠️':''}</div>
-                <div style="font-size:9px;font-family:'DM Mono';color:var(--muted);">${q.qv}/75 videos · ${q.qventas} ventas</div>
+                <div style="font-size:9px;font-family:'DM Mono';color:var(--muted);">${q.qv}/${QUINCENA_META} videos · ${q.qventas} ventas</div>
               </div>
               <div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-size:11px;font-weight:800;color:${q.completa||cerrada?'var(--accent)':'var(--muted)'};">$${q.sugerido.toLocaleString("es-AR")}</span>
