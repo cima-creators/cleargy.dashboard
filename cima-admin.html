@@ -332,6 +332,11 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
           <select class="fsel" id="vf-product" onchange="renderVideos()" style="display:none;">
             <option value="ALL">📦 Todos los productos</option>
           </select>
+          <select class="fsel" id="vf-views" onchange="renderVideos()">
+            <option value="ALL">Views: todas</option>
+            <option value="5000">🔥 +5.000 views</option>
+            <option value="10000">🔥 +10.000 views</option>
+          </select>
           <input type="date" class="fsel" id="vf-date-from" onchange="renderVideos()" title="Desde">
           <input type="date" class="fsel" id="vf-date-to" onchange="renderVideos()" title="Hasta">
           <select class="fsel" id="vf-sort" onchange="renderVideos()">
@@ -1246,6 +1251,8 @@ function renderVideos(){
   if(cf!=="ALL") vids=vids.filter(v=>v.creator===cf);
   const pf=document.getElementById("vf-product")?.value||"ALL";
   if(pf!=="ALL") vids=vids.filter(v=>v.producto===pf);
+  const wf=document.getElementById("vf-views")?.value||"ALL";
+  if(wf!=="ALL") vids=vids.filter(v=>viewsAcum(v)>=Number(wf));
   if(sf==="featured") vids=vids.filter(v=>v.featured||v.featuredAt);
   else if(sf!=="ALL") vids=vids.filter(v=>v.status===sf);
   if(dateFrom) vids=vids.filter(v=>v.date&&v.date.slice(0,10)>=dateFrom);
