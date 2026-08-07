@@ -888,6 +888,7 @@ const SALARY = BRAND.salary || 650000;
 const COMISION_POR_VENTA = 2500;
 const MIN_VIDEOS = BRAND.minVideos || 150;
 const QUINCENA_META = Math.round(MIN_VIDEOS/2); // meta de videos por quincena (mitad del objetivo)
+const RACHA_ACTIVA = false; // Bono de racha DISCONTINUADO en todas las marcas (2026-08)
 // Ventana de gracia: hasta el viernes 19/6 los pendientes cuentan; desde ahí, solo aprobados.
 // Los rechazados NUNCA cuentan.
 const GRACE_END = new Date('2026-06-19T00:00:00-03:00');
@@ -1473,7 +1474,7 @@ function renderBonos(){
     ${CREATORS.map(c=>`<button onclick="resetCreadoraBonos('${c}')" style="padding:5px 12px;border-radius:20px;font-size:10px;font-family:'Nunito';font-weight:700;cursor:pointer;background:rgba(232,93,38,.06);border:1px solid rgba(232,93,38,.2);color:var(--accent2);">↺ ${NAMES[c].split(' ')[0]}</button>`).join('')}
   </div>`;
 
-  const bonoCards=bonoTypes.filter(b=>!(BRAND.noRacha&&b.key==="racha")).map(b=>`
+  const bonoCards=bonoTypes.filter(b=>!((!RACHA_ACTIVA||BRAND.noRacha)&&b.key==="racha")).map(b=>`
     <div style="background:white;border-radius:var(--radius);padding:20px;margin-bottom:12px;box-shadow:var(--shadow);">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">
         <div>
@@ -1730,7 +1731,7 @@ function autoAssignBonos(){
     const _d=argDate(v.date);
     _diasDe[v.creator][_d]=(_diasDe[v.creator][_d]||0)+1;
   }
-  if(!BRAND.noRacha) for(const c of Object.keys(_diasDe)){
+  if(RACHA_ACTIVA && !BRAND.noRacha) for(const c of Object.keys(_diasDe)){
     const _fechas=Object.keys(_diasDe[c]).filter(d=>_diasDe[c][d]>=(BRAND.dailyVideos||5)).sort();
     let bloques=0, _strk=0, _prevT=null;
     for(const f of _fechas){
