@@ -1108,7 +1108,7 @@ function renderOverview(){
   const totalVids=validos.length;
   const totalVentas=CREATORS.reduce((a,c)=>a+(data.ventas[c]||0),0);
   const pending=data.videos.filter(v=>v.status==="pending").length;
-  const viral=validos.filter(v=>v.views>=10000).length;
+  const viral=validos.filter(v=>viewsAcum(v)>=10000).length;
   const totalViews=validos.reduce((a,v)=>a+viewsAcum(v),0);
   const viewsPeriodo=videosEnPeriodo.reduce((a,v)=>a+viewsAcum(v),0);
   const VIDEO_GOAL=BRAND.videoGoal||750;
@@ -1522,7 +1522,7 @@ function renderViral(){
   // Auto-feature todos los +10K views
   let changed=false;
   data.videos.forEach(v=>{
-    const shouldFeat=v.views>=10000;
+    const shouldFeat=viewsAcum(v)>=10000;
     if(shouldFeat && !v.featured){v.featured=true;changed=true;}
   });
   if(changed) saveData();
@@ -1539,7 +1539,7 @@ function renderViral(){
   vids=vids.slice(0,20);
 
   document.getElementById("viral-list").innerHTML=vids.length?vids.map((v,i)=>{
-    const isMega=v.views>=100000;
+    const isMega=viewsAcum(v)>=100000;
     const cardClass=isMega?"v-mega":"v-high";
     const viewsClass=isMega?"v-mega":"v-high";
     const rankClass=i===0?"r1":i===1?"r2":i===2?"r3":"";
@@ -1686,7 +1686,7 @@ function autoAssignBonos(){
   for(const v of data.videos){
     const vid=String(v.id);
     if(data.bonoGranted['100k_video'][v.creator]===vid) continue;
-    if((v.views||0)>=10000 && cuentaPago(v) && !data.bonoGranted['10k'].includes(vid)){
+    if(viewsAcum(v)>=10000 && cuentaPago(v) && !data.bonoGranted['10k'].includes(vid)){
       if(!data.bonos[v.creator]) data.bonos[v.creator]=0;
       data.bonos[v.creator]+=10000;
       data.bonoGranted['10k'].push(vid);
@@ -1700,7 +1700,7 @@ function autoAssignBonos(){
 
   // $75.000 por primer video con 100k+ views (1 por creadora) — no aplica en marcas con no100k
   if(!BRAND.no100k) for(const v of data.videos){
-    if((v.views||0)>=100000 && cuentaPago(v) && !data.bonoGranted['100k'].includes(v.creator)){
+    if(viewsAcum(v)>=100000 && cuentaPago(v) && !data.bonoGranted['100k'].includes(v.creator)){
       if(!data.bonos[v.creator]) data.bonos[v.creator]=0;
       data.bonos[v.creator]+=75000;
       data.bonoGranted['100k'].push(v.creator);
