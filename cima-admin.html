@@ -1745,6 +1745,8 @@ function autoAssignBonos(){
     if(bloques>pagados){
       if(!data.bonos[c]) data.bonos[c]=0;
       data.bonos[c]+=(bloques-pagados)*RACHA_MONTO;
+      if(!data.bonoGranted['rachaMontoAcum']) data.bonoGranted['rachaMontoAcum']={};
+      data.bonoGranted['rachaMontoAcum'][c]=(data.bonoGranted['rachaMontoAcum'][c]||0)+(bloques-pagados)*RACHA_MONTO;
       data.bonoGranted['racha'][c]=bloques;
       if(!data.bonosGanados) data.bonosGanados={};
       if(!data.bonosGanados[c]) data.bonosGanados[c]={};
@@ -1995,6 +1997,8 @@ function renderFinanzas(){
     const _racha = data.bonoGranted['racha'];
     const rachaAuto = Array.isArray(_racha) ? (_racha.includes(c)?1:0) : ((_racha||{})[c]||0);
     const rachaCount = (data.bonoGranted['rachaCount']||{})[c] || rachaAuto;
+    // Monto REAL acreditado en rachas (respeta la tarifa vigente cuando se ganaron)
+    const rachaMontoReal = (data.bonoGranted['rachaMontoAcum']||{})[c] ?? (rachaCount*RACHA_MONTO);
     // Viral semanal (soporta múltiples) — fallback a bonosGanados si viralCount no está seteado
     const viralCount = (data.bonoGranted['viralCount']||{})[c] || (((data.bonosGanados||{})[c]||{})['viral']?1:0);
     // Más ventas semana
@@ -2013,7 +2017,7 @@ function renderFinanzas(){
     const q1 = quincena(1), q2 = quincena(2);
     const diaHoy = Math.floor((Date.now()-startMs)/86400000)+1;
 
-    return {c, vids, base, comVentas, bonos, total, pagado, deuda, vids10k, got100k, rachaCount, viralCount, ventasCount, q1, q2, diaHoy};
+    return {c, vids, base, comVentas, bonos, total, pagado, deuda, vids10k, got100k, rachaCount, rachaMontoReal, viralCount, ventasCount, q1, q2, diaHoy};
   });
 
   // Orden: mayor deuda arriba (los $0 quedan al final)
@@ -2044,7 +2048,7 @@ function renderFinanzas(){
               <span>🚀 Bono 100K (1er video)</span><span style="font-weight:700;color:#ef4444;">$75.000</span>
             </div>`:''}
             ${r.rachaCount>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);align-items:center;">
-              <span>📅 Racha completa</span><div style="display:flex;align-items:center;gap:4px;">${r.rachaCount>1?`<span style="font-size:9px;background:#8b5cf620;color:#8b5cf6;border-radius:8px;padding:1px 5px;font-weight:800;">×${r.rachaCount}</span>`:''}<span style="font-weight:700;color:#8b5cf6;">${fmtP(r.rachaCount*RACHA_MONTO)}</span></div>
+              <span>📅 Racha completa</span><div style="display:flex;align-items:center;gap:4px;">${r.rachaCount>1?`<span style="font-size:9px;background:#8b5cf620;color:#8b5cf6;border-radius:8px;padding:1px 5px;font-weight:800;">×${r.rachaCount}</span>`:''}<span style="font-weight:700;color:#8b5cf6;">${fmtP(r.rachaMontoReal)}</span></div>
             </div>`:''}
             ${r.viralCount>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);align-items:center;">
               <span>🔥 Video viral</span><div style="display:flex;align-items:center;gap:4px;">${r.viralCount>1?`<span style="font-size:9px;background:#d9770620;color:#d97706;border-radius:8px;padding:1px 5px;font-weight:800;">×${r.viralCount}</span>`:''}<span style="font-weight:700;color:#d97706;">${fmtP(r.viralCount*40000)}</span></div>
