@@ -1218,7 +1218,10 @@ function videoRow(v, compact=false){
   const ttBtn = v.linkTt
     ? `<a href="${escUrl(v.linkTt)}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">🎵 TT</a>`
     : "";
-  const copyBtn = (igBtn||ttBtn) ? igBtn+" "+ttBtn : `<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`;
+  const fbBtn = v.linkFb
+    ? `<a href="${escUrl(v.linkFb)}" target="_blank" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;text-decoration:none;">👥 FB</a>`
+    : "";
+  const copyBtn = (igBtn||ttBtn||fbBtn) ? [igBtn,ttBtn,fbBtn].filter(Boolean).join(" ") : `<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'DM Mono';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`;
   const startStr = campaignStartFor(v.creator);
   const calcDay = v.date ? Math.max(1,Math.floor((new Date(v.date)-new Date(startStr))/(86400000))+1) : (v.day||1);
   return`<tr>
