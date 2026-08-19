@@ -71,7 +71,7 @@ input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10
   <div class="kpis" id="kpis"></div>
   <div style="overflow-x:auto"><table>
     <thead><tr>
-      <th>Campaña</th><th>PM</th><th>Progreso del mes</th><th>Ritmo</th>
+      <th>Campaña</th><th>PM</th><th>Progreso campaña</th><th>Ritmo</th>
       <th class="hide-m">Creadoras</th><th>Views mes</th><th class="hide-m">Ventas</th>
       <th>Pendientes</th><th>A pagar</th>
     </tr></thead>
@@ -97,12 +97,12 @@ import { getFirestore, initializeFirestore, doc, getDoc, collection, getDocs, qu
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const BRANDS=[
- {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',cerrada:true,salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
- {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
- {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio',creadora5:'Pedro',creadora6:'Marcos',creadora7:'Leandro'}},
- {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
- {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora4:'María Eugenia',creadora5:'María Jimena'}},
- {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',salary:500000,min:100,dia:3,creators:{creadora1:'Pablo',creadora2:'Leandro',creadora3:'Diego'}},
+ {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',cerrada:true,inicio:'2026-06-01',salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
+ {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
+ {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',inicio:'2026-07-02',salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio'}},
+ {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',inicio:'2026-08-01',salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
+ {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',inicio:'2026-08-11',salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
+ {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',inicio:'2026-07-02',salary:500000,min:100,dia:3,creators:{creadora1:'Pablo',creadora2:'Leandro',creadora3:'Diego'}},
 ];
 const COM=2500;
 const app=initializeApp({apiKey:"AIzaSyCTv4DiRCpbCpGYP6E86TPHlkPvaAZTN3g",authDomain:"cleargy-creators.firebaseapp.com",projectId:"cleargy-creators",storageBucket:"cleargy-creators.firebasestorage.app",messagingSenderId:"313543582398",appId:"1:313543582398:web:99fe78991adeea2e7cb4ef"});
@@ -117,24 +117,37 @@ const viewsAcum=v=>{const a=Number(v.igViews)||0,b=Number(v.ttViews)||0;return (
 async function cargarMarca(B){
   const col=collection(db,B.id+'_videos');
   const desdeMes=hoyART().slice(0,8)+'01';
-  const [snapState,cAll,cApr,cPen,mes,ventasSnap]=await Promise.all([
-    getDoc(doc(db,B.id,'main')),
+  const snapState=await getDoc(doc(db,B.id,'main'));
+  let st0={}; try{ st0=JSON.parse(snapState.data().data); }catch(e){}
+  const _sd=st0.startDates||{}; const _act=Object.keys(B.creators);
+  const _ini=_act.map(c=>_sd[c]).filter(Boolean).sort();
+  const desdeCamp=_ini.length?_ini[0]:(B.inicio||desdeMes);
+  const [cAll,cApr,cPen,mes,ventasSnap]=await Promise.all([
     getCountFromServer(col),
     getCountFromServer(query(col,where('status','==','approved'))),
     getCountFromServer(query(col,where('status','==','pending'))),
-    getDocs(query(col,where('date','>=',desdeMes))),
+    getDocs(query(col,where('date','>=',desdeCamp))),
     getDocs(collection(db,B.id==='cleargy'?'sales':B.id+'_sales')).catch(()=>({docs:[]})),
   ]);
-  let st={}; try{ st=JSON.parse(snapState.data().data); }catch(e){}
+  const st=st0;
   const totalVids=cAll.data().count, aprob=cApr.data().count, pend=cPen.data().count;
   const vidsMes=mes.docs.map(d=>d.data()).filter(v=>v.status!=='rejected');
   const viewsMes=vidsMes.reduce((a,v)=>a+viewsAcum(v),0);
   const hoy=hoyART();
   const subieronHoy=new Set(vidsMes.filter(v=>v.date&&argDate(v.date)===hoy).map(v=>v.creator));
   const activos=Object.keys(B.creators);
-  const sinSubir=activos.filter(c=>!subieronHoy.has(c)).map(c=>B.creators[c]);
+  const ult={};
+  vidsMes.forEach(v=>{ if(!v.creator||!v.date) return; const d=argDate(v.date); if(!ult[v.creator]||d>ult[v.creator]) ult[v.creator]=d; });
+  const hoyD=new Date(hoy+'T12:00:00');
+  const frenados=[], sinSubir=[];
+  activos.forEach(c=>{
+    const last=ult[c];
+    const dias=last?Math.round((hoyD-new Date(last+'T12:00:00'))/86400000):999;
+    if(dias>=2) frenados.push({n:B.creators[c],d:dias});
+    else if(dias>=1) sinSubir.push(B.creators[c]);
+  });
   const ventasArr=(ventasSnap.docs||[]).map(d=>d.data());
-  const ventasMes=ventasArr.filter(s=>s.date&&String(s.date).slice(0,10)>=desdeMes).length;
+  const ventasMes=ventasArr.filter(s=>s.date&&String(s.date).slice(0,10)>=desdeCamp).length;
   const ventasTot=ventasArr.length;
   const sumV=Object.values(st.ventas||{}).reduce((a,b)=>a+(b||0),0);
   const sumB=Object.values(st.bonos||{}).reduce((a,b)=>a+(b||0),0);
@@ -145,9 +158,10 @@ async function cargarMarca(B){
   const d=new Date(hoy+'T12:00:00'); const diaMes=d.getDate();
   const diasMes=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
   const pct=objetivoMes?Math.round(vidsMes.length/objetivoMes*100):0;
-  const esperado=Math.round(diaMes/diasMes*100);
+  const diasCamp=Math.max(1,Math.round((new Date(hoy+'T12:00:00')-new Date(desdeCamp+'T12:00:00'))/86400000)+1);
+  const esperado=Math.min(100,Math.round(diasCamp/30*100));
   const ritmo=esperado?Math.round(pct/esperado*100):100;
-  return {B,totalVids,aprob,pend,vidsMes:vidsMes.length,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
+  return {B,totalVids,aprob,pend,frenados,diasCamp,desdeCamp,vidsMes:vidsMes.length,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
 }
 
 const IGN_KEY='cima_gen_ignoradas';
@@ -178,7 +192,7 @@ function render(rs){
   const TT=(f)=>rs.reduce((a,r)=>a+f(r),0);
   document.getElementById('kpis').innerHTML=[
     ['Campañas activas',act.length],
-    ['Videos del mes',T(r=>r.vidsMes).toLocaleString('es-AR')],
+    ['Videos de campaña',T(r=>r.vidsMes).toLocaleString('es-AR')],
     ['Views del mes',fmtV(T(r=>r.viewsMes))],
     ['Ventas del mes',T(r=>r.ventasMes)],
     ['Sin aprobar',TT(r=>r.pend)],
@@ -189,6 +203,7 @@ function render(rs){
   rs.forEach(r=>{
     if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`,r.B.id+':pend']);
     if(r.B.cerrada && r.deuda>0) A.push(['#2a52c9',`<b>${r.B.name}:</b> campaña cerrada con ${fmtP(r.deuda)} pendientes de pago`,r.B.id+':deuda']);
+    if(!r.B.cerrada && r.frenados.length) A.push(['#dc2626',`<b>${r.B.name}:</b> ${r.frenados.length} sin subir hace 2+ días — ${r.frenados.map(x=>x.n+' ('+(x.d>900?'nunca subió':x.d+' días')+')').join(', ')}`,r.B.id+':frenados']);
     if(!r.B.cerrada && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`,r.B.id+':sinsubir']);
     if(!r.B.cerrada && r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`,r.B.id+':ritmo']);
     if(!r.B.cerrada && r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`,r.B.id+':ventas']);
