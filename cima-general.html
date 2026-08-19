@@ -76,20 +76,25 @@ input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10
   <div style="overflow-x:auto"><table>
     <thead><tr>
       <th>Campaña</th><th>PM</th><th>Progreso campaña</th><th>Últimos 7 días</th>
-      <th class="hide-m">Creadoras</th><th>Views mes</th><th class="hide-m">Ventas</th>
-      <th>Pendientes</th><th>A pagar</th>
+      <th class="hide-m">Creadoras</th><th>Views mes</th><th class="money hide-m">Ventas</th>
+      <th>Pendientes</th><th class="hide-m">Faltan</th><th class="money">A pagar</th>
     </tr></thead>
-    <tbody id="rows"><tr><td colspan="9" style="text-align:center;padding:34px" class="muted">Cargando campañas…</td></tr></tbody>
+    <tbody id="rows"><tr><td colspan="10" style="text-align:center;padding:34px" class="muted">Cargando campañas…</td></tr></tbody>
   </table></div>
   <div class="alerts" id="alerts" style="display:none;margin-top:16px"></div>
-  <div class="sub" style="margin-top:12px">Tocá el nombre de una campaña para abrir su panel. Los datos salen en vivo de la app. "A pagar" = total ganado por las creadoras menos lo ya registrado como pagado.</div>
+  <div class="sub" style="margin-top:12px">Tocá el nombre de una campaña para abrir su panel. Los datos salen en vivo de la app. <span class="money">"A pagar" = total ganado por las creadoras menos lo ya registrado como pagado. </span>"Faltan" = videos que quedan para el objetivo y en cuántos días se llega al ritmo de los últimos 7.</div>
 </div>
 
 <script>
 const PASSES=['cima-2026','dani-2026','abril-2026'];
+// Solo la clave de Nacho ve ventas y montos a pagar. El equipo (Dani/Abril) ve todo lo demás.
 function doLogin(){
   const p=document.getElementById('pass').value.trim();
-  if(PASSES.includes(p)){ sessionStorage.setItem('cima_gen','1'); document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start(); }
+  if(PASSES.includes(p)){
+    sessionStorage.setItem('cima_gen','1');
+    sessionStorage.setItem('cima_gen_rol', p==='cima-2026'?'owner':'team');
+    document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start();
+  }
   else document.getElementById('err').style.display='block';
 }
 if(sessionStorage.getItem('cima_gen')==='1'){ document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; }); }
@@ -215,28 +220,50 @@ function pintarAlertas(){
   }
   al.innerHTML=h;
 }
+const VER_PLATA = sessionStorage.getItem('cima_gen_rol')!=='team';
+if(!VER_PLATA){ document.head.insertAdjacentHTML('beforeend','<style>.money{display:none !important}</style>'); }
+
+// "Faltan": videos que quedan y en cuántos días se llega al ritmo real de los últimos 7
+function faltanCell(r){
+  if(r.B.cerrada) return '<span class="ms">—</span>';
+  if(!r.arranco) return '<span class="ms">sin arrancar</span>';
+  const falta=Math.max(0,r.objetivoMes-r.vidsMes);
+  if(falta===0) return '<span class="pill" style="background:rgba(22,163,74,.12);color:var(--ok);font-weight:700">completo</span>';
+  const dias=r.prom7>0?Math.ceil(falta/r.prom7):null;
+  let pie;
+  if(dias===null) pie='<span class="ms" style="color:var(--bad)">sin ritmo</span>';
+  else{
+    const f=new Date(); f.setDate(f.getDate()+dias);
+    pie=`<span class="ms">~${dias} día${dias===1?'':'s'} · ${f.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})}</span>`;
+  }
+  return `<div class="num"><b>${falta}</b></div><div>${pie}</div>`;
+}
+
 function render(rs){
   const act=rs.filter(r=>!r.B.cerrada);
   const T=(f)=>act.reduce((a,r)=>a+f(r),0);
   const TT=(f)=>rs.reduce((a,r)=>a+f(r),0);
-  document.getElementById('kpis').innerHTML=[
+  const sinSubirHoy=act.reduce((a,r)=>a+(r.arranco?r.sinSubir.length:0),0);
+  const kp=[
     ['Campañas activas',act.length],
     ['Videos de campaña',T(r=>r.vidsMes).toLocaleString('es-AR')],
     ['Views del mes',fmtV(T(r=>r.viewsMes))],
-    ['Ventas del mes',T(r=>r.ventasMes)],
+    ['Creadoras activas',T(r=>r.activos)],
     ['Sin aprobar',TT(r=>r.pend)],
-    ['A pagar (todas)',fmtP(TT(r=>r.deuda))],
-  ].map(([l,v])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+    ['Sin subir hoy',sinSubirHoy],
+  ];
+  if(VER_PLATA){ kp.push(['Ventas del mes',T(r=>r.ventasMes)]); kp.push(['A pagar (todas)',fmtP(TT(r=>r.deuda))]); }
+  document.getElementById('kpis').innerHTML=kp.map(([l,v])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
 
   const A=[];
   rs.forEach(r=>{
     if(!r.B.cerrada && !r.arranco) A.push(['#6b7c8f',`<b>${r.B.name}:</b> todavía no arrancó — el día 1 cuenta desde el primer video`,r.B.id+':sinarrancar']);
     if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`,r.B.id+':pend']);
-    if(r.B.cerrada && r.deuda>0) A.push(['#2a52c9',`<b>${r.B.name}:</b> campaña cerrada con ${fmtP(r.deuda)} pendientes de pago`,r.B.id+':deuda']);
+    if(VER_PLATA && r.B.cerrada && r.deuda>0) A.push(['#2a52c9',`<b>${r.B.name}:</b> campaña cerrada con ${fmtP(r.deuda)} pendientes de pago`,r.B.id+':deuda']);
     if(!r.B.cerrada && r.arranco && r.frenados.length) A.push(['#dc2626',`<b>${r.B.name}:</b> ${r.frenados.length} sin subir hace 2+ días — ${r.frenados.map(x=>x.n+' ('+(x.d>900?'nunca subió':x.d+' días')+')').join(', ')}`,r.B.id+':frenados']);
     if(!r.B.cerrada && r.arranco && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`,r.B.id+':sinsubir']);
     if(!r.B.cerrada && r.arranco && r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`,r.B.id+':ritmo']);
-    if(!r.B.cerrada && r.arranco && r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`,r.B.id+':ventas']);
+    if(VER_PLATA && !r.B.cerrada && r.arranco && r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`,r.B.id+':ventas']);
   });
   window._alerts=A; pintarAlertas();
 
@@ -244,7 +271,7 @@ function render(rs){
   let sep=false;
   document.getElementById('rows').innerHTML=orden.map(r=>{
     let pre='';
-    if(r.B.cerrada && !sep){ sep=true; pre='<tr><td colspan="9" style="background:#f7f9fb;padding:7px 12px;font-family:\'DM Mono\';font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2)">Campañas cerradas</td></tr>'; }
+    if(r.B.cerrada && !sep){ sep=true; pre='<tr><td colspan="10" style="background:#f7f9fb;padding:7px 12px;font-family:\'DM Mono\';font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2)">Campañas cerradas</td></tr>'; }
     const col=r.B.cerrada?'var(--mut)':r.ritmo>=90?'var(--ok)':r.ritmo>=70?'var(--warn)':'var(--bad)';
     return pre+`<tr${r.B.cerrada?' style="opacity:.62"':''}>
       <td><div class="mk"><span class="sq" style="background:${r.B.color}"></span><div>
@@ -263,9 +290,10 @@ function render(rs){
         <div class="ms" style="margin-top:4px"><span class="sp-def">ayer <b style="color:${r.ayer>=r.diarioObj?'var(--ok)':r.ayer>0?'var(--warn)':'var(--bad)'}">${r.ayer}</b>/${r.diarioObj} · prom ${r.prom7}</span><span class="sp-hov" style="display:none;font-weight:800;color:var(--txt)"></span></div>`}</td>
       <td class="hide-m"><span class="num">${r.activos}</span> <span class="ms">activas</span></td>
       <td><span class="big">${fmtV(r.viewsMes)}</span></td>
-      <td class="hide-m"><span class="num">${r.ventasMes}</span> <span class="ms">(${r.ventasTot} tot)</span></td>
+      <td class="money hide-m"><span class="num">${r.ventasMes}</span> <span class="ms">(${r.ventasTot} tot)</span></td>
       <td>${r.pend?`<span class="pill" style="background:rgba(217,119,6,.12);color:var(--warn);font-weight:700">${r.pend}</span>`:'<span class="ms">—</span>'}</td>
-      <td><span class="big" style="color:${r.deuda>0?'var(--acc)':'var(--mut2)'}">${fmtP(r.deuda)}</span></td>
+      <td class="hide-m">${faltanCell(r)}</td>
+      <td class="money"><span class="big" style="color:${r.deuda>0?'var(--acc)':'var(--mut2)'}">${fmtP(r.deuda)}</span></td>
     </tr>`;
   }).join('');
   document.getElementById('stamp').textContent='Actualizado '+new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · datos en vivo';
