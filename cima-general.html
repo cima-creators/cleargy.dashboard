@@ -37,6 +37,8 @@ tr:last-child td{border:none}
 .mn{font-weight:800;font-size:13.5px}
 .mn:hover{color:var(--acc)!important}
 .ms{font-family:'DM Mono';font-size:10px;color:var(--mut)}
+.spark{display:flex;align-items:flex-end;gap:2.5px;height:26px;min-width:74px}
+.spark i{flex:1;border-radius:2px 2px 1px 1px;min-height:3px;display:block}
 .bar{height:6px;background:#eef1f4;border-radius:4px;overflow:hidden;margin-top:5px;min-width:90px}
 .bar i{display:block;height:100%;border-radius:4px}
 .pill{display:inline-block;font-family:'DM Mono';font-size:9.5px;font-weight:500;padding:3px 8px;border-radius:20px}
@@ -71,7 +73,7 @@ input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10
   <div class="kpis" id="kpis"></div>
   <div style="overflow-x:auto"><table>
     <thead><tr>
-      <th>Campaña</th><th>PM</th><th>Progreso campaña</th><th>Ritmo</th>
+      <th>Campaña</th><th>PM</th><th>Progreso campaña</th><th>Últimos 7 días</th>
       <th class="hide-m">Creadoras</th><th>Views mes</th><th class="hide-m">Ventas</th>
       <th>Pendientes</th><th>A pagar</th>
     </tr></thead>
@@ -157,11 +159,20 @@ async function cargarMarca(B){
   const objetivoMes=B.min*activos.length;
   const d=new Date(hoy+'T12:00:00'); const diaMes=d.getDate();
   const diasMes=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  const diarioObj=B.dia*activos.length;
+  const dias7=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(hoyD); d.setDate(d.getDate()-i);
+    const k=d.toLocaleDateString('sv');
+    dias7.push({k,n:vidsMes.filter(v=>v.date&&argDate(v.date)===k).length,hoy:i===0});
+  }
+  const ayer=dias7[5]?dias7[5].n:0;
+  const prom7=Math.round(dias7.slice(0,6).reduce((a,x)=>a+x.n,0)/6);
   const pct=objetivoMes?Math.round(vidsMes.length/objetivoMes*100):0;
   const diasCamp=Math.max(1,Math.round((new Date(hoy+'T12:00:00')-new Date(desdeCamp+'T12:00:00'))/86400000)+1);
   const esperado=Math.min(100,Math.round(diasCamp/30*100));
   const ritmo=esperado?Math.round(pct/esperado*100):100;
-  return {B,totalVids,aprob,pend,frenados,diasCamp,desdeCamp,vidsMes:vidsMes.length,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
+  return {B,totalVids,aprob,pend,frenados,diasCamp,desdeCamp,dias7,diarioObj,ayer,prom7,vidsMes:vidsMes.length,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
 }
 
 const IGN_KEY='cima_gen_ignoradas';
@@ -216,15 +227,19 @@ function render(rs){
     let pre='';
     if(r.B.cerrada && !sep){ sep=true; pre='<tr><td colspan="9" style="background:#f7f9fb;padding:7px 12px;font-family:\'DM Mono\';font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2)">Campañas cerradas</td></tr>'; }
     const col=r.B.cerrada?'var(--mut)':r.ritmo>=90?'var(--ok)':r.ritmo>=70?'var(--warn)':'var(--bad)';
-    const lbl=r.B.cerrada?'Finalizada':r.ritmo>=90?'Al día':r.ritmo>=70?'Va lento':'Atrasada';
-    const bg=r.B.cerrada?'#eceff3':r.ritmo>=90?'rgba(22,163,74,.1)':r.ritmo>=70?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)';
     return pre+`<tr${r.B.cerrada?' style="opacity:.62"':''}>
       <td><div class="mk"><span class="sq" style="background:${r.B.color}"></span><div>
         <a href="cima-admin.html?brand=${r.B.id}" target="_blank" class="mn" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px" title="Abrir el panel de ${r.B.name}">${r.B.name}<span style="font-size:10px;color:var(--acc)">↗</span></a>${r.B.cerrada?' <span class="pill" style="background:#eceff3;color:#6b7c8f;font-weight:700">cerrada</span>':''}<div class="ms">${r.totalVids.toLocaleString('es-AR')} videos · ${r.B.dia}/día</div></div></div></td>
       <td><span class="pill" style="background:#eef1f7;color:#3a4a63">${r.B.pm}</span></td>
       <td><div class="num"><b>${r.vidsMes}</b> <span class="muted">/ ${r.objetivoMes}</span> · ${r.pct}%</div>
         <div class="bar"><i style="width:${Math.min(100,r.pct)}%;background:${col}"></i></div></td>
-      <td><span class="pill" style="background:${bg};color:${col};font-weight:700">${lbl}</span></td>
+      <td>${r.B.cerrada?`<span class="pill" style="background:#eceff3;color:var(--mut);font-weight:700">Finalizada</span>`:`
+        <div class="spark">${r.dias7.map(d=>{
+          const p=r.diarioObj?Math.min(100,Math.round(d.n/r.diarioObj*100)):0;
+          const c=d.n===0?'#e4e8ec':d.n>=r.diarioObj?'#16a34a':'#d97706';
+          return `<i title="${d.k}: ${d.n} video${d.n===1?'':'s'}" style="height:${Math.max(9,p)}%;background:${c};${d.hoy?'outline:1.5px solid #cfd6dd;outline-offset:1px;':''}"></i>`;
+        }).join('')}</div>
+        <div class="ms" style="margin-top:4px">ayer <b style="color:${r.ayer>=r.diarioObj?'var(--ok)':r.ayer>0?'var(--warn)':'var(--bad)'}">${r.ayer}</b>/${r.diarioObj} · prom ${r.prom7}</div>`}</td>
       <td class="hide-m"><span class="num">${r.activos}</span> <span class="ms">activas</span></td>
       <td><span class="big">${fmtV(r.viewsMes)}</span></td>
       <td class="hide-m"><span class="num">${r.ventasMes}</span> <span class="ms">(${r.ventasTot} tot)</span></td>
