@@ -220,8 +220,13 @@ function pintarAlertas(){
   }
   al.innerHTML=h;
 }
-const VER_PLATA = sessionStorage.getItem('cima_gen_rol')!=='team';
-if(!VER_PLATA){ document.head.insertAdjacentHTML('beforeend','<style>.money{display:none !important}</style>'); }
+// El rol se resuelve en cada render (el módulo se evalúa antes del login)
+function verPlata(){ return sessionStorage.getItem('cima_gen_rol')!=='team'; }
+function aplicarRol(){
+  const st=document.getElementById('rol-style');
+  if(!verPlata()){ if(!st) document.head.insertAdjacentHTML('beforeend','<style id="rol-style">.money{display:none !important}</style>'); }
+  else if(st) st.remove();
+}
 
 // "Faltan": videos que quedan y en cuántos días se llega al ritmo real de los últimos 7
 function faltanCell(r){
@@ -240,6 +245,8 @@ function faltanCell(r){
 }
 
 function render(rs){
+  aplicarRol();
+  const VER_PLATA = verPlata();
   const act=rs.filter(r=>!r.B.cerrada);
   const T=(f)=>act.reduce((a,r)=>a+f(r),0);
   const TT=(f)=>rs.reduce((a,r)=>a+f(r),0);
