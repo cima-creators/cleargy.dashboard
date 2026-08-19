@@ -94,7 +94,7 @@ import { getFirestore, initializeFirestore, doc, getDoc, collection, getDocs, qu
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const BRANDS=[
- {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
+ {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',cerrada:true,salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
  {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora9:'Valentina',creadora11:'Abril',creadora12:'Juliana'}},
  {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio',creadora5:'Pedro',creadora6:'Marcos',creadora7:'Leandro'}},
  {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
@@ -148,33 +148,40 @@ async function cargarMarca(B){
 }
 
 function render(rs){
-  const T=(f)=>rs.reduce((a,r)=>a+f(r),0);
+  const act=rs.filter(r=>!r.B.cerrada);
+  const T=(f)=>act.reduce((a,r)=>a+f(r),0);
+  const TT=(f)=>rs.reduce((a,r)=>a+f(r),0);
   document.getElementById('kpis').innerHTML=[
-    ['Campañas activas',rs.length],
+    ['Campañas activas',act.length],
     ['Videos del mes',T(r=>r.vidsMes).toLocaleString('es-AR')],
     ['Views del mes',fmtV(T(r=>r.viewsMes))],
     ['Ventas del mes',T(r=>r.ventasMes)],
-    ['Sin aprobar',T(r=>r.pend)],
-    ['A pagar',fmtP(T(r=>r.deuda))],
+    ['Sin aprobar',TT(r=>r.pend)],
+    ['A pagar (todas)',fmtP(TT(r=>r.deuda))],
   ].map(([l,v])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
 
   const A=[];
   rs.forEach(r=>{
-    if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar`]);
-    if(r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`]);
-    if(r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`]);
-    if(r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`]);
+    if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`]);
+    if(r.B.cerrada && r.deuda>0) A.push(['#2a52c9',`<b>${r.B.name}:</b> campaña cerrada con ${fmtP(r.deuda)} pendientes de pago`]);
+    if(!r.B.cerrada && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`]);
+    if(!r.B.cerrada && r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`]);
+    if(!r.B.cerrada && r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`]);
   });
   const al=document.getElementById('alerts');
   if(A.length){ al.style.display='block'; al.innerHTML='<h2>⚠️ Requiere atención</h2>'+A.map(([c,t])=>`<div class="al"><span class="dot" style="background:${c}"></span><span>${t}</span></div>`).join(''); }
 
-  document.getElementById('rows').innerHTML=rs.map(r=>{
-    const col=r.ritmo>=90?'var(--ok)':r.ritmo>=70?'var(--warn)':'var(--bad)';
-    const lbl=r.ritmo>=90?'Al día':r.ritmo>=70?'Va lento':'Atrasada';
-    const bg=r.ritmo>=90?'rgba(22,163,74,.1)':r.ritmo>=70?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)';
-    return `<tr>
+  const orden=[...rs.filter(r=>!r.B.cerrada),...rs.filter(r=>r.B.cerrada)];
+  let sep=false;
+  document.getElementById('rows').innerHTML=orden.map(r=>{
+    let pre='';
+    if(r.B.cerrada && !sep){ sep=true; pre='<tr><td colspan="9" style="background:#f7f9fb;padding:7px 12px;font-family:\'DM Mono\';font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2)">Campañas cerradas</td></tr>'; }
+    const col=r.B.cerrada?'var(--mut)':r.ritmo>=90?'var(--ok)':r.ritmo>=70?'var(--warn)':'var(--bad)';
+    const lbl=r.B.cerrada?'Finalizada':r.ritmo>=90?'Al día':r.ritmo>=70?'Va lento':'Atrasada';
+    const bg=r.B.cerrada?'#eceff3':r.ritmo>=90?'rgba(22,163,74,.1)':r.ritmo>=70?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)';
+    return pre+`<tr${r.B.cerrada?' style="opacity:.62"':''}>
       <td><div class="mk"><span class="sq" style="background:${r.B.color}"></span><div>
-        <div class="mn">${r.B.name}</div><div class="ms">${r.totalVids.toLocaleString('es-AR')} videos · ${r.B.dia}/día</div></div></div></td>
+        <div class="mn">${r.B.name}${r.B.cerrada?' <span class="pill" style="background:#eceff3;color:#6b7c8f;font-weight:700">cerrada</span>':''}</div><div class="ms">${r.totalVids.toLocaleString('es-AR')} videos · ${r.B.dia}/día</div></div></div></td>
       <td><span class="pill" style="background:#eef1f7;color:#3a4a63">${r.B.pm}</span></td>
       <td><div class="num"><b>${r.vidsMes}</b> <span class="muted">/ ${r.objetivoMes}</span> · ${r.pct}%</div>
         <div class="bar"><i style="width:${Math.min(100,r.pct)}%;background:${col}"></i></div></td>
