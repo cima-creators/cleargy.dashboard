@@ -54,6 +54,7 @@ input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10
 @media(max-width:820px){td,th{padding:9px 7px;font-size:11.5px}.hide-m{display:none}}
 .money{display:none !important}
 html.plata .money{display:revert !important}
+html.plata .kpi.money{display:block !important}
 @media(max-width:820px){html.plata .money.hide-m{display:none !important}}
 </style></head><body>
 
@@ -260,8 +261,9 @@ function render(rs){
     ['Sin aprobar',TT(r=>r.pend)],
     ['Sin subir hoy',sinSubirHoy],
   ];
-  if(VER_PLATA){ kp.push(['Ventas del mes',T(r=>r.ventasMes)]); kp.push(['A pagar (todas)',fmtP(TT(r=>r.deuda))]); }
-  document.getElementById('kpis').innerHTML=kp.map(([l,v])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+  if(VER_PLATA){ kp.push(['Ventas del mes',T(r=>r.ventasMes),1]); kp.push(['A pagar (todas)',fmtP(TT(r=>r.deuda)),1]); }
+  // los KPI de plata llevan .money: quedan tapados por CSS aunque el render se haya hecho antes
+  document.getElementById('kpis').innerHTML=kp.map(([l,v,m])=>`<div class="kpi${m?' money':''}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
 
   const A=[];
   rs.forEach(r=>{
