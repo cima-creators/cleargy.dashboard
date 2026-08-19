@@ -161,7 +161,7 @@ async function cargarMarca(B){
   const objetivoMes=B.objetivo||B.min*activos.length;
   const d=new Date(hoy+'T12:00:00'); const diaMes=d.getDate();
   const diasMes=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
-  const diarioObj=B.objetivo?Math.max(1,Math.round(B.objetivo/30)):B.dia*activos.length;
+  const diarioObj=B.dia*activos.length; // ritmo diario real segun creadoras activas
   const dias7=[];
   for(let i=6;i>=0;i--){
     const d=new Date(hoyD); d.setDate(d.getDate()-i);
