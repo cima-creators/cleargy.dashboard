@@ -104,9 +104,9 @@ const BRANDS=[
  {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',cerrada:true,inicio:'2026-06-01',salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
  {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
  {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',inicio:'2026-07-02',objetivo:500,salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio'}},
- {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',inicio:'2026-08-01',salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
+ {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',inicio:'2026-08-01',objetivo:250,salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
  {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',inicio:'2026-08-11',objetivo:200,salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
- {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',inicio:'2026-07-02',objetivo:200,salary:500000,min:100,dia:3,creators:{creadora2:'Leandro',creadora3:'Diego'}},
+ {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',inicio:'2026-07-02',objetivo:200,diarioFijo:3,salary:500000,min:100,dia:3,creators:{creadora2:'Leandro',creadora3:'Diego'}},
 ];
 const COM=2500;
 const app=initializeApp({apiKey:"AIzaSyCTv4DiRCpbCpGYP6E86TPHlkPvaAZTN3g",authDomain:"cleargy-creators.firebaseapp.com",projectId:"cleargy-creators",storageBucket:"cleargy-creators.firebasestorage.app",messagingSenderId:"313543582398",appId:"1:313543582398:web:99fe78991adeea2e7cb4ef"});
@@ -161,7 +161,7 @@ async function cargarMarca(B){
   const objetivoMes=B.objetivo||B.min*activos.length;
   const d=new Date(hoy+'T12:00:00'); const diaMes=d.getDate();
   const diasMes=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
-  const diarioObj=B.dia*activos.length; // ritmo diario real segun creadoras activas
+  const diarioObj=B.diarioFijo||B.dia*activos.length; // fijo por marca, o videos/dia x creadoras activas
   const dias7=[];
   for(let i=6;i>=0;i--){
     const d=new Date(hoyD); d.setDate(d.getDate()-i);
