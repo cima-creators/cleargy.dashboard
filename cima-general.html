@@ -101,7 +101,7 @@ import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/1
 const BRANDS=[
  {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',cerrada:true,inicio:'2026-06-01',salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
  {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
- {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',inicio:'2026-07-02',salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio'}},
+ {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',inicio:'2026-07-02',objetivo:500,salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio'}},
  {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',inicio:'2026-08-01',salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
  {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',inicio:'2026-08-11',salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
  {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',inicio:'2026-07-02',salary:500000,min:100,dia:3,creators:{creadora1:'Pablo',creadora2:'Leandro',creadora3:'Diego'}},
@@ -156,10 +156,10 @@ async function cargarMarca(B){
   const pagado=(st.pagos||[]).reduce((a,p)=>a+(p.monto||0),0);
   const ganado=Math.round(B.salary*aprob/B.min)+sumV*COM+sumB;
   const deuda=Math.max(0,ganado-pagado);
-  const objetivoMes=B.min*activos.length;
+  const objetivoMes=B.objetivo||B.min*activos.length;
   const d=new Date(hoy+'T12:00:00'); const diaMes=d.getDate();
   const diasMes=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
-  const diarioObj=B.dia*activos.length;
+  const diarioObj=B.objetivo?Math.max(1,Math.round(B.objetivo/30)):B.dia*activos.length;
   const dias7=[];
   for(let i=6;i>=0;i--){
     const d=new Date(hoyD); d.setDate(d.getDate()-i);
