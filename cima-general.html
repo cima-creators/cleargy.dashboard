@@ -37,8 +37,10 @@ tr:last-child td{border:none}
 .mn{font-weight:800;font-size:13.5px}
 .mn:hover{color:var(--acc)!important}
 .ms{font-family:'DM Mono';font-size:10px;color:var(--mut)}
-.spark{display:flex;align-items:flex-end;gap:2.5px;height:26px;min-width:74px}
-.spark i{flex:1;border-radius:2px 2px 1px 1px;min-height:3px;display:block}
+.spark{display:flex;align-items:flex-end;gap:2.5px;height:26px;min-width:80px}
+.sp{flex:1;height:100%;display:flex;align-items:flex-end;cursor:default;border-radius:3px}
+.sp:hover{background:#f0f3f6}
+.sp i{width:100%;border-radius:2px 2px 1px 1px;min-height:3px;display:block}
 .bar{height:6px;background:#eef1f4;border-radius:4px;overflow:hidden;margin-top:5px;min-width:90px}
 .bar i{display:block;height:100%;border-radius:4px}
 .pill{display:inline-block;font-family:'DM Mono';font-size:9.5px;font-weight:500;padding:3px 8px;border-radius:20px}
@@ -103,8 +105,8 @@ const BRANDS=[
  {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
  {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',inicio:'2026-07-02',objetivo:500,salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio'}},
  {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',inicio:'2026-08-01',salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
- {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',inicio:'2026-08-11',salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
- {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',inicio:'2026-07-02',salary:500000,min:100,dia:3,creators:{creadora1:'Pablo',creadora2:'Leandro',creadora3:'Diego'}},
+ {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',inicio:'2026-08-11',objetivo:200,salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
+ {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',inicio:'2026-07-02',objetivo:200,salary:500000,min:100,dia:3,creators:{creadora2:'Leandro',creadora3:'Diego'}},
 ];
 const COM=2500;
 const app=initializeApp({apiKey:"AIzaSyCTv4DiRCpbCpGYP6E86TPHlkPvaAZTN3g",authDomain:"cleargy-creators.firebaseapp.com",projectId:"cleargy-creators",storageBucket:"cleargy-creators.firebasestorage.app",messagingSenderId:"313543582398",appId:"1:313543582398:web:99fe78991adeea2e7cb4ef"});
@@ -181,6 +183,16 @@ const setIgn=a=>localStorage.setItem(IGN_KEY,JSON.stringify(a));
 window.ignorar=k=>{const a=getIgn(); if(!a.includes(k)){a.push(k);setIgn(a);} pintarAlertas();};
 window.restaurar=k=>{setIgn(getIgn().filter(x=>x!==k)); pintarAlertas();};
 window.restaurarTodo=()=>{setIgn([]); pintarAlertas();};
+window.spOn=function(el){
+  const td=el.closest('td'); if(!td) return;
+  const d=td.querySelector('.sp-def'), h=td.querySelector('.sp-hov');
+  if(d&&h){ d.style.display='none'; h.style.display='inline'; h.textContent=el.dataset.t; }
+};
+window.spOff=function(el){
+  const td=el.closest('td'); if(!td) return;
+  const d=td.querySelector('.sp-def'), h=td.querySelector('.sp-hov');
+  if(d&&h){ h.style.display='none'; d.style.display='inline'; }
+};
 function pintarAlertas(){
   const A=window._alerts||[], ign=getIgn();
   const act=A.filter(a=>!ign.includes(a[2])), baja=A.filter(a=>ign.includes(a[2]));
@@ -237,9 +249,11 @@ function render(rs){
         <div class="spark">${r.dias7.map(d=>{
           const p=r.diarioObj?Math.min(100,Math.round(d.n/r.diarioObj*100)):0;
           const c=d.n===0?'#e4e8ec':d.n>=r.diarioObj?'#16a34a':'#d97706';
-          return `<i title="${d.k}: ${d.n} video${d.n===1?'':'s'}" style="height:${Math.max(9,p)}%;background:${c};${d.hoy?'outline:1.5px solid #cfd6dd;outline-offset:1px;':''}"></i>`;
+          const dd=new Date(d.k+'T12:00:00');
+          const et=d.hoy?'hoy':dd.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'numeric'});
+          return `<span class="sp" data-t="${et} · ${d.n} video${d.n===1?'':'s'} de ${r.diarioObj}" onmouseenter="spOn(this)" onmouseleave="spOff(this)"><i style="height:${Math.max(9,p)}%;background:${c};${d.hoy?'outline:1.5px solid #cfd6dd;outline-offset:1px;':''}"></i></span>`;
         }).join('')}</div>
-        <div class="ms" style="margin-top:4px">ayer <b style="color:${r.ayer>=r.diarioObj?'var(--ok)':r.ayer>0?'var(--warn)':'var(--bad)'}">${r.ayer}</b>/${r.diarioObj} · prom ${r.prom7}</div>`}</td>
+        <div class="ms" style="margin-top:4px"><span class="sp-def">ayer <b style="color:${r.ayer>=r.diarioObj?'var(--ok)':r.ayer>0?'var(--warn)':'var(--bad)'}">${r.ayer}</b>/${r.diarioObj} · prom ${r.prom7}</span><span class="sp-hov" style="display:none;font-weight:800;color:var(--txt)"></span></div>`}</td>
       <td class="hide-m"><span class="num">${r.activos}</span> <span class="ms">activas</span></td>
       <td><span class="big">${fmtV(r.viewsMes)}</span></td>
       <td class="hide-m"><span class="num">${r.ventasMes}</span> <span class="ms">(${r.ventasTot} tot)</span></td>
