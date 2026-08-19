@@ -67,7 +67,6 @@ input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10
     </div>
   </div>
   <div class="kpis" id="kpis"></div>
-  <div class="alerts" id="alerts" style="display:none"></div>
   <div style="overflow-x:auto"><table>
     <thead><tr>
       <th>Campaña</th><th>PM</th><th>Progreso del mes</th><th>Ritmo</th>
@@ -76,6 +75,7 @@ input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10
     </tr></thead>
     <tbody id="rows"><tr><td colspan="9" style="text-align:center;padding:34px" class="muted">Cargando campañas…</td></tr></tbody>
   </table></div>
+  <div class="alerts" id="alerts" style="display:none;margin-top:16px"></div>
   <div class="sub" style="margin-top:12px">Tocá el nombre de una campaña para abrir su panel. Los datos salen en vivo de la app. "A pagar" = total ganado por las creadoras menos lo ya registrado como pagado.</div>
 </div>
 
@@ -96,7 +96,7 @@ import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/1
 
 const BRANDS=[
  {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',cerrada:true,salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
- {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora9:'Valentina',creadora11:'Abril',creadora12:'Juliana'}},
+ {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
  {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio',creadora5:'Pedro',creadora6:'Marcos',creadora7:'Leandro'}},
  {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
  {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora4:'María Eugenia',creadora5:'María Jimena'}},
