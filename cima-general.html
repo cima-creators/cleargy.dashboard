@@ -173,10 +173,13 @@ async function cargarMarca(B){
   const ayer=dias7[5]?dias7[5].n:0;
   const prom7=Math.round(dias7.slice(0,6).reduce((a,x)=>a+x.n,0)/6);
   const pct=objetivoMes?Math.round(vidsMes.length/objetivoMes*100):0;
-  const diasCamp=Math.max(1,Math.round((new Date(hoy+'T12:00:00')-new Date(desdeCamp+'T12:00:00'))/86400000)+1);
-  const esperado=Math.min(100,Math.round(diasCamp/30*100));
+  const _fechas=vidsMes.map(v=>v.date&&argDate(v.date)).filter(Boolean).sort();
+  const arranco=_fechas.length>0;
+  const inicioReal=arranco?_fechas[0]:null;
+  const diasCamp=arranco?Math.max(1,Math.round((new Date(hoy+'T12:00:00')-new Date(inicioReal+'T12:00:00'))/86400000)+1):0;
+  const esperado=arranco?Math.min(100,Math.round(diasCamp/30*100)):0;
   const ritmo=esperado?Math.round(pct/esperado*100):100;
-  return {B,totalVids,aprob,pend,frenados,diasCamp,desdeCamp,dias7,diarioObj,ayer,prom7,vidsMes:vidsMes.length,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
+  return {B,totalVids,aprob,pend,frenados,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsMes.length,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
 }
 
 const IGN_KEY='cima_gen_ignoradas';
@@ -226,12 +229,13 @@ function render(rs){
 
   const A=[];
   rs.forEach(r=>{
+    if(!r.B.cerrada && !r.arranco) A.push(['#6b7c8f',`<b>${r.B.name}:</b> todavía no arrancó — el día 1 cuenta desde el primer video`,r.B.id+':sinarrancar']);
     if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`,r.B.id+':pend']);
     if(r.B.cerrada && r.deuda>0) A.push(['#2a52c9',`<b>${r.B.name}:</b> campaña cerrada con ${fmtP(r.deuda)} pendientes de pago`,r.B.id+':deuda']);
-    if(!r.B.cerrada && r.frenados.length) A.push(['#dc2626',`<b>${r.B.name}:</b> ${r.frenados.length} sin subir hace 2+ días — ${r.frenados.map(x=>x.n+' ('+(x.d>900?'nunca subió':x.d+' días')+')').join(', ')}`,r.B.id+':frenados']);
-    if(!r.B.cerrada && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`,r.B.id+':sinsubir']);
-    if(!r.B.cerrada && r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`,r.B.id+':ritmo']);
-    if(!r.B.cerrada && r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`,r.B.id+':ventas']);
+    if(!r.B.cerrada && r.arranco && r.frenados.length) A.push(['#dc2626',`<b>${r.B.name}:</b> ${r.frenados.length} sin subir hace 2+ días — ${r.frenados.map(x=>x.n+' ('+(x.d>900?'nunca subió':x.d+' días')+')').join(', ')}`,r.B.id+':frenados']);
+    if(!r.B.cerrada && r.arranco && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`,r.B.id+':sinsubir']);
+    if(!r.B.cerrada && r.arranco && r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`,r.B.id+':ritmo']);
+    if(!r.B.cerrada && r.arranco && r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`,r.B.id+':ventas']);
   });
   window._alerts=A; pintarAlertas();
 
@@ -243,7 +247,7 @@ function render(rs){
     const col=r.B.cerrada?'var(--mut)':r.ritmo>=90?'var(--ok)':r.ritmo>=70?'var(--warn)':'var(--bad)';
     return pre+`<tr${r.B.cerrada?' style="opacity:.62"':''}>
       <td><div class="mk"><span class="sq" style="background:${r.B.color}"></span><div>
-        <a href="cima-admin.html?brand=${r.B.id}" target="_blank" class="mn" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px" title="Abrir el panel de ${r.B.name}">${r.B.name}<span style="font-size:10px;color:var(--acc)">↗</span></a>${r.B.cerrada?' <span class="pill" style="background:#eceff3;color:#6b7c8f;font-weight:700">cerrada</span>':''}<div class="ms">${r.totalVids.toLocaleString('es-AR')} videos · ${r.B.dia}/día</div></div></div></td>
+        <a href="cima-admin.html?brand=${r.B.id}" target="_blank" class="mn" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px" title="Abrir el panel de ${r.B.name}">${r.B.name}<span style="font-size:10px;color:var(--acc)">↗</span></a>${r.B.cerrada?' <span class="pill" style="background:#eceff3;color:#6b7c8f;font-weight:700">cerrada</span>':''}<div class="ms">${r.B.cerrada?r.totalVids.toLocaleString('es-AR')+' videos':r.arranco?'día '+r.diasCamp+' · '+r.totalVids.toLocaleString('es-AR')+' videos':'sin arrancar'}</div></div></div></td>
       <td><span class="pill" style="background:#eef1f7;color:#3a4a63">${r.B.pm}</span></td>
       <td><div class="num"><b>${r.vidsMes}</b> <span class="muted">/ ${r.objetivoMes}</span> · ${r.pct}%</div>
         <div class="bar"><i style="width:${Math.min(100,r.pct)}%;background:${col}"></i></div></td>
