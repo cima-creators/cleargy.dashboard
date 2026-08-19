@@ -81,12 +81,12 @@ html.plata .kpi.money{display:block !important}
     <thead><tr>
       <th>Campaña</th><th>PM</th><th>Progreso campaña</th><th>Últimos 7 días</th>
       <th class="hide-m">Creadoras</th><th>Views mes</th><th class="money hide-m">Ventas</th>
-      <th>Pendientes</th><th class="hide-m">Faltan</th><th class="money">A pagar</th>
+      <th>Pendientes</th><th class="hide-m">Faltan</th><th>Cobro</th>
     </tr></thead>
     <tbody id="rows"><tr><td colspan="10" style="text-align:center;padding:34px" class="muted">Cargando campañas…</td></tr></tbody>
   </table></div>
   <div class="alerts" id="alerts" style="display:none;margin-top:16px"></div>
-  <div class="sub" style="margin-top:12px">Tocá el nombre de una campaña para abrir su panel. Los datos salen en vivo de la app. <span class="money">"A pagar" = total ganado por las creadoras menos lo ya registrado como pagado. </span>"Faltan" = videos que quedan para el objetivo y en cuántos días se llega al ritmo de los últimos 7.</div>
+  <div class="sub" style="margin-top:12px">Tocá el nombre de una campaña para abrir su panel. Los datos salen en vivo de la app. "Cobro" = en qué va la facturación a la marca (cuotas y cuándo se gatilla la siguiente). "Faltan" = videos que quedan para el objetivo y en cuántos días se llega al ritmo de los últimos 7.</div>
 </div>
 
 <script>
@@ -116,10 +116,11 @@ const BRANDS=[
  {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
  {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',inicio:'2026-07-02',objetivo:500,salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio'}},
  {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',inicio:'2026-08-01',objetivo:250,salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
- {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',inicio:'2026-08-11',objetivo:200,salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
+ {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',cobro:{tipo:'cuotas',pagadas:1,total:2,gatillo:50},inicio:'2026-08-11',objetivo:200,salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
+ {id:'tierrafertil',name:'Tierra Fértil',color:'#4F6B2A',pm:'Abril',inicio:'2026-08-19',objetivo:9,salary:120000,min:5,dia:1,creators:{creadora1:'Creador 1',creadora2:'Creador 2'}},
  {id:'cortizen',name:'Cortizen',color:'#1B3A6B',pm:'Abril',inicio:'2026-08-19',objetivo:28,salary:120000,min:4,dia:1,creators:{creadora1:'Creador 1',creadora2:'Creador 2',creadora3:'Creador 3',creadora4:'Creador 4',creadora5:'Creador 5',creadora6:'Creador 6',creadora7:'Creador 7'}},
  {id:'lagos',name:'Lagos',color:'#5A626A',pm:'Abril',inicio:'2026-08-19',objetivo:195,salary:450000,min:65,dia:2,creators:{creadora1:'Creadora 1',creadora2:'Creadora 2',creadora3:'Creadora 3'}},
- {id:'mentralabs',name:'Mentra Labs',color:'#8A6A3B',pm:'Abril',inicio:'2026-08-19',objetivo:200,diarioFijo:9,salary:400000,min:50,dia:3,creators:{creadora1:'Creador 1',creadora2:'Creador 2',creadora3:'Creador 3',creadora4:'Creador 4'}},
+ {id:'mentralabs',name:'Mentra Labs',cobro:{tipo:'cuotas',pagadas:1,total:2,gatillo:50},color:'#8A6A3B',pm:'Abril',inicio:'2026-08-19',objetivo:200,diarioFijo:9,salary:400000,min:50,dia:3,creators:{creadora1:'Creador 1',creadora2:'Creador 2',creadora3:'Creador 3',creadora4:'Creador 4'}},
  {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',inicio:'2026-07-02',objetivo:200,diarioFijo:3,salary:500000,min:100,dia:3,creators:{creadora2:'Leandro',creadora3:'Diego'}},
 ];
 const COM=2500;
@@ -230,6 +231,34 @@ function pintarAlertas(){
 function verPlata(){ return sessionStorage.getItem('cima_gen_rol')!=='team'; }
 function aplicarRol(){ document.documentElement.classList.toggle('plata', verPlata()); }
 
+// ── Cobro a la marca (lo que la marca nos paga a nosotros, no lo de las creadoras)
+// cobro:{tipo:'completo'}                                → ya facturado y cobrado entero
+// cobro:{tipo:'cuotas', pagadas:1, total:2, gatillo:50}  → la próxima cuota se cobra al llegar a ese % de la campaña
+function cobroEstado(r){
+  const cb=r.B.cobro;
+  if(!cb) return {txt:'—', tono:'mut2', accion:false, def:false};
+  if(cb.tipo==='completo' || (cb.pagadas||0)>=(cb.total||1))
+    return {txt:'Pago completo', tono:'ok', accion:false, def:true};
+  const n=(cb.pagadas||0)+1;
+  const ord=['1ª','2ª','3ª','4ª'][n-1]||(n+'ª');
+  const g=cb.gatillo||100;
+  if(r.pct>=g) return {txt:'Cobrar '+ord+' cuota', tono:'bad', accion:true, def:true,
+                       alerta:`llegó al ${r.pct}% — toca cobrar la ${ord} cuota (se gatilla al ${g}%)`};
+  return {txt:ord+' cuota al '+g+'%', tono:'warn', accion:false, def:true, falta:g-r.pct};
+}
+function cobroCell(r){
+  const e=cobroEstado(r);
+  if(!e.def) return '<span class="ms">—</span>';
+  const col={ok:'var(--ok)',warn:'var(--warn)',bad:'var(--bad)',mut2:'var(--mut2)'}[e.tono];
+  const bg={ok:'rgba(22,163,74,.12)',warn:'rgba(217,119,6,.12)',bad:'rgba(220,38,38,.12)',mut2:'#f2f4f7'}[e.tono];
+  const ico=e.accion?'🔔 ':e.tono==='ok'?'✓ ':'';
+  let pie='';
+  if(e.accion) pie='<div class="ms" style="color:var(--bad);margin-top:3px">listo para facturar</div>';
+  else if(e.falta>0) pie=`<div class="ms" style="margin-top:3px">faltan ${e.falta}%</div>`;
+  const monto=(r.B.cobro&&r.B.cobro.monto)?`<div class="ms money" style="margin-top:3px">${fmtP(r.B.cobro.monto)}</div>`:'';
+  return `<span class="pill" style="background:${bg};color:${col};font-weight:700">${ico}${e.txt}</span>${pie}${monto}`;
+}
+
 // "Faltan": videos que quedan y en cuántos días se llega al ritmo real de los últimos 7
 function faltanCell(r){
   if(r.B.cerrada) return '<span class="ms">—</span>';
@@ -261,7 +290,9 @@ function render(rs){
     ['Sin aprobar',TT(r=>r.pend)],
     ['Sin subir hoy',sinSubirHoy],
   ];
-  if(VER_PLATA){ kp.push(['Ventas del mes',T(r=>r.ventasMes),1]); kp.push(['A pagar (todas)',fmtP(TT(r=>r.deuda)),1]); }
+  const porCobrar=act.filter(r=>cobroEstado(r).accion).length;
+  kp.push(['Cuotas por cobrar',porCobrar]);
+  if(VER_PLATA){ kp.push(['Ventas del mes',T(r=>r.ventasMes),1]); }
   // los KPI de plata llevan .money: quedan tapados por CSS aunque el render se haya hecho antes
   document.getElementById('kpis').innerHTML=kp.map(([l,v,m])=>`<div class="kpi${m?' money':''}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
 
@@ -269,7 +300,8 @@ function render(rs){
   rs.forEach(r=>{
     if(!r.B.cerrada && !r.arranco) A.push(['#6b7c8f',`<b>${r.B.name}:</b> todavía no arrancó — el día 1 cuenta desde el primer video`,r.B.id+':sinarrancar']);
     if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`,r.B.id+':pend']);
-    if(VER_PLATA && r.B.cerrada && r.deuda>0) A.push(['#2a52c9',`<b>${r.B.name}:</b> campaña cerrada con ${fmtP(r.deuda)} pendientes de pago`,r.B.id+':deuda']);
+    const _cb=cobroEstado(r);
+    if(_cb.accion) A.push(['#16a34a',`<b>${r.B.name}:</b> ${_cb.alerta}`,r.B.id+':cobro']);
     if(!r.B.cerrada && r.arranco && r.frenados.length) A.push(['#dc2626',`<b>${r.B.name}:</b> ${r.frenados.length} sin subir hace 2+ días — ${r.frenados.map(x=>x.n+' ('+(x.d>900?'nunca subió':x.d+' días')+')').join(', ')}`,r.B.id+':frenados']);
     if(!r.B.cerrada && r.arranco && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`,r.B.id+':sinsubir']);
     if(!r.B.cerrada && r.arranco && r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`,r.B.id+':ritmo']);
@@ -303,7 +335,7 @@ function render(rs){
       <td class="money hide-m"><span class="num">${r.ventasMes}</span> <span class="ms">(${r.ventasTot} tot)</span></td>
       <td>${r.pend?`<span class="pill" style="background:rgba(217,119,6,.12);color:var(--warn);font-weight:700">${r.pend}</span>`:'<span class="ms">—</span>'}</td>
       <td class="hide-m">${faltanCell(r)}</td>
-      <td class="money"><span class="big" style="color:${r.deuda>0?'var(--acc)':'var(--mut2)'}">${fmtP(r.deuda)}</span></td>
+      <td>${cobroCell(r)}</td>
     </tr>`;
   }).join('');
   document.getElementById('stamp').textContent='Actualizado '+new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · datos en vivo';
