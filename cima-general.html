@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<title>CIMA — Vista General</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Nunito',-apple-system,sans-serif}
+:root{--bg:#f4f6f8;--card:#fff;--line:#e6eaee;--txt:#16202b;--mut:#6b7c8f;--mut2:#9aa9b8;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--acc:#2a52c9}
+body{background:var(--bg);color:var(--txt);padding:20px;min-height:100vh}
+.wrap{max-width:1240px;margin:0 auto}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+h1{font-size:24px;font-weight:900;letter-spacing:-.5px}
+.sub{font-family:'DM Mono';font-size:11px;color:var(--mut)}
+.btn{background:var(--acc);color:#fff;border:none;padding:9px 16px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer}
+.btn.g{background:none;color:var(--mut);border:1px solid var(--line)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px}
+.kpi .l{font-family:'DM Mono';font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--mut2)}
+.kpi .v{font-size:24px;font-weight:900;letter-spacing:-1px;margin-top:3px}
+.alerts{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:16px}
+.alerts h2{font-size:13px;font-weight:900;margin-bottom:9px}
+.al{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f2f5f7}
+.al:last-child{border:none}
+.al b{font-weight:800}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+th{font-family:'DM Mono';font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--mut2);text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px;border-bottom:1px solid #f2f5f7;font-size:13px;vertical-align:middle}
+tr:last-child td{border:none}
+.mk{display:flex;align-items:center;gap:9px}
+.sq{width:9px;height:30px;border-radius:3px;flex-shrink:0}
+.mn{font-weight:800;font-size:13.5px}
+.ms{font-family:'DM Mono';font-size:10px;color:var(--mut)}
+.bar{height:6px;background:#eef1f4;border-radius:4px;overflow:hidden;margin-top:5px;min-width:90px}
+.bar i{display:block;height:100%;border-radius:4px}
+.pill{display:inline-block;font-family:'DM Mono';font-size:9.5px;font-weight:500;padding:3px 8px;border-radius:20px}
+.num{font-family:'DM Mono';font-size:12.5px}
+.big{font-weight:900;font-size:15px;letter-spacing:-.3px}
+.login{max-width:340px;margin:14vh auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px}
+.login h1{font-size:20px;margin-bottom:4px}
+input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;font-size:14px;margin:14px 0;outline:none}
+.err{color:var(--bad);font-size:12px;display:none;margin-bottom:8px}
+.muted{color:var(--mut)}
+@media(max-width:820px){td,th{padding:9px 7px;font-size:11.5px}.hide-m{display:none}}
+</style></head><body>
+
+<div class="login" id="login">
+  <h1>CIMA · Vista General</h1>
+  <div class="sub">Panel del equipo</div>
+  <input type="password" id="pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()">
+  <div class="err" id="err">Contraseña incorrecta</div>
+  <button class="btn" style="width:100%" onclick="doLogin()">Entrar</button>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="hd">
+    <div>
+      <h1>Vista General</h1>
+      <div class="sub" id="stamp">cargando…</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn g" onclick="location.reload()">↻ Actualizar</button>
+    </div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="alerts" id="alerts" style="display:none"></div>
+  <div style="overflow-x:auto"><table>
+    <thead><tr>
+      <th>Campaña</th><th>PM</th><th>Progreso del mes</th><th>Ritmo</th>
+      <th class="hide-m">Creadoras</th><th>Views mes</th><th class="hide-m">Ventas</th>
+      <th>Pendientes</th><th>A pagar</th>
+    </tr></thead>
+    <tbody id="rows"><tr><td colspan="9" style="text-align:center;padding:34px" class="muted">Cargando campañas…</td></tr></tbody>
+  </table></div>
+  <div class="sub" style="margin-top:12px">Los datos salen en vivo de la app. "A pagar" = total ganado por las creadoras menos lo ya registrado como pagado.</div>
+</div>
+
+<script>
+const PASSES=['cima-2026','dani-2026','abril-2026'];
+function doLogin(){
+  const p=document.getElementById('pass').value.trim();
+  if(PASSES.includes(p)){ sessionStorage.setItem('cima_gen','1'); document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start(); }
+  else document.getElementById('err').style.display='block';
+}
+if(sessionStorage.getItem('cima_gen')==='1'){ document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; }); }
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, initializeFirestore, doc, getDoc, collection, getDocs, query, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const BRANDS=[
+ {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
+ {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora9:'Valentina',creadora11:'Abril',creadora12:'Juliana'}},
+ {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio',creadora5:'Pedro',creadora6:'Marcos',creadora7:'Leandro'}},
+ {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
+ {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora4:'María Eugenia',creadora5:'María Jimena'}},
+ {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',salary:500000,min:100,dia:3,creators:{creadora1:'Pablo',creadora2:'Leandro',creadora3:'Diego'}},
+];
+const COM=2500;
+const app=initializeApp({apiKey:"AIzaSyCTv4DiRCpbCpGYP6E86TPHlkPvaAZTN3g",authDomain:"cleargy-creators.firebaseapp.com",projectId:"cleargy-creators",storageBucket:"cleargy-creators.firebasestorage.app",messagingSenderId:"313543582398",appId:"1:313543582398:web:99fe78991adeea2e7cb4ef"});
+let db; try{ db=initializeFirestore(app,{experimentalAutoDetectLongPolling:true}); }catch(e){ db=getFirestore(app); }
+
+const fmtP=n=>'$'+Math.round(n||0).toLocaleString('es-AR');
+const fmtV=n=>{n=n||0;return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?Math.round(n/1000)+'K':String(n);};
+const argDate=d=>new Date(d).toLocaleDateString('sv',{timeZone:'America/Argentina/Buenos_Aires'});
+const hoyART=()=>new Date().toLocaleDateString('sv',{timeZone:'America/Argentina/Buenos_Aires'});
+const viewsAcum=v=>{const a=Number(v.igViews)||0,b=Number(v.ttViews)||0;return (a+b)>0?a+b:(Number(v.views)||0);};
+
+async function cargarMarca(B){
+  const col=collection(db,B.id+'_videos');
+  const desdeMes=hoyART().slice(0,8)+'01';
+  const [snapState,cAll,cApr,cPen,mes,ventasSnap]=await Promise.all([
+    getDoc(doc(db,B.id,'main')),
+    getCountFromServer(col),
+    getCountFromServer(query(col,where('status','==','approved'))),
+    getCountFromServer(query(col,where('status','==','pending'))),
+    getDocs(query(col,where('date','>=',desdeMes))),
+    getDocs(collection(db,B.id==='cleargy'?'sales':B.id+'_sales')).catch(()=>({docs:[]})),
+  ]);
+  let st={}; try{ st=JSON.parse(snapState.data().data); }catch(e){}
+  const totalVids=cAll.data().count, aprob=cApr.data().count, pend=cPen.data().count;
+  const vidsMes=mes.docs.map(d=>d.data()).filter(v=>v.status!=='rejected');
+  const viewsMes=vidsMes.reduce((a,v)=>a+viewsAcum(v),0);
+  const hoy=hoyART();
+  const subieronHoy=new Set(vidsMes.filter(v=>v.date&&argDate(v.date)===hoy).map(v=>v.creator));
+  const activos=Object.keys(B.creators);
+  const sinSubir=activos.filter(c=>!subieronHoy.has(c)).map(c=>B.creators[c]);
+  const ventasArr=(ventasSnap.docs||[]).map(d=>d.data());
+  const ventasMes=ventasArr.filter(s=>s.date&&String(s.date).slice(0,10)>=desdeMes).length;
+  const ventasTot=ventasArr.length;
+  const sumV=Object.values(st.ventas||{}).reduce((a,b)=>a+(b||0),0);
+  const sumB=Object.values(st.bonos||{}).reduce((a,b)=>a+(b||0),0);
+  const pagado=(st.pagos||[]).reduce((a,p)=>a+(p.monto||0),0);
+  const ganado=Math.round(B.salary*aprob/B.min)+sumV*COM+sumB;
+  const deuda=Math.max(0,ganado-pagado);
+  const objetivoMes=B.min*activos.length;
+  const d=new Date(hoy+'T12:00:00'); const diaMes=d.getDate();
+  const diasMes=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  const pct=objetivoMes?Math.round(vidsMes.length/objetivoMes*100):0;
+  const esperado=Math.round(diaMes/diasMes*100);
+  const ritmo=esperado?Math.round(pct/esperado*100):100;
+  return {B,totalVids,aprob,pend,vidsMes:vidsMes.length,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
+}
+
+function render(rs){
+  const T=(f)=>rs.reduce((a,r)=>a+f(r),0);
+  document.getElementById('kpis').innerHTML=[
+    ['Campañas activas',rs.length],
+    ['Videos del mes',T(r=>r.vidsMes).toLocaleString('es-AR')],
+    ['Views del mes',fmtV(T(r=>r.viewsMes))],
+    ['Ventas del mes',T(r=>r.ventasMes)],
+    ['Sin aprobar',T(r=>r.pend)],
+    ['A pagar',fmtP(T(r=>r.deuda))],
+  ].map(([l,v])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+
+  const A=[];
+  rs.forEach(r=>{
+    if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar`]);
+    if(r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`]);
+    if(r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`]);
+    if(r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`]);
+  });
+  const al=document.getElementById('alerts');
+  if(A.length){ al.style.display='block'; al.innerHTML='<h2>⚠️ Requiere atención</h2>'+A.map(([c,t])=>`<div class="al"><span class="dot" style="background:${c}"></span><span>${t}</span></div>`).join(''); }
+
+  document.getElementById('rows').innerHTML=rs.map(r=>{
+    const col=r.ritmo>=90?'var(--ok)':r.ritmo>=70?'var(--warn)':'var(--bad)';
+    const lbl=r.ritmo>=90?'Al día':r.ritmo>=70?'Va lento':'Atrasada';
+    const bg=r.ritmo>=90?'rgba(22,163,74,.1)':r.ritmo>=70?'rgba(217,119,6,.12)':'rgba(220,38,38,.1)';
+    return `<tr>
+      <td><div class="mk"><span class="sq" style="background:${r.B.color}"></span><div>
+        <div class="mn">${r.B.name}</div><div class="ms">${r.totalVids.toLocaleString('es-AR')} videos · ${r.B.dia}/día</div></div></div></td>
+      <td><span class="pill" style="background:#eef1f7;color:#3a4a63">${r.B.pm}</span></td>
+      <td><div class="num"><b>${r.vidsMes}</b> <span class="muted">/ ${r.objetivoMes}</span> · ${r.pct}%</div>
+        <div class="bar"><i style="width:${Math.min(100,r.pct)}%;background:${col}"></i></div></td>
+      <td><span class="pill" style="background:${bg};color:${col};font-weight:700">${lbl}</span></td>
+      <td class="hide-m"><span class="num">${r.activos}</span> <span class="ms">activas</span></td>
+      <td><span class="big">${fmtV(r.viewsMes)}</span></td>
+      <td class="hide-m"><span class="num">${r.ventasMes}</span> <span class="ms">(${r.ventasTot} tot)</span></td>
+      <td>${r.pend?`<span class="pill" style="background:rgba(217,119,6,.12);color:var(--warn);font-weight:700">${r.pend}</span>`:'<span class="ms">—</span>'}</td>
+      <td><span class="big" style="color:${r.deuda>0?'var(--acc)':'var(--mut2)'}">${fmtP(r.deuda)}</span></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('stamp').textContent='Actualizado '+new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · datos en vivo';
+}
+
+window.start=async function(){
+  try{ await signInAnonymously(getAuth(app)); }catch(e){ console.error(e); }
+  const rs=[];
+  for(const B of BRANDS){ try{ rs.push(await cargarMarca(B)); }catch(e){ console.error(B.id,e); } }
+  render(rs);
+};
+if(sessionStorage.getItem('cima_gen')==='1') window.start();
+</script>
+</body></html>
