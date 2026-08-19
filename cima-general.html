@@ -25,6 +25,8 @@ h1{font-size:24px;font-weight:900;letter-spacing:-.5px}
 .al{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f2f5f7}
 .al:last-child{border:none}
 .al b{font-weight:800}
+.xbtn{background:none;border:1px solid var(--line);color:var(--mut);font-family:'DM Mono';font-size:9.5px;padding:3px 9px;border-radius:20px;cursor:pointer;flex-shrink:0}
+.xbtn:hover{border-color:var(--mut2);color:var(--txt)}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
 table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 th{font-family:'DM Mono';font-size:9px;letter-spacing:1.1px;text-transform:uppercase;color:var(--mut2);text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -148,6 +150,28 @@ async function cargarMarca(B){
   return {B,totalVids,aprob,pend,vidsMes:vidsMes.length,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
 }
 
+const IGN_KEY='cima_gen_ignoradas';
+const getIgn=()=>{try{return JSON.parse(localStorage.getItem(IGN_KEY)||'[]')}catch(e){return[]}};
+const setIgn=a=>localStorage.setItem(IGN_KEY,JSON.stringify(a));
+window.ignorar=k=>{const a=getIgn(); if(!a.includes(k)){a.push(k);setIgn(a);} pintarAlertas();};
+window.restaurar=k=>{setIgn(getIgn().filter(x=>x!==k)); pintarAlertas();};
+window.restaurarTodo=()=>{setIgn([]); pintarAlertas();};
+function pintarAlertas(){
+  const A=window._alerts||[], ign=getIgn();
+  const act=A.filter(a=>!ign.includes(a[2])), baja=A.filter(a=>ign.includes(a[2]));
+  const al=document.getElementById('alerts');
+  if(!A.length){ al.style.display='none'; return; }
+  al.style.display='block';
+  let h='';
+  h+='<h2>⚠️ Requiere atención'+(act.length?` <span class="pill" style="background:rgba(220,38,38,.1);color:var(--bad);font-weight:700">${act.length}</span>`:'')+'</h2>';
+  h+= act.length ? act.map(([c,t,k])=>`<div class="al"><span class="dot" style="background:${c}"></span><span style="flex:1">${t}</span><button class="xbtn" onclick="ignorar('${k}')" title="Pasar a prioridad baja">ignorar</button></div>`).join('')
+     : '<div class="al muted" style="font-size:12px">Todo en orden por acá 👌</div>';
+  if(baja.length){
+    h+=`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><h2 style="color:var(--mut)">🔕 Prioridad baja <span class="pill" style="background:#eef1f4;color:var(--mut)">${baja.length}</span> <button class="xbtn" style="float:right" onclick="restaurarTodo()">restaurar todas</button></h2>`;
+    h+=baja.map(([c,t,k])=>`<div class="al" style="opacity:.6"><span class="dot" style="background:${c}"></span><span style="flex:1">${t}</span><button class="xbtn" onclick="restaurar('${k}')" title="Volver a Requiere atención">restaurar</button></div>`).join('')+'</div>';
+  }
+  al.innerHTML=h;
+}
 function render(rs){
   const act=rs.filter(r=>!r.B.cerrada);
   const T=(f)=>act.reduce((a,r)=>a+f(r),0);
@@ -163,14 +187,13 @@ function render(rs){
 
   const A=[];
   rs.forEach(r=>{
-    if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`]);
-    if(r.B.cerrada && r.deuda>0) A.push(['#2a52c9',`<b>${r.B.name}:</b> campaña cerrada con ${fmtP(r.deuda)} pendientes de pago`]);
-    if(!r.B.cerrada && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`]);
-    if(!r.B.cerrada && r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`]);
-    if(!r.B.cerrada && r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`]);
+    if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`,r.B.id+':pend']);
+    if(r.B.cerrada && r.deuda>0) A.push(['#2a52c9',`<b>${r.B.name}:</b> campaña cerrada con ${fmtP(r.deuda)} pendientes de pago`,r.B.id+':deuda']);
+    if(!r.B.cerrada && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`,r.B.id+':sinsubir']);
+    if(!r.B.cerrada && r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`,r.B.id+':ritmo']);
+    if(!r.B.cerrada && r.ventasTot===0) A.push(['#dc2626',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`,r.B.id+':ventas']);
   });
-  const al=document.getElementById('alerts');
-  if(A.length){ al.style.display='block'; al.innerHTML='<h2>⚠️ Requiere atención</h2>'+A.map(([c,t])=>`<div class="al"><span class="dot" style="background:${c}"></span><span>${t}</span></div>`).join(''); }
+  window._alerts=A; pintarAlertas();
 
   const orden=[...rs.filter(r=>!r.B.cerrada),...rs.filter(r=>r.B.cerrada)];
   let sep=false;
