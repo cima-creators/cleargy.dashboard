@@ -141,15 +141,18 @@ async function cargarMarca(B){
   const _sd=st0.startDates||{}; const _act=Object.keys(B.creators);
   const _ini=_act.map(c=>_sd[c]).filter(Boolean).sort();
   const desdeCamp=_ini.length?_ini[0]:(B.inicio||desdeMes);
-  const [cAll,cApr,cPen,mes,ventasSnap]=await Promise.all([
+  const [cAll,cApr,cPen,cRech,mes,ventasSnap]=await Promise.all([
     getCountFromServer(col),
     getCountFromServer(query(col,where('status','==','approved'))),
     getCountFromServer(query(col,where('status','==','pending'))),
+    getCountFromServer(query(col,where('status','==','rejected'))),
     getDocs(query(col,where('date','>=',desdeCamp))),
     getDocs(collection(db,B.id==='cleargy'?'sales':B.id+'_sales')).catch(()=>({docs:[]})),
   ]);
   const st=st0;
-  const totalVids=cAll.data().count, aprob=cApr.data().count, pend=cPen.data().count;
+  // Los rechazados NO cuentan: la app de cada marca tampoco los suma
+  const aprob=cApr.data().count, pend=cPen.data().count, rech=cRech.data().count;
+  const totalVids=cAll.data().count-rech;
   const vidsMes=mes.docs.map(d=>d.data()).filter(v=>v.status!=='rejected');
   const viewsMes=vidsMes.reduce((a,v)=>a+viewsAcum(v),0);
   const hoy=hoyART();
