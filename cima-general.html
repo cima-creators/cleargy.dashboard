@@ -113,7 +113,7 @@ import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/1
 
 const BRANDS=[
  {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',cerrada:true,inicio:'2026-06-01',salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
- {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
+ {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',previos:900,objetivo:300,inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
  {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',inicio:'2026-07-02',objetivo:500,salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio'}},
  {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',cerrada:true,inicio:'2026-08-01',objetivo:250,salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
  {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',cobro:{tipo:'cuotas',pagadas:1,total:2,gatillo:50},inicio:'2026-08-11',objetivo:200,salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
@@ -188,14 +188,17 @@ async function cargarMarca(B){
   }
   const ayer=dias7[5]?dias7[5].n:0;
   const prom7=Math.round(dias7.slice(0,6).reduce((a,x)=>a+x.n,0)/6);
-  const pct=objetivoMes?Math.round(vidsMes.length/objetivoMes*100):0;
+  // B.previos = videos ya entregados en la campaña anterior; el avance arranca recién ahí
+  const previos=B.previos||0;
+  const vidsCamp=previos?Math.max(0,totalVids-previos):vidsMes.length;
+  const pct=objetivoMes?Math.round(vidsCamp/objetivoMes*100):0;
   const _fechas=vidsMes.map(v=>v.date&&argDate(v.date)).filter(Boolean).sort();
   const arranco=_fechas.length>0;
   const inicioReal=arranco?_fechas[0]:null;
   const diasCamp=arranco?Math.max(1,Math.round((new Date(hoy+'T12:00:00')-new Date(inicioReal+'T12:00:00'))/86400000)+1):0;
   const esperado=arranco?Math.min(100,Math.round(diasCamp/30*100)):0;
   const ritmo=esperado?Math.round(pct/esperado*100):100;
-  return {B,totalVids,aprob,pend,frenados,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsMes.length,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
+  return {B,totalVids,aprob,pend,frenados,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
 }
 
 const IGN_KEY='cima_gen_ignoradas';
@@ -295,7 +298,6 @@ function render(rs){
   ];
   const porCobrar=act.filter(r=>cobroEstado(r).accion).length;
   kp.push(['Cuotas por cobrar',porCobrar]);
-  if(VER_PLATA){ kp.push(['Ventas del mes',T(r=>r.ventasMes),1]); }
   // los KPI de plata llevan .money: quedan tapados por CSS aunque el render se haya hecho antes
   document.getElementById('kpis').innerHTML=kp.map(([l,v,m])=>`<div class="kpi${m?' money':''}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
 
@@ -356,7 +358,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-08-24-c';
+const APP_VERSION = '2026-08-25-a';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
