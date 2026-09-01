@@ -52,6 +52,8 @@ input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10
 .err{color:var(--bad);font-size:12px;display:none;margin-bottom:8px}
 .muted{color:var(--mut)}
 @media(max-width:820px){td,th{padding:9px 7px;font-size:11.5px}.hide-m{display:none}}
+.xbtn.ir{background:var(--mark);color:#fff;border-color:var(--mark);text-decoration:none;font-weight:600;white-space:nowrap;}
+.xbtn.ir:hover{filter:brightness(1.1);}
 .money{display:none !important}
 html.plata .money{display:revert !important}
 html.plata .kpi.money{display:block !important}
@@ -256,11 +258,12 @@ function pintarAlertas(){
   al.style.display='block';
   let h='';
   h+='<h2>⚠️ Requiere atención'+(act.length?` <span class="pill" style="background:rgba(220,38,38,.1);color:var(--bad);font-weight:700">${act.length}</span>`:'')+'</h2>';
-  h+= act.length ? act.map(([c,t,k])=>`<div class="al"><span class="dot" style="background:${c}"></span><span style="flex:1">${t}</span><button class="xbtn" onclick="ignorar('${k}')" title="Pasar a prioridad baja">ignorar</button></div>`).join('')
+  const ir=(u,rot)=>u?`<a class="xbtn ir" href="${u}" target="_blank" rel="noopener" title="Abrir el panel de la marca">${rot||'abrir'} →</a>`:'';
+  h+= act.length ? act.map(([c,t,k,u,rot])=>`<div class="al"><span class="dot" style="background:${c}"></span><span style="flex:1">${t}</span>${ir(u,rot)}<button class="xbtn" onclick="ignorar('${k}')" title="Pasar a prioridad baja">ignorar</button></div>`).join('')
      : '<div class="al muted" style="font-size:12px">Todo en orden por acá 👌</div>';
   if(baja.length){
     h+=`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><h2 style="color:var(--mut)">🔕 Prioridad baja <span class="pill" style="background:#eef1f4;color:var(--mut)">${baja.length}</span> <button class="xbtn" style="float:right" onclick="restaurarTodo()">restaurar todas</button></h2>`;
-    h+=baja.map(([c,t,k])=>`<div class="al" style="opacity:.6"><span class="dot" style="background:${c}"></span><span style="flex:1">${t}</span><button class="xbtn" onclick="restaurar('${k}')" title="Volver a Requiere atención">restaurar</button></div>`).join('')+'</div>';
+    h+=baja.map(([c,t,k,u,rot])=>`<div class="al" style="opacity:.6"><span class="dot" style="background:${c}"></span><span style="flex:1">${t}</span><button class="xbtn" onclick="restaurar('${k}')" title="Volver a Requiere atención">restaurar</button></div>`).join('')+'</div>';
   }
   al.innerHTML=h;
 }
@@ -346,7 +349,9 @@ function render(rs){
         ? `terminó sus ${r.metaCreador} videos (${h.n})`
         : `pasó la mitad — ${h.n} de ${r.metaCreador} (${h.pct}%)`;
       const cola = VER_PLATA ? ` — le debés ${fmtP(h.debe)}` : '';
-      A.push(['#2a8f5e',`<b>${r.B.name}:</b> ${h.nombre} ${cierre}${cola}`, r.B.id+':pago'+h.hito+':'+h.c]);
+      A.push(['#2a8f5e',`<b>${r.B.name}:</b> ${h.nombre} ${cierre}${cola}`, r.B.id+':pago'+h.hito+':'+h.c,
+        `https://cima-creators.github.io/cleargy.ugc/cima-admin.html?brand=${r.B.id}&ver=finanzas&creador=${h.c}`,
+        'Pagar']);
     });
     if(!r.B.cerrada && r.arranco && r.frenados.length) A.push(['#dc2626',`<b>${r.B.name}:</b> ${r.frenados.length} sin subir hace 2+ días — ${r.frenados.map(x=>x.n+' ('+(x.d>900?'nunca subió':x.d+' días')+')').join(', ')}`,r.B.id+':frenados']);
     if(!r.B.cerrada && r.arranco && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`,r.B.id+':sinsubir']);
@@ -399,7 +404,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-08-29-i';
+const APP_VERSION = '2026-08-29-l';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
