@@ -199,14 +199,24 @@ async function cargarMarca(B){
   const diasCamp=arranco?Math.max(1,Math.round((new Date(hoy+'T12:00:00')-new Date(inicioReal+'T12:00:00'))/86400000)+1):0;
   const esperado=arranco?Math.min(100,Math.round(diasCamp/30*100)):0;
   const ritmo=esperado?Math.round(pct/esperado*100):100;
-  // Hitos de pago: Ignacio paga al 50% y al 100% del trabajo de cada creador
+  // Hitos de pago: Ignacio paga al 50% y al 100% del trabajo de cada creador.
+  // Sólo avisa si de verdad le queda plata por cobrar — si ya se le pagó, no molesta.
   const metaCreador = B.min || 0;
   const hitos = [];
-  if (metaCreador) activos.forEach(c => {
-    const n = vidsMes.filter(v => v.creator === c).length;
+  const _pagosC = {};
+  (st.pagos || []).forEach(p => { _pagosC[p.creator] = (_pagosC[p.creator] || 0) + (p.monto || 0); });
+  if (metaCreador && !B.cerrada) activos.forEach(c => {
+    const mios = vidsMes.filter(v => v.creator === c);
+    const n = mios.length;
     const p = Math.round(n / metaCreador * 100);
-    if (p >= 100) hitos.push({ c, nombre: B.creators[c], n, pct: p, hito: 100 });
-    else if (p >= 50) hitos.push({ c, nombre: B.creators[c], n, pct: p, hito: 50 });
+    if (p < 50) return;
+    const aprobC = mios.filter(v => v.status === 'approved').length;
+    const ganadoC = Math.round(B.salary * aprobC / metaCreador)
+                  + ((st.bonos || {})[c] || 0)
+                  + ((st.ventas || {})[c] || 0) * COM;
+    const debeC = Math.max(0, ganadoC - (_pagosC[c] || 0));
+    if (debeC <= 0) return; // ya está cobrado: no hay nada que avisar
+    hitos.push({ c, nombre: B.creators[c], n, pct: p, hito: p >= 100 ? 100 : 50, debe: debeC });
   });
 
   return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
@@ -325,7 +335,7 @@ function render(rs){
       const cierre = h.hito===100
         ? `terminó sus ${r.metaCreador} videos (${h.n})`
         : `pasó la mitad — ${h.n} de ${r.metaCreador} (${h.pct}%)`;
-      const cola = VER_PLATA ? (h.hito===100 ? ' — toca pagarle el saldo' : ' — toca pagarle la mitad') : '';
+      const cola = VER_PLATA ? ` — le debés ${fmtP(h.debe)}` : '';
       A.push(['#2a8f5e',`<b>${r.B.name}:</b> ${h.nombre} ${cierre}${cola}`, r.B.id+':pago'+h.hito+':'+h.c]);
     });
     if(!r.B.cerrada && r.arranco && r.frenados.length) A.push(['#dc2626',`<b>${r.B.name}:</b> ${r.frenados.length} sin subir hace 2+ días — ${r.frenados.map(x=>x.n+' ('+(x.d>900?'nunca subió':x.d+' días')+')').join(', ')}`,r.B.id+':frenados']);
@@ -379,7 +389,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-08-29-g';
+const APP_VERSION = '2026-08-29-h';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
