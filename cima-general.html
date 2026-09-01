@@ -199,7 +199,17 @@ async function cargarMarca(B){
   const diasCamp=arranco?Math.max(1,Math.round((new Date(hoy+'T12:00:00')-new Date(inicioReal+'T12:00:00'))/86400000)+1):0;
   const esperado=arranco?Math.min(100,Math.round(diasCamp/30*100)):0;
   const ritmo=esperado?Math.round(pct/esperado*100):100;
-  return {B,totalVids,aprob,pend,frenados,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
+  // Hitos de pago: Ignacio paga al 50% y al 100% del trabajo de cada creador
+  const metaCreador = B.min || 0;
+  const hitos = [];
+  if (metaCreador) activos.forEach(c => {
+    const n = vidsMes.filter(v => v.creator === c).length;
+    const p = Math.round(n / metaCreador * 100);
+    if (p >= 100) hitos.push({ c, nombre: B.creators[c], n, pct: p, hito: 100 });
+    else if (p >= 50) hitos.push({ c, nombre: B.creators[c], n, pct: p, hito: 50 });
+  });
+
+  return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
 }
 
 const IGN_KEY='cima_gen_ignoradas';
@@ -298,7 +308,9 @@ function render(rs){
     ['Sin subir hoy',sinSubirHoy],
   ];
   const porCobrar=act.filter(r=>cobroEstado(r).accion).length;
+  const hitosPago=act.reduce((a,r)=>a+((r.hitos||[]).length),0);
   kp.push(['Cuotas por cobrar',porCobrar]);
+  kp.push(['Creadores a pagar',hitosPago]);
   // los KPI de plata llevan .money: quedan tapados por CSS aunque el render se haya hecho antes
   document.getElementById('kpis').innerHTML=kp.map(([l,v,m])=>`<div class="kpi${m?' money':''}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
 
@@ -308,6 +320,14 @@ function render(rs){
     if(r.pend>0) A.push(['#d97706',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`,r.B.id+':pend']);
     const _cb=cobroEstado(r);
     if(_cb.accion) A.push(['#16a34a',`<b>${r.B.name}:</b> ${_cb.alerta}`,r.B.id+':cobro']);
+    // Hitos de pago a creadores: se avisa una vez y se puede archivar con "ignorar"
+    (r.hitos||[]).forEach(h=>{
+      const cierre = h.hito===100
+        ? `terminó sus ${r.metaCreador} videos (${h.n})`
+        : `pasó la mitad — ${h.n} de ${r.metaCreador} (${h.pct}%)`;
+      const cola = VER_PLATA ? (h.hito===100 ? ' — toca pagarle el saldo' : ' — toca pagarle la mitad') : '';
+      A.push(['#2a8f5e',`<b>${r.B.name}:</b> ${h.nombre} ${cierre}${cola}`, r.B.id+':pago'+h.hito+':'+h.c]);
+    });
     if(!r.B.cerrada && r.arranco && r.frenados.length) A.push(['#dc2626',`<b>${r.B.name}:</b> ${r.frenados.length} sin subir hace 2+ días — ${r.frenados.map(x=>x.n+' ('+(x.d>900?'nunca subió':x.d+' días')+')').join(', ')}`,r.B.id+':frenados']);
     if(!r.B.cerrada && r.arranco && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#dc2626':'#d97706',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`,r.B.id+':sinsubir']);
     if(!r.B.cerrada && r.arranco && r.ritmo<70) A.push(['#dc2626',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`,r.B.id+':ritmo']);
@@ -359,7 +379,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-08-29-c';
+const APP_VERSION = '2026-08-29-g';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
