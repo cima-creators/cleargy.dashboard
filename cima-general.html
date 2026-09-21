@@ -88,6 +88,8 @@ tbody tr:hover{background:#FCFAF8}
 .sp{flex:1;height:100%;display:flex;align-items:flex-end;cursor:default;border-radius:4px}
 .sp:hover{background:var(--soft)}
 .sp i{width:100%;border-radius:4px;min-height:4px;display:block}
+.sp-lbl{position:relative;white-space:nowrap}
+.sp-hov{display:none;position:absolute;left:0;top:0;white-space:nowrap;font-weight:600;color:var(--txt)}
 .bar{height:7px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:7px;min-width:100px}
 .bar i{display:block;height:100%;border-radius:99px}
 .pill{display:inline-block;font-size:11px;font-weight:500;padding:4px 11px;border-radius:99px}
@@ -349,12 +351,13 @@ window.restaurarTodo=()=>{setIgn([]); pintarAlertas();};
 window.spOn=function(el){
   const td=el.closest('td'); if(!td) return;
   const d=td.querySelector('.sp-def'), h=td.querySelector('.sp-hov');
-  if(d&&h){ d.style.display='none'; h.style.display='inline'; h.textContent=el.dataset.t; }
+  // el texto del día se superpone al de "ayer" (que solo se oculta): la fila no cambia de tamaño
+  if(d&&h){ d.style.visibility='hidden'; h.style.display='inline'; h.textContent=el.dataset.t; }
 };
 window.spOff=function(el){
   const td=el.closest('td'); if(!td) return;
   const d=td.querySelector('.sp-def'), h=td.querySelector('.sp-hov');
-  if(d&&h){ h.style.display='none'; d.style.display='inline'; }
+  if(d&&h){ h.style.display='none'; d.style.visibility=''; }
 };
 // Lleva a los avisos de pago y los resalta un momento
 window.irAPagos=function(){
@@ -625,10 +628,10 @@ function render(rs){
           const p=r.diarioObj?Math.min(100,Math.round(d.n/r.diarioObj*100)):0;
           const c=d.n===0?'#EFE8E3':d.n>=r.diarioObj?'#3F8F6B':'#B07B2E';
           const dd=new Date(d.k+'T12:00:00');
-          const et=d.hoy?'hoy':dd.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'numeric'});
-          return `<span class="sp" data-t="${et} · ${d.n} video${d.n===1?'':'s'} de ${r.diarioObj}" onmouseenter="spOn(this)" onmouseleave="spOff(this)"><i style="height:${Math.max(9,p)}%;background:${c};${d.hoy?'outline:1.5px solid #D9CFC8;outline-offset:1px;':''}"></i></span>`;
+          const et=d.hoy?'hoy':['dom','lun','mar','mié','jue','vie','sáb'][dd.getDay()]+' '+dd.getDate()+'/'+(dd.getMonth()+1);
+          return `<span class="sp" data-t="${et} · ${d.n} de ${r.diarioObj}" onmouseenter="spOn(this)" onmouseleave="spOff(this)"><i style="height:${Math.max(9,p)}%;background:${c};${d.hoy?'outline:1.5px solid #D9CFC8;outline-offset:1px;':''}"></i></span>`;
         }).join('')}</div>
-        <div class="ms" style="margin-top:4px"><span class="sp-def">ayer <b style="color:${r.ayer>=r.diarioObj?'var(--ok)':r.ayer>0?'var(--warn)':'var(--bad)'}">${r.ayer}</b>/${r.diarioObj} · prom ${r.prom7}</span><span class="sp-hov" style="display:none;font-weight:800;color:var(--txt)"></span></div>`}</td>
+        <div class="ms sp-lbl" style="margin-top:4px"><span class="sp-def">ayer <b style="color:${r.ayer>=r.diarioObj?'var(--ok)':r.ayer>0?'var(--warn)':'var(--bad)'}">${r.ayer}</b>/${r.diarioObj} · prom ${r.prom7}</span><span class="sp-hov"></span></div>`}</td>
       <td class="hide-m"><span class="num">${r.activos}</span> <span class="ms">activas</span></td>
       <td><span class="big">${fmtV(r.viewsMes)}</span></td>
       <td class="money hide-m"><span class="num">${r.ventasMes}</span> <span class="ms">(${r.ventasTot} tot)</span></td>
@@ -654,7 +657,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-09-21-d';
+const APP_VERSION = '2026-09-21-e';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
