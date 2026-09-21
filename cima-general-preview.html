@@ -30,9 +30,26 @@ h1{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
 .btn.g:hover{border-color:var(--line2);opacity:1}
 .btn.on{background:var(--txt);color:#fff;border-color:var(--txt)}
 
+/* ── arriba: aro de avance + tarjetas ── */
+.top{display:grid;grid-template-columns:minmax(300px,390px) minmax(0,1fr);gap:12px;margin-bottom:18px}
+.top.solo{grid-template-columns:minmax(0,1fr)}
+.hero{border-radius:26px;padding:22px 24px;color:#fff;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#51463F 0%,#26211E 64%);display:flex;align-items:center;gap:20px}
+.hero .blob{position:absolute;width:230px;height:230px;border-radius:50%;background:rgba(255,255,255,.06);right:-80px;bottom:-100px}
+.ringbox{position:relative;width:112px;height:112px;flex-shrink:0}
+.ringbox svg{transform:rotate(-90deg);display:block}
+.ringbox .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ringbox .mid b{font-size:31px;font-weight:700;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.ringbox .mid u{text-decoration:none;font-size:10.5px;opacity:.75;margin-top:3px}
+.hero-msg{position:relative;min-width:0}
+.hero-msg .ey{font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;opacity:.6}
+.hero-msg h3{font-size:19px;font-weight:700;line-height:1.2;letter-spacing:-.025em;margin:6px 0 7px}
+.hero-msg p{font-size:12.5px;line-height:1.5;opacity:.85}
+
 /* ── tarjetas de KPI ── */
-.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:11px;margin-bottom:18px}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;min-height:96px}
+.kpis{display:grid;grid-template-columns:repeat(var(--kc,4),minmax(0,1fr));gap:11px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;min-height:96px;display:flex;flex-direction:column}
+.kpi .v{margin-top:auto !important;padding-top:8px}
 .kpi .l{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
 .kpi .v{font-size:30px;font-weight:700;letter-spacing:-.035em;margin-top:6px;line-height:1;font-variant-numeric:tabular-nums}
 .ksub{font-size:11.5px;color:var(--mut);margin-top:8px;line-height:1.45}
@@ -111,7 +128,10 @@ input[type=password]:focus{border-color:var(--line2)}
 .err{color:var(--bad);font-size:12.5px;display:none;margin-bottom:10px}
 .foot{font-size:12px;color:var(--mut);margin-top:14px;line-height:1.55;max-width:90ch}
 
+@media(max-width:1040px){.top{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:820px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hero{padding:20px}
   body{padding:18px 12px 50px}
   h1{font-size:25px}
   td,th{padding:11px 9px;font-size:12px}
@@ -148,7 +168,7 @@ html.plata .kpi.money{display:block !important}
     <div class="opts" id="picker-opts"></div>
     <div class="hint">Se guarda en esta compu. Tocá para mostrar u ocultar.</div>
   </div>
-  <div class="kpis" id="kpis"></div>
+  <div class="top" id="top"><div class="hero" id="hero"></div><div class="kpis" id="kpis"></div></div>
   <div class="aviso-orden">Arrastrá las campañas desde <b>⋮⋮</b> o usá las flechas. El orden se guarda solo. Tocá <b>Listo</b> cuando termines.</div>
   <div class="tbl-wrap"><div class="tbl-scroll"><table>
     <thead><tr>
@@ -170,6 +190,7 @@ function doLogin(){
   if(PASSES.includes(p)){
     sessionStorage.setItem('cima_gen','1');
     sessionStorage.setItem('cima_gen_rol', p==='cima-2026'?'owner':'team');
+    sessionStorage.setItem('cima_gen_quien', {'cima-2026':'Nacho','dani-2026':'Dani','abril-2026':'Abril'}[p]);
     document.documentElement.classList.toggle('plata', p==='cima-2026');
     document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start();
   }
@@ -363,7 +384,7 @@ window.toggleKpi=function(id){
   const cat=(window._kpiCatalogo||[]).map(k=>k.id);
   let sel=kpisElegidos()||cat.slice();
   sel = sel.includes(id) ? sel.filter(x=>x!==id) : [...sel,id];
-  if(!sel.length) sel=[id==='activas'?'videos':'activas'];   // nunca dejar la fila vacía
+  if(!sel.length) sel=[id==='resumen'?'activas':'resumen'];   // nunca dejar la fila vacía
   guardarLS(KPI_KEY, sel);
   render(window._rs);
 };
@@ -508,10 +529,39 @@ function render(rs){
   kp.push(['apagar','Creadores a pagar',hitosPago,0,aPagar.join(' · '),'irAPagos']);
   // los KPI de plata llevan .money: quedan tapados por CSS aunque el render se haya hecho antes
   // Solo se muestran las stats que elegiste en "Stats" (se guarda en esta compu)
-  window._kpiCatalogo = kp.map(k=>({id:k[0], label:k[1]}));
+  window._kpiCatalogo = [{id:'resumen',label:'Aro de avance'}, ...kp.map(k=>({id:k[0], label:k[1]}))];
   const _elegidos = kpisElegidos();
   const kpVisibles = kp.filter(k => !_elegidos || _elegidos.includes(k[0]));
+  const verAro = !_elegidos || _elegidos.includes('resumen');
   pintarPicker();
+
+  // Aro de avance: videos hechos contra el objetivo de todas las campañas activas
+  const hechos=T(r=>r.vidsMes), meta=T(r=>r.objetivoMes);
+  const pctTot=meta?Math.min(100,Math.round(hechos/meta*100)):0;
+  const atrasadas=act.filter(r=>r.arranco&&r.ritmo<70).length;
+  const sinArrancar=act.filter(r=>!r.arranco).length;
+  const pendTot=act.reduce((a,r)=>a+r.pend,0);
+  const R=48, CIRC=2*Math.PI*R;
+  const _det=[
+    atrasadas?`${atrasadas} atrasada${atrasadas>1?'s':''}`:'todas en ritmo',
+    sinArrancar?`${sinArrancar} sin arrancar`:'',
+    pendTot?`${pendTot} videos sin aprobar`:'',
+  ].filter(Boolean).join(' · ');
+  const hero=document.getElementById('hero');
+  hero.style.display=verAro?'':'none';
+  hero.innerHTML=`<span class="blob"></span>
+    <div class="ringbox"><svg width="112" height="112" viewBox="0 0 112 112">
+      <circle cx="56" cy="56" r="${R}" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="10"/>
+      <circle cx="56" cy="56" r="${R}" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="${CIRC.toFixed(1)}" stroke-dashoffset="${(CIRC*(1-pctTot/100)).toFixed(1)}"/></svg>
+      <div class="mid"><b>${pctTot}%</b><u>del objetivo</u></div></div>
+    <div class="hero-msg"><div class="ey">${act.length} campañas activas</div>
+      <h3>${hechos.toLocaleString('es-AR')} de ${meta.toLocaleString('es-AR')} videos</h3>
+      <p>${_det}</p></div>`;
+  document.getElementById('top').classList.toggle('solo', !verAro || !kpVisibles.length);
+  const _n=kpVisibles.length;
+  document.getElementById('kpis').style.display=_n?'':'none';
+  document.getElementById('kpis').style.setProperty('--kc', _n<=4 ? Math.max(1,_n) : Math.ceil(_n/2));
   document.getElementById('kpis').innerHTML=kpVisibles.map(([id,l,v,m,sub,accion])=>
     `<div class="kpi${m?' money':''}${accion?' clickable':''}"${accion?` onclick="${accion}()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')${accion}()"`:''}>`+
     `<div class="l">${l}</div><div class="v">${v}</div>`+
@@ -578,7 +628,8 @@ function render(rs){
     </tr>`;
   }).join('');
   activarArrastre();
-  document.getElementById('stamp').textContent='Actualizado '+new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · datos en vivo';
+  const _quien=sessionStorage.getItem('cima_gen_quien');
+  document.getElementById('stamp').textContent=(_quien?'Hola '+_quien+' · ':'')+'Actualizado '+new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · datos en vivo';
 }
 
 window.start=async function(){
@@ -593,7 +644,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = 'preview-gen-1';
+const APP_VERSION = 'preview-gen-2';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
