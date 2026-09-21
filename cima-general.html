@@ -209,7 +209,7 @@ html.plata .kpi.money{display:block !important}
 const PASSES=['cima-2026','dani-2026','abril-2026'];
 // Solo la clave de Nacho ve ventas y montos a pagar. El equipo (Dani/Abril) ve todo lo demás.
 function doLogin(){
-  const p=document.getElementById('pass').value.trim();
+  const p=document.getElementById('pass').value.trim().toLowerCase();  // el celu pone mayúscula o espacio al final
   if(PASSES.includes(p)){
     sessionStorage.setItem('cima_gen','1');
     sessionStorage.setItem('cima_gen_rol', p==='cima-2026'?'owner':'team');
@@ -688,13 +688,13 @@ let _collabs=null, _collabsCargando=false;
 function pedirClaveCollabs(msg){
   document.getElementById('v-collabs').innerHTML=`<div class="login" style="margin:24px auto">
     <h1 style="font-size:20px">Collabs</h1>
-    <div class="sub">${msg||'Poné tu clave una vez más para abrir los paneles de collab.'}</div>
-    <input type="password" id="clave-collabs" placeholder="Tu clave" onkeydown="if(event.key==='Enter')guardarClaveCollabs()">
+    <div class="sub">${msg||'Poné la misma clave con la que entrás a la Vista General (se pide una sola vez).'}</div>
+    <input type="password" id="clave-collabs" placeholder="La clave de la Vista General" autocapitalize="none" autocomplete="off" onkeydown="if(event.key==='Enter')guardarClaveCollabs()">
     <button class="btn" style="width:100%" onclick="guardarClaveCollabs()">Ver collabs</button></div>`;
 }
 window.guardarClaveCollabs=function(){
   const v=(document.getElementById('clave-collabs')||{}).value; if(!v||!v.trim()) return;
-  sessionStorage.setItem('cima_gen_clave',v.trim()); cargarCollabs();
+  sessionStorage.setItem('cima_gen_clave',v.trim().toLowerCase()); cargarCollabs();
 };
 async function cargarCollabs(){
   const clave=sessionStorage.getItem('cima_gen_clave');
@@ -712,7 +712,7 @@ async function cargarCollabs(){
     }catch(e){ console.error('collab',C.id,e); return {C,error:true}; }
   }));
   _collabsCargando=false;
-  if(res.some(r=>r.sinClave)){ sessionStorage.removeItem('cima_gen_clave'); pedirClaveCollabs('Esa clave no abre los paneles de collab. Probá de nuevo.'); return; }
+  if(res.some(r=>r.sinClave)){ sessionStorage.removeItem('cima_gen_clave'); pedirClaveCollabs('Esa clave no abre los paneles de collab. Es la misma con la que entrás a la Vista General.'); return; }
   _collabs=res; pintarCollabs();
 }
 function pintarCollabs(){
@@ -790,7 +790,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-09-21-g';
+const APP_VERSION = '2026-09-21-h';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
