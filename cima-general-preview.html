@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="es"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<title>CIMA — Vista General</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',-apple-system,BlinkMacSystemFont,sans-serif}
+:root{
+  --bg:#FAF7F4;--card:#FFFFFF;--soft:#F6F2EE;--line:#EFE8E3;--line2:#E2D8D1;
+  --txt:#26211E;--mut:#8A7E77;--mut2:#B5A79F;
+  --ok:#3F8F6B;--warn:#B07B2E;--bad:#C1613C;
+  --acc:#26211E;--mark:#26211E;
+  --r:22px;--r-sm:16px;--r-xs:12px;
+}
+body{background:var(--bg);color:var(--txt);padding:28px 22px 60px;min-height:100vh;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto}
+
+/* ── cabecera ── */
+.hd{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+h1{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
+.sub{font-size:12.5px;color:var(--mut);margin-top:4px}
+.hd-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{background:var(--txt);color:#fff;border:0;padding:10px 17px;border-radius:14px;font-weight:600;font-size:13px;cursor:pointer;transition:opacity .15s}
+.btn:hover{opacity:.88}
+.btn.g{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+.btn.g:hover{border-color:var(--line2);opacity:1}
+.btn.on{background:var(--txt);color:#fff;border-color:var(--txt)}
+
+/* ── tarjetas de KPI ── */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:11px;margin-bottom:18px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;min-height:96px}
+.kpi .l{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.kpi .v{font-size:30px;font-weight:700;letter-spacing:-.035em;margin-top:6px;line-height:1;font-variant-numeric:tabular-nums}
+.ksub{font-size:11.5px;color:var(--mut);margin-top:8px;line-height:1.45}
+.kgo{font-size:11.5px;color:var(--txt);margin-top:8px;font-weight:600}
+.kpi.clickable{cursor:pointer;transition:border-color .18s,transform .18s}
+.kpi.clickable:hover{border-color:var(--line2);transform:translateY(-1px)}
+
+/* ── selector de stats ── */
+.picker{display:none;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;margin-bottom:14px}
+.picker.open{display:block}
+.picker h3{font-size:13px;font-weight:600;margin-bottom:11px}
+.picker .opts{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:99px;padding:7px 13px;font-size:12.5px;cursor:pointer;user-select:none;background:var(--card);color:var(--mut)}
+.chip input{display:none}
+.chip.sel{background:var(--txt);border-color:var(--txt);color:#fff}
+.chip .ck{width:14px;height:14px;border-radius:5px;border:1.5px solid currentColor;display:inline-grid;place-items:center;font-size:9px;line-height:1}
+.picker .hint{font-size:11.5px;color:var(--mut);margin-top:11px}
+
+/* ── tabla de campañas ── */
+.tbl-wrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:10.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--mut);text-align:left;padding:15px 14px 13px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:15px 14px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:#FCFAF8}
+.mk{display:flex;align-items:center;gap:11px}
+.sq{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.mn{font-weight:600;font-size:14.5px;letter-spacing:-.015em}
+.mn:hover{opacity:.7}
+.ms{font-size:11.5px;color:var(--mut);margin-top:1px}
+.spark{display:flex;align-items:flex-end;gap:3px;height:30px;min-width:92px}
+.sp{flex:1;height:100%;display:flex;align-items:flex-end;cursor:default;border-radius:4px}
+.sp:hover{background:var(--soft)}
+.sp i{width:100%;border-radius:4px;min-height:4px;display:block}
+.bar{height:7px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:7px;min-width:100px}
+.bar i{display:block;height:100%;border-radius:99px}
+.pill{display:inline-block;font-size:11px;font-weight:500;padding:4px 11px;border-radius:99px}
+.num{font-size:13px;font-variant-numeric:tabular-nums}
+.num b{font-weight:600}
+.big{font-weight:700;font-size:16px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.muted{color:var(--mut)}
+.sep-row td{background:var(--soft);padding:9px 14px;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+
+/* ── modo ordenar ── */
+.ord{display:none;align-items:center;gap:3px;margin-right:4px}
+body.ordenando .ord{display:flex}
+.grip{cursor:grab;color:var(--mut2);font-size:15px;padding:0 3px;line-height:1;user-select:none}
+.ob{border:1px solid var(--line);background:var(--card);color:var(--mut);width:24px;height:24px;border-radius:8px;cursor:pointer;font-size:10px;display:grid;place-items:center}
+.ob:hover{border-color:var(--line2);color:var(--txt)}
+.ob:disabled{opacity:.3;cursor:default}
+body.ordenando tbody tr.movible{cursor:grab}
+tr.arrastrando{opacity:.4}
+tr.destino td{box-shadow:inset 0 2px 0 var(--txt)}
+.aviso-orden{display:none;font-size:12px;color:var(--mut);margin:0 0 12px;background:var(--card);border:1px dashed var(--line2);border-radius:14px;padding:10px 14px}
+body.ordenando .aviso-orden{display:block}
+
+/* ── avisos ── */
+.alerts{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+.alerts h2{font-size:15px;font-weight:600;letter-spacing:-.015em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.al{display:flex;gap:10px;align-items:center;font-size:13px;padding:10px 0;border-bottom:1px solid var(--line);line-height:1.45}
+.al:last-child{border:0}
+.al b{font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.xbtn{background:var(--card);border:1px solid var(--line);color:var(--mut);font-size:11.5px;font-weight:500;padding:5px 12px;border-radius:99px;cursor:pointer;flex-shrink:0;white-space:nowrap}
+.xbtn:hover{border-color:var(--line2);color:var(--txt)}
+.xbtn.ir{background:var(--mark);color:#fff;border-color:var(--mark);text-decoration:none;font-weight:600}
+.xbtn.ir:hover{opacity:.88;color:#fff}
+
+/* ── login ── */
+.login{max-width:380px;margin:14vh auto;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:32px 28px}
+.login h1{font-size:23px;margin-bottom:4px}
+input[type=password]{width:100%;padding:13px 15px;border:1px solid var(--line);background:var(--soft);border-radius:14px;font-size:14.5px;margin:18px 0 12px;outline:none;color:var(--txt)}
+input[type=password]:focus{border-color:var(--line2)}
+.err{color:var(--bad);font-size:12.5px;display:none;margin-bottom:10px}
+.foot{font-size:12px;color:var(--mut);margin-top:14px;line-height:1.55;max-width:90ch}
+
+@media(max-width:820px){
+  body{padding:18px 12px 50px}
+  h1{font-size:25px}
+  td,th{padding:11px 9px;font-size:12px}
+  .hide-m{display:none}
+}
+.money{display:none !important}
+html.plata .money{display:revert !important}
+html.plata .kpi.money{display:block !important}
+@media(max-width:820px){html.plata .money.hide-m{display:none !important}}
+</style></head><body>
+
+<div class="login" id="login">
+  <h1>Vista General</h1>
+  <div class="sub">Panel del equipo de CIMA</div>
+  <input type="password" id="pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')doLogin()">
+  <div class="err" id="err">Contraseña incorrecta</div>
+  <button class="btn" style="width:100%" onclick="doLogin()">Entrar</button>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+  <div class="hd">
+    <div>
+      <h1>Vista General</h1>
+      <div class="sub" id="stamp">cargando…</div>
+    </div>
+    <div class="hd-actions">
+      <button class="btn g" id="btn-stats" onclick="toggleStats()">Stats</button>
+      <button class="btn g" id="btn-orden" onclick="toggleOrden()">Ordenar</button>
+      <button class="btn g" onclick="location.reload()">↻ Actualizar</button>
+    </div>
+  </div>
+  <div class="picker" id="picker">
+    <h3>¿Qué querés ver arriba?</h3>
+    <div class="opts" id="picker-opts"></div>
+    <div class="hint">Se guarda en esta compu. Tocá para mostrar u ocultar.</div>
+  </div>
+  <div class="kpis" id="kpis"></div>
+  <div class="aviso-orden">Arrastrá las campañas desde <b>⋮⋮</b> o usá las flechas. El orden se guarda solo. Tocá <b>Listo</b> cuando termines.</div>
+  <div class="tbl-wrap"><div class="tbl-scroll"><table>
+    <thead><tr>
+      <th>Campaña</th><th>PM</th><th>Progreso campaña</th><th>Últimos 7 días</th>
+      <th class="hide-m">Creadoras</th><th>Views mes</th><th class="money hide-m">Ventas</th>
+      <th>Pendientes</th><th class="hide-m">Faltan</th><th>Cobro</th>
+    </tr></thead>
+    <tbody id="rows"><tr><td colspan="10" style="text-align:center;padding:40px" class="muted">Cargando campañas…</td></tr></tbody>
+  </table></div></div>
+  <div class="alerts" id="alerts" style="display:none;margin-top:18px"></div>
+  <div class="foot">Tocá el nombre de una campaña para abrir su panel. Los datos salen en vivo de la app. "Cobro" = en qué va la facturación a la marca (cuotas y cuándo se gatilla la siguiente). "Faltan" = videos que quedan para el objetivo y en cuántos días se llega al ritmo de los últimos 7.</div>
+</div>
+
+<script>
+const PASSES=['cima-2026','dani-2026','abril-2026'];
+// Solo la clave de Nacho ve ventas y montos a pagar. El equipo (Dani/Abril) ve todo lo demás.
+function doLogin(){
+  const p=document.getElementById('pass').value.trim();
+  if(PASSES.includes(p)){
+    sessionStorage.setItem('cima_gen','1');
+    sessionStorage.setItem('cima_gen_rol', p==='cima-2026'?'owner':'team');
+    document.documentElement.classList.toggle('plata', p==='cima-2026');
+    document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start();
+  }
+  else document.getElementById('err').style.display='block';
+}
+if(sessionStorage.getItem('cima_gen_rol')!=='team') document.documentElement.classList.add('plata');
+if(sessionStorage.getItem('cima_gen')==='1'){ document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; }); }
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, initializeFirestore, doc, getDoc, collection, getDocs, query, where, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const BRANDS=[
+ {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',cerrada:true,inicio:'2026-06-01',salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
+ {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',previos:900,objetivo:300,inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
+ {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',inicio:'2026-07-02',objetivo:500,salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio'}},
+ {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',cerrada:true,inicio:'2026-08-01',objetivo:250,salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
+ {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',cerrada:true,cobro:{tipo:'cuotas',pagadas:2,total:2,gatillo:50},inicio:'2026-08-11',objetivo:200,salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
+ {id:'paperblank',name:'Paperblank',color:'#23262A',pm:'Abril',inicio:'2026-09-01',objetivo:300,salary:500000,min:75,dia:3,creators:{creadora1:'Dani',creadora2:'Georgina',creadora3:'Kari',creadora4:'Rocio'}},
+ {id:'cleanpack',name:'Cleanpack',color:'#0F9AA8',pm:'Abril',inicio:'2026-09-18',objetivo:240,salary:400000,min:60,dia:2,creators:{creadora1:'Juani',creadora2:'Cati',creadora3:'Constanza',creadora4:'Fabi'}},
+ {id:'menlab',name:'MenLab',color:'#111111',pm:'Abril',inicio:'2026-09-08',objetivo:200,salary:370000,salarios:{creadora1:450000,creadora2:750000,creadora3:450000},min:50,dia:2,creators:{creadora1:'Fernando',creadora2:'Matías',creadora3:'Sebastián',creadora4:'Creador 4'}},
+ {id:'purewall',name:'PureWall',color:'#1B6FC4',pm:'Abril',cerrada:true,diaUno:'2026-09-14',inicio:'2026-09-01',objetivo:100,salary:375000,min:50,dia:2,creators:{creadora1:'Maru',creadora2:'Ale'}},
+ {id:'silq',name:'SILQ',color:'#191713',pm:'Abril',inicio:'2026-08-29',objetivo:60,salary:400000,min:60,dia:2,creators:{creadora1:'Juani'}},
+ {id:'tierrafertil',name:'Tierra Fértil',color:'#4F6B2A',pm:'Abril',cerrada:true,inicio:'2026-08-19',objetivo:9,salary:120000,min:5,dia:1,creators:{creadora1:'Marco Dolce',creadora2:'Sebastián'}},
+ {id:'cortizen',name:'Cortizen',color:'#1B3A6B',pm:'Abril',inicio:'2026-08-19',objetivo:52,salary:120000,min:4,dia:1,creators:{creadora1:'Yessica',creadora2:'Marlene',creadora3:'Gabriela',creadora4:'Leandro',creadora5:'Agustina',creadora6:'Laura',creadora7:'Yasmín',creadora8:'Ana',creadora9:'Vanessa',creadora10:'Matías',creadora11:'María',creadora12:'Fabiana',creadora13:'Verónica'}},
+ {id:'lagos',name:'Lagos',color:'#5A626A',pm:'Abril',inicio:'2026-08-19',objetivo:195,salary:450000,min:65,dia:2,creators:{creadora1:'Vane',creadora2:'Dani',creadora3:'Georgina'}},
+ {id:'mentralabs',name:'Mentra Labs',cerrada:true,cobro:{tipo:'cuotas',pagadas:1,total:2,gatillo:50},color:'#8A6A3B',pm:'Abril',inicio:'2026-08-19',objetivo:200,diarioFijo:9,salary:350000,min:50,dia:3,creators:{creadora1:'Fabiana',creadora2:'María Julia',creadora3:'Fernando',creadora4:'Sebastián'}},
+ {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',inicio:'2026-07-02',objetivo:200,diarioFijo:3,salary:500000,min:100,dia:3,creators:{creadora2:'Leandro',creadora3:'Diego'}},
+];
+const COM=2500;
+const app=initializeApp({apiKey:"AIzaSyCTv4DiRCpbCpGYP6E86TPHlkPvaAZTN3g",authDomain:"cleargy-creators.firebaseapp.com",projectId:"cleargy-creators",storageBucket:"cleargy-creators.firebasestorage.app",messagingSenderId:"313543582398",appId:"1:313543582398:web:99fe78991adeea2e7cb4ef"});
+let db; try{ db=initializeFirestore(app,{experimentalAutoDetectLongPolling:true}); }catch(e){ db=getFirestore(app); }
+
+const fmtP=n=>'$'+Math.round(n||0).toLocaleString('es-AR');
+const fmtV=n=>{n=n||0;return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?Math.round(n/1000)+'K':String(n);};
+const argDate=d=>new Date(d).toLocaleDateString('sv',{timeZone:'America/Argentina/Buenos_Aires'});
+const hoyART=()=>new Date().toLocaleDateString('sv',{timeZone:'America/Argentina/Buenos_Aires'});
+const viewsAcum=v=>{const a=Number(v.igViews)||0,b=Number(v.ttViews)||0;return (a+b)>0?a+b:(Number(v.views)||0);};
+
+async function cargarMarca(B){
+  const col=collection(db,B.id+'_videos');
+  const desdeMes=hoyART().slice(0,8)+'01';
+  const snapState=await getDoc(doc(db,B.id,'main'));
+  let st0={}; try{ st0=JSON.parse(snapState.data().data); }catch(e){}
+  const _sd=st0.startDates||{}; const _act=Object.keys(B.creators);
+  const _ini=_act.map(c=>_sd[c]).filter(Boolean).sort();
+  const desdeCamp=_ini.length?_ini[0]:(B.inicio||desdeMes);
+  const [cAll,cApr,cPen,cRech,mes,ventasSnap]=await Promise.all([
+    getCountFromServer(col),
+    getCountFromServer(query(col,where('status','==','approved'))),
+    getCountFromServer(query(col,where('status','==','pending'))),
+    getCountFromServer(query(col,where('status','==','rejected'))),
+    getDocs(query(col,where('date','>=',desdeCamp))),
+    getDocs(collection(db,B.id==='cleargy'?'sales':B.id+'_sales')).catch(()=>({docs:[]})),
+  ]);
+  const st=st0;
+  // Los rechazados NO cuentan: la app de cada marca tampoco los suma
+  const aprob=cApr.data().count, pend=cPen.data().count, rech=cRech.data().count;
+  const totalVids=cAll.data().count-rech;
+  const vidsMes=mes.docs.map(d=>d.data()).filter(v=>v.status!=='rejected');
+  const viewsMes=vidsMes.reduce((a,v)=>a+viewsAcum(v),0);
+  const hoy=hoyART();
+  const subieronHoy=new Set(vidsMes.filter(v=>v.date&&argDate(v.date)===hoy).map(v=>v.creator));
+  const activos=Object.keys(B.creators);
+  const ult={};
+  vidsMes.forEach(v=>{ if(!v.creator||!v.date) return; const d=argDate(v.date); if(!ult[v.creator]||d>ult[v.creator]) ult[v.creator]=d; });
+  const hoyD=new Date(hoy+'T12:00:00');
+  const frenados=[], sinSubir=[];
+  activos.forEach(c=>{
+    const last=ult[c];
+    const dias=last?Math.round((hoyD-new Date(last+'T12:00:00'))/86400000):999;
+    if(dias>=2) frenados.push({n:B.creators[c],d:dias});
+    else if(dias>=1) sinSubir.push(B.creators[c]);
+  });
+  const ventasArr=(ventasSnap.docs||[]).map(d=>d.data());
+  const ventasMes=ventasArr.filter(s=>s.date&&String(s.date).slice(0,10)>=desdeCamp).length;
+  const ventasTot=ventasArr.length;
+  const sumV=Object.values(st.ventas||{}).reduce((a,b)=>a+(b||0),0);
+  const sumB=Object.values(st.bonos||{}).reduce((a,b)=>a+(b||0),0);
+  const pagado=(st.pagos||[]).reduce((a,p)=>a+(p.monto||0),0);
+  const ganado=(B.salarios
+    ? activos.reduce((a,c)=>a+Math.round(((B.salarios[c]||B.salary)
+        * vidsMes.filter(v=>v.creator===c&&v.status==='approved').length) / (B.min||1)),0)
+    : Math.round(B.salary*aprob/B.min)) + sumV*COM + sumB;
+  const deuda=Math.max(0,ganado-pagado);
+  const objetivoMes=B.objetivo||B.min*activos.length;
+  const d=new Date(hoy+'T12:00:00'); const diaMes=d.getDate();
+  const diasMes=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  const diarioObj=B.diarioFijo||B.dia*activos.length; // fijo por marca, o videos/dia x creadoras activas
+  const dias7=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(hoyD); d.setDate(d.getDate()-i);
+    const k=d.toLocaleDateString('sv');
+    dias7.push({k,n:vidsMes.filter(v=>v.date&&argDate(v.date)===k).length,hoy:i===0});
+  }
+  const ayer=dias7[5]?dias7[5].n:0;
+  const prom7=Math.round(dias7.slice(0,6).reduce((a,x)=>a+x.n,0)/6);
+  // B.previos = videos ya entregados en la campaña anterior; el avance arranca recién ahí
+  const previos=B.previos||0;
+  const vidsCamp=previos?Math.max(0,totalVids-previos):vidsMes.length;
+  const pct=objetivoMes?Math.round(vidsCamp/objetivoMes*100):0;
+  const _fechas=vidsMes.map(v=>v.date&&argDate(v.date)).filter(Boolean).sort();
+  const arranco=_fechas.length>0;
+  // diaUno fija el día 1 a mano; los videos siguen contando desde "inicio"
+  const inicioReal=B.diaUno||(arranco?_fechas[0]:null);
+  const diasCamp=arranco?Math.max(1,Math.round((new Date(hoy+'T12:00:00')-new Date(inicioReal+'T12:00:00'))/86400000)+1):0;
+  const esperado=arranco?Math.min(100,Math.round(diasCamp/30*100)):0;
+  const ritmo=esperado?Math.round(pct/esperado*100):100;
+  // Hitos de pago: Ignacio paga al 50% y al 100% del trabajo de cada creador.
+  // Sólo avisa si de verdad le queda plata por cobrar — si ya se le pagó, no molesta.
+  const metaCreador = B.min || 0;
+  const hitos = [];
+  // Se paga UNA vez al 50% y UNA vez al 100%. Lo que decide el aviso es
+  // cuántas cuotas ya cobró en ESTA campaña, no cuánta deuda acumuló después.
+  const _pagosC = {}, _cuotasC = {};
+  (st.pagos || []).forEach(p => {
+    if (!p || !p.creator) return;
+    _pagosC[p.creator] = (_pagosC[p.creator] || 0) + (p.monto || 0);
+    if (String(p.fecha || '') >= desdeCamp) _cuotasC[p.creator] = (_cuotasC[p.creator] || 0) + 1;
+  });
+  // En campañas cerradas también se avisa: cerrar no es lo mismo que haber pagado
+  if (metaCreador) activos.forEach(c => {
+    const mios = vidsMes.filter(v => v.creator === c);
+    const n = mios.length;
+    const p = Math.round(n / metaCreador * 100);
+    // En una activa se avisa desde el 50%; en una cerrada, siempre que quede plata sin pagar
+    if (p < 50 && !B.cerrada) return;
+    const cuotas = _cuotasC[c] || 0;          // cuotas ya cobradas en esta campaña
+    const hito = (p >= 100 || B.cerrada) ? 100 : 50;
+    if (hito === 50 && cuotas >= 1) return;   // ya cobró la mitad: no molestar
+    if (hito === 100 && cuotas >= 2) return;  // ya cobró todo
+    const aprobC = mios.filter(v => v.status === 'approved').length;
+    const salC = (B.salarios || {})[c] || B.salary;   // marcas con sueldos distintos por creador
+    const ganadoC = Math.round(salC * aprobC / metaCreador)
+                  + ((st.bonos || {})[c] || 0)
+                  + ((st.ventas || {})[c] || 0) * COM;
+    const debeC = Math.max(0, ganadoC - (_pagosC[c] || 0));
+    if (debeC <= 0) return;                   // no le debemos nada
+    hitos.push({ c, nombre: B.creators[c], n, pct: p, hito, debe: debeC, cuotas });
+  });
+
+  return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
+}
+
+const IGN_KEY='cima_gen_ignoradas';
+const getIgn=()=>{try{return JSON.parse(localStorage.getItem(IGN_KEY)||'[]')}catch(e){return[]}};
+const setIgn=a=>localStorage.setItem(IGN_KEY,JSON.stringify(a));
+window.ignorar=k=>{const a=getIgn(); if(!a.includes(k)){a.push(k);setIgn(a);} pintarAlertas();};
+window.restaurar=k=>{setIgn(getIgn().filter(x=>x!==k)); pintarAlertas();};
+window.restaurarTodo=()=>{setIgn([]); pintarAlertas();};
+window.spOn=function(el){
+  const td=el.closest('td'); if(!td) return;
+  const d=td.querySelector('.sp-def'), h=td.querySelector('.sp-hov');
+  if(d&&h){ d.style.display='none'; h.style.display='inline'; h.textContent=el.dataset.t; }
+};
+window.spOff=function(el){
+  const td=el.closest('td'); if(!td) return;
+  const d=td.querySelector('.sp-def'), h=td.querySelector('.sp-hov');
+  if(d&&h){ h.style.display='none'; d.style.display='inline'; }
+};
+// Lleva a los avisos de pago y los resalta un momento
+window.irAPagos=function(){
+  const al=document.getElementById('alerts');
+  if(!al) return;
+  al.scrollIntoView({behavior:'smooth',block:'start'});
+  [...al.querySelectorAll('.al')].forEach(d=>{
+    if(!/debés|pasó la mitad|terminó sus/.test(d.innerText)) return;
+    d.style.transition='background .3s';
+    d.style.background='rgba(63,143,107,.10)';
+    setTimeout(()=>{ d.style.background=''; }, 2400);
+  });
+}
+
+// ═══ Stats elegidas y orden de campañas — preferencias de esta compu ═══
+const KPI_KEY='cima_gen_kpis', ORD_KEY='cima_gen_orden';
+function leerLS(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
+function guardarLS(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function kpisElegidos(){ const v=leerLS(KPI_KEY); return Array.isArray(v)?v:null; }  // null = todas
+
+function pintarPicker(){
+  const box=document.getElementById('picker-opts'); if(!box) return;
+  const cat=window._kpiCatalogo||[], sel=kpisElegidos();
+  box.innerHTML=cat.map(k=>{
+    const on=!sel||sel.includes(k.id);
+    return `<label class="chip${on?' sel':''}"><input type="checkbox" ${on?'checked':''} onchange="toggleKpi('${k.id}')"><span class="ck">${on?'✓':''}</span>${k.label}</label>`;
+  }).join('');
+}
+window.toggleKpi=function(id){
+  const cat=(window._kpiCatalogo||[]).map(k=>k.id);
+  let sel=kpisElegidos()||cat.slice();
+  sel = sel.includes(id) ? sel.filter(x=>x!==id) : [...sel,id];
+  if(!sel.length) sel=[id==='activas'?'videos':'activas'];   // nunca dejar la fila vacía
+  guardarLS(KPI_KEY, sel);
+  render(window._rs);
+};
+window.toggleStats=function(){
+  const pk=document.getElementById('picker'), b=document.getElementById('btn-stats');
+  const abierto=pk.classList.toggle('open');
+  b.classList.toggle('on',abierto);
+};
+
+function ordenarCampanas(act){
+  const o=leerLS(ORD_KEY);
+  if(!Array.isArray(o)) return act;
+  const base=id=>BRANDS.findIndex(b=>b.id===id);
+  const pos=id=>{ const i=o.indexOf(id); return i<0 ? 1000+base(id) : i; };  // las nuevas van al final
+  return [...act].sort((a,b)=>pos(a.B.id)-pos(b.B.id));
+}
+function ordenActual(){
+  return [...document.querySelectorAll('#rows tr.movible')].map(tr=>tr.dataset.id);
+}
+window.mover=function(id,dir){
+  const o=ordenActual(), i=o.indexOf(id), j=i+dir;
+  if(i<0||j<0||j>=o.length) return;
+  [o[i],o[j]]=[o[j],o[i]];
+  guardarLS(ORD_KEY,o);
+  render(window._rs);
+};
+window.toggleOrden=function(){
+  const on=document.body.classList.toggle('ordenando');
+  const b=document.getElementById('btn-orden');
+  b.textContent = on ? 'Listo' : 'Ordenar';
+  b.classList.toggle('on',on);
+  activarArrastre();
+};
+// Arrastrar filas (solo con el modo Ordenar prendido)
+function activarArrastre(){
+  const on=document.body.classList.contains('ordenando');
+  const tb=document.getElementById('rows'); if(!tb) return;
+  tb.querySelectorAll('tr.movible').forEach(tr=>{
+    tr.draggable=on;
+    tr.ondragstart = on ? e=>{ tr.classList.add('arrastrando'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',tr.dataset.id); } : null;
+    tr.ondragend   = on ? ()=>{ tr.classList.remove('arrastrando'); tb.querySelectorAll('.destino').forEach(x=>x.classList.remove('destino')); } : null;
+    tr.ondragover  = on ? e=>{ e.preventDefault(); tb.querySelectorAll('.destino').forEach(x=>x.classList.remove('destino')); tr.classList.add('destino'); } : null;
+    tr.ondrop      = on ? e=>{
+      e.preventDefault();
+      const desde=e.dataTransfer.getData('text/plain'), hasta=tr.dataset.id;
+      if(!desde||desde===hasta) return;
+      const o=ordenActual().filter(x=>x!==desde);
+      o.splice(o.indexOf(hasta),0,desde);
+      guardarLS(ORD_KEY,o);
+      render(window._rs);
+    } : null;
+  });
+}
+
+function pintarAlertas(){
+  const A=window._alerts||[], ign=getIgn();
+  const act=A.filter(a=>!ign.includes(a[2])), baja=A.filter(a=>ign.includes(a[2]));
+  const al=document.getElementById('alerts');
+  if(!A.length){ al.style.display='none'; return; }
+  al.style.display='block';
+  let h='';
+  h+='<h2>⚠️ Requiere atención'+(act.length?` <span class="pill" style="background:rgba(193,97,60,.1);color:var(--bad);font-weight:700">${act.length}</span>`:'')+'</h2>';
+  const ir=(u,rot)=>u?`<a class="xbtn ir" href="${u}" target="_blank" rel="noopener" title="Abrir el panel de la marca">${rot||'abrir'} →</a>`:'';
+  h+= act.length ? act.map(([c,t,k,u,rot])=>`<div class="al"><span class="dot" style="background:${c}"></span><span style="flex:1">${t}</span>${ir(u,rot)}<button class="xbtn" onclick="ignorar('${k}')" title="Pasar a prioridad baja">ignorar</button></div>`).join('')
+     : '<div class="al muted" style="font-size:12px">Todo en orden por acá 👌</div>';
+  if(baja.length){
+    h+=`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)"><h2 style="color:var(--mut)">🔕 Prioridad baja <span class="pill" style="background:#F3EEEA;color:var(--mut)">${baja.length}</span> <button class="xbtn" style="float:right" onclick="restaurarTodo()">restaurar todas</button></h2>`;
+    h+=baja.map(([c,t,k,u,rot])=>`<div class="al" style="opacity:.6"><span class="dot" style="background:${c}"></span><span style="flex:1">${t}</span><button class="xbtn" onclick="restaurar('${k}')" title="Volver a Requiere atención">restaurar</button></div>`).join('')+'</div>';
+  }
+  al.innerHTML=h;
+}
+// El rol se resuelve en cada render (el módulo se evalúa antes del login)
+function verPlata(){ return sessionStorage.getItem('cima_gen_rol')!=='team'; }
+function aplicarRol(){ document.documentElement.classList.toggle('plata', verPlata()); }
+
+// ── Cobro a la marca (lo que la marca nos paga a nosotros, no lo de las creadoras)
+// cobro:{tipo:'completo'}                                → ya facturado y cobrado entero
+// cobro:{tipo:'cuotas', pagadas:1, total:2, gatillo:50}  → la próxima cuota se cobra al llegar a ese % de la campaña
+function cobroEstado(r){
+  const cb=r.B.cobro;
+  if(!cb) return {txt:'—', tono:'mut2', accion:false, def:false};
+  if(cb.tipo==='completo' || (cb.pagadas||0)>=(cb.total||1))
+    return {txt:'Pago completo', tono:'ok', accion:false, def:true};
+  const n=(cb.pagadas||0)+1;
+  const ord=['1ª','2ª','3ª','4ª'][n-1]||(n+'ª');
+  const g=cb.gatillo||100;
+  if(r.pct>=g) return {txt:'Cobrar '+ord+' cuota', tono:'bad', accion:true, def:true,
+                       alerta:`llegó al ${r.pct}% — toca cobrar la ${ord} cuota (se gatilla al ${g}%)`};
+  return {txt:ord+' cuota al '+g+'%', tono:'warn', accion:false, def:true, falta:g-r.pct};
+}
+function cobroCell(r){
+  const e=cobroEstado(r);
+  if(!e.def) return '<span class="ms">—</span>';
+  const col={ok:'var(--ok)',warn:'var(--warn)',bad:'var(--bad)',mut2:'var(--mut2)'}[e.tono];
+  const bg={ok:'rgba(63,143,107,.12)',warn:'rgba(176,123,46,.12)',bad:'rgba(193,97,60,.12)',mut2:'#F6F2EE'}[e.tono];
+  const ico=e.accion?'🔔 ':e.tono==='ok'?'✓ ':'';
+  let pie='';
+  if(e.accion) pie='<div class="ms" style="color:var(--bad);margin-top:3px">listo para facturar</div>';
+  else if(e.falta>0) pie=`<div class="ms" style="margin-top:3px">faltan ${e.falta}%</div>`;
+  const monto=(r.B.cobro&&r.B.cobro.monto)?`<div class="ms money" style="margin-top:3px">${fmtP(r.B.cobro.monto)}</div>`:'';
+  return `<span class="pill" style="background:${bg};color:${col};font-weight:700">${ico}${e.txt}</span>${pie}${monto}`;
+}
+
+// "Faltan": videos que quedan y en cuántos días se llega al ritmo real de los últimos 7
+function faltanCell(r){
+  if(r.B.cerrada) return '<span class="ms">—</span>';
+  if(!r.arranco) return '<span class="ms">sin arrancar</span>';
+  const falta=Math.max(0,r.objetivoMes-r.vidsMes);
+  if(falta===0) return '<span class="pill" style="background:rgba(63,143,107,.12);color:var(--ok);font-weight:700">completo</span>';
+  const dias=r.prom7>0?Math.ceil(falta/r.prom7):null;
+  let pie;
+  if(dias===null) pie='<span class="ms" style="color:var(--bad)">sin ritmo</span>';
+  else{
+    const f=new Date(); f.setDate(f.getDate()+dias);
+    pie=`<span class="ms">~${dias} día${dias===1?'':'s'} · ${f.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})}</span>`;
+  }
+  return `<div class="num"><b>${falta}</b></div><div>${pie}</div>`;
+}
+
+function render(rs){
+  aplicarRol();
+  const VER_PLATA = verPlata();
+  const act=rs.filter(r=>!r.B.cerrada);
+  const T=(f)=>act.reduce((a,r)=>a+f(r),0);
+  const TT=(f)=>rs.reduce((a,r)=>a+f(r),0);
+  const sinSubirHoy=act.reduce((a,r)=>a+(r.arranco?r.sinSubir.length:0),0);
+  const kp=[
+    ['activas','Campañas activas',act.length],
+    ['videos','Videos de campaña',T(r=>r.vidsMes).toLocaleString('es-AR')],
+    ['views','Views del mes',fmtV(T(r=>r.viewsMes))],
+    ['creadoras','Creadoras activas',T(r=>r.activos)],
+    ['sinaprobar','Sin aprobar',TT(r=>r.pend)],
+    ['sinsubir','Sin subir hoy',sinSubirHoy],
+  ];
+  const porCobrar=act.filter(r=>cobroEstado(r).accion).length;
+  const hitosPago=rs.reduce((a,r)=>a+((r.hitos||[]).length),0);
+  kp.push(['cuotas','Cuotas por cobrar',porCobrar,0,
+    act.filter(r=>cobroEstado(r).accion).map(r=>r.B.name).join(' · ')]);
+  // Los nombres van en la tarjeta: el número solo no sirve para saber a quién pagarle
+  const aPagar=[];
+  rs.forEach(r=>(r.hitos||[]).forEach(h=>aPagar.push(h.nombre+' ('+r.B.name+')')));
+  kp.push(['apagar','Creadores a pagar',hitosPago,0,aPagar.join(' · '),'irAPagos']);
+  // los KPI de plata llevan .money: quedan tapados por CSS aunque el render se haya hecho antes
+  // Solo se muestran las stats que elegiste en "Stats" (se guarda en esta compu)
+  window._kpiCatalogo = kp.map(k=>({id:k[0], label:k[1]}));
+  const _elegidos = kpisElegidos();
+  const kpVisibles = kp.filter(k => !_elegidos || _elegidos.includes(k[0]));
+  pintarPicker();
+  document.getElementById('kpis').innerHTML=kpVisibles.map(([id,l,v,m,sub,accion])=>
+    `<div class="kpi${m?' money':''}${accion?' clickable':''}"${accion?` onclick="${accion}()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')${accion}()"`:''}>`+
+    `<div class="l">${l}</div><div class="v">${v}</div>`+
+    (sub?`<div class="ksub">${sub}</div>`:'')+
+    (accion&&Number(v)>0?`<div class="kgo">ver quiénes →</div>`:'')+
+    `</div>`).join('');
+
+  const A=[];
+  rs.forEach(r=>{
+    if(!r.B.cerrada && !r.arranco) A.push(['#8A7E77',`<b>${r.B.name}:</b> todavía no arrancó — el día 1 cuenta desde el primer video`,r.B.id+':sinarrancar']);
+    if(r.pend>0) A.push(['#B07B2E',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`,r.B.id+':pend']);
+    const _cb=cobroEstado(r);
+    if(_cb.accion) A.push(['#3F8F6B',`<b>${r.B.name}:</b> ${_cb.alerta}`,r.B.id+':cobro']);
+    // Hitos de pago a creadores: se avisa una vez y se puede archivar con "ignorar"
+    (r.hitos||[]).forEach(h=>{
+      const cierre = h.hito===100
+        ? (h.n >= r.metaCreador
+            ? `terminó sus ${r.metaCreador} videos (${h.n})`
+            : `campaña cerrada con ${h.n} de ${r.metaCreador} videos`)
+        : `pasó la mitad — ${h.n} de ${r.metaCreador} (${h.pct}%)`;
+      const cola = VER_PLATA ? ` — le debés ${fmtP(h.debe)}` : '';
+      A.push(['#3F8F6B',`<b>${r.B.name}:</b> ${h.nombre} ${cierre}${cola}`, r.B.id+':pago'+h.hito+':'+h.c,
+        `https://cima-creators.github.io/cleargy.ugc/cima-admin.html?brand=${r.B.id}&ver=finanzas&creador=${h.c}`,
+        'Pagar']);
+    });
+    if(!r.B.cerrada && r.arranco && r.frenados.length) A.push(['#C1613C',`<b>${r.B.name}:</b> ${r.frenados.length} sin subir hace 2+ días — ${r.frenados.map(x=>x.n+' ('+(x.d>900?'nunca subió':x.d+' días')+')').join(', ')}`,r.B.id+':frenados']);
+    if(!r.B.cerrada && r.arranco && r.sinSubir.length) A.push([r.sinSubir.length>=r.activos?'#C1613C':'#B07B2E',`<b>${r.B.name}:</b> ${r.sinSubir.length} de ${r.activos} sin subir hoy — ${r.sinSubir.join(', ')}`,r.B.id+':sinsubir']);
+    if(!r.B.cerrada && r.arranco && r.ritmo<70) A.push(['#C1613C',`<b>${r.B.name}:</b> va atrasada — ${r.pct}% del objetivo y debería ir ${r.esperado}%`,r.B.id+':ritmo']);
+    if(VER_PLATA && !r.B.cerrada && r.arranco && r.ventasTot===0) A.push(['#C1613C',`<b>${r.B.name}:</b> sin ventas conectadas (falta enlazar la tienda)`,r.B.id+':ventas']);
+  });
+  window._alerts=A; pintarAlertas();
+
+  window._rs = rs;
+  const _activasOrd = ordenarCampanas(rs.filter(r=>!r.B.cerrada));
+  const orden=[..._activasOrd,...rs.filter(r=>r.B.cerrada)];
+  let sep=false;
+  document.getElementById('rows').innerHTML=orden.map(r=>{
+    let pre='';
+    if(r.B.cerrada && !sep){ sep=true; pre='<tr class="sep-row"><td colspan="10">Campañas cerradas</td></tr>'; }
+    const col=r.B.cerrada?'var(--mut)':r.ritmo>=90?'var(--ok)':r.ritmo>=70?'var(--warn)':'var(--bad)';
+    const _i=_activasOrd.indexOf(r);
+    const _ctl = r.B.cerrada ? '' : `<span class="ord"><span class="grip" title="Arrastrar">⋮⋮</span><button class="ob" onclick="mover('${r.B.id}',-1)" ${_i===0?'disabled':''} aria-label="Subir">▲</button><button class="ob" onclick="mover('${r.B.id}',1)" ${_i===_activasOrd.length-1?'disabled':''} aria-label="Bajar">▼</button></span>`;
+    return pre+`<tr data-id="${r.B.id}" class="${r.B.cerrada?'':'movible'}"${r.B.cerrada?' style="opacity:.6"':''}>
+      <td><div class="mk">${_ctl}<span class="sq" style="background:${r.B.color}"></span><div>
+        <a href="https://cima-creators.github.io/cleargy.ugc/cima-admin.html?brand=${r.B.id}" target="_blank" class="mn" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px" title="Abrir el panel de ${r.B.name}">${r.B.name}<span style="font-size:10px;color:var(--acc)">↗</span></a>${r.B.cerrada?' <span class="pill" style="background:#F3EEEA;color:#8A7E77;font-weight:700">cerrada</span>':''}<div class="ms">${r.B.cerrada?r.totalVids.toLocaleString('es-AR')+' videos':r.arranco?'día '+r.diasCamp+' · '+r.totalVids.toLocaleString('es-AR')+' videos':'sin arrancar'}</div></div></div></td>
+      <td><span class="pill" style="background:#F3EEEA;color:#4A423E">${r.B.pm}</span></td>
+      <td><div class="num"><b>${r.vidsMes}</b> <span class="muted">/ ${r.objetivoMes}</span> · ${r.pct}%</div>
+        <div class="bar"><i style="width:${Math.min(100,r.pct)}%;background:${col}"></i></div></td>
+      <td>${r.B.cerrada?`<span class="pill" style="background:#F3EEEA;color:var(--mut);font-weight:700">Finalizada</span>`:`
+        <div class="spark">${r.dias7.map(d=>{
+          const p=r.diarioObj?Math.min(100,Math.round(d.n/r.diarioObj*100)):0;
+          const c=d.n===0?'#EFE8E3':d.n>=r.diarioObj?'#3F8F6B':'#B07B2E';
+          const dd=new Date(d.k+'T12:00:00');
+          const et=d.hoy?'hoy':dd.toLocaleDateString('es-AR',{weekday:'short',day:'numeric',month:'numeric'});
+          return `<span class="sp" data-t="${et} · ${d.n} video${d.n===1?'':'s'} de ${r.diarioObj}" onmouseenter="spOn(this)" onmouseleave="spOff(this)"><i style="height:${Math.max(9,p)}%;background:${c};${d.hoy?'outline:1.5px solid #D9CFC8;outline-offset:1px;':''}"></i></span>`;
+        }).join('')}</div>
+        <div class="ms" style="margin-top:4px"><span class="sp-def">ayer <b style="color:${r.ayer>=r.diarioObj?'var(--ok)':r.ayer>0?'var(--warn)':'var(--bad)'}">${r.ayer}</b>/${r.diarioObj} · prom ${r.prom7}</span><span class="sp-hov" style="display:none;font-weight:800;color:var(--txt)"></span></div>`}</td>
+      <td class="hide-m"><span class="num">${r.activos}</span> <span class="ms">activas</span></td>
+      <td><span class="big">${fmtV(r.viewsMes)}</span></td>
+      <td class="money hide-m"><span class="num">${r.ventasMes}</span> <span class="ms">(${r.ventasTot} tot)</span></td>
+      <td>${r.pend?`<span class="pill" style="background:rgba(176,123,46,.12);color:var(--warn);font-weight:700">${r.pend}</span>`:'<span class="ms">—</span>'}</td>
+      <td class="hide-m">${faltanCell(r)}</td>
+      <td>${cobroCell(r)}</td>
+    </tr>`;
+  }).join('');
+  activarArrastre();
+  document.getElementById('stamp').textContent='Actualizado '+new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · datos en vivo';
+}
+
+window.start=async function(){
+  try{ await signInAnonymously(getAuth(app)); }catch(e){ console.error(e); }
+  const rs=[];
+  for(const B of BRANDS){ try{ rs.push(await cargarMarca(B)); }catch(e){ console.error(B.id,e); } }
+  render(rs);
+};
+if(sessionStorage.getItem('cima_gen')==='1') window.start();
+</script>
+
+<!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
+     Esto compara la versión publicada con la que está corriendo y refresca sola. -->
+<script>
+const APP_VERSION = 'preview-gen-1';
+(function(){
+  var CLAVE='cima_ver_reload';
+  function hayAlguienEscribiendo(){
+    var a=document.activeElement;
+    if(a && (a.tagName==='INPUT'||a.tagName==='TEXTAREA'||a.tagName==='SELECT')) return true;
+    return [].some.call(document.querySelectorAll('input,textarea'), function(i){ return i.value && i.value.trim(); });
+  }
+  function banner(){
+    if(document.getElementById('ver-banner')) return;
+    var d=document.createElement('div');
+    d.id='ver-banner';
+    d.style.cssText='position:fixed;left:12px;right:12px;bottom:14px;z-index:99999;background:#26211E;color:#fff;'+
+      'padding:12px 16px;border-radius:12px;font-family:system-ui,-apple-system,sans-serif;font-size:13px;font-weight:700;'+
+      'box-shadow:0 6px 24px rgba(0,0,0,.25);cursor:pointer;text-align:center;';
+    d.textContent='↻ Hay una versión nueva — tocá para actualizar';
+    d.onclick=function(){ sessionStorage.removeItem(CLAVE); location.reload(); };
+    document.body.appendChild(d);
+  }
+  function chequear(){
+    if(!navigator.onLine) return;
+    fetch(location.pathname+'?cb='+Date.now(), {cache:'no-store'})
+      .then(function(r){ return r.ok?r.text():null; })
+      .then(function(t){
+        if(!t) return;
+        var m=t.match(/APP_VERSION\s*=\s*'([^']+)'/);
+        if(!m || m[1]===APP_VERSION) return;
+        if(hayAlguienEscribiendo()){ banner(); return; }
+        if(sessionStorage.getItem(CLAVE)===m[1]){ banner(); return; }  // ya recargamos por esta versión: no loopear
+        sessionStorage.setItem(CLAVE, m[1]);
+        location.reload();
+      })
+      .catch(function(){});
+  }
+  setTimeout(chequear, 1500);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) chequear(); });
+})();
+</script>
+</body></html>
