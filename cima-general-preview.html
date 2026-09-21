@@ -45,6 +45,8 @@ h1{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
 .hero-msg .ey{font-size:10.5px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;opacity:.6}
 .hero-msg h3{font-size:19px;font-weight:700;line-height:1.2;letter-spacing:-.025em;margin:6px 0 7px}
 .hero-msg p{font-size:12.5px;line-height:1.5;opacity:.85}
+.hero-msg p b{font-weight:600}
+.hero:empty,.kpis:empty{display:none}
 
 /* ── tarjetas de KPI ── */
 .kpis{display:grid;grid-template-columns:repeat(var(--kc,4),minmax(0,1fr));gap:11px}
@@ -538,15 +540,13 @@ function render(rs){
   // Aro de avance: videos hechos contra el objetivo de todas las campañas activas
   const hechos=T(r=>r.vidsMes), meta=T(r=>r.objetivoMes);
   const pctTot=meta?Math.min(100,Math.round(hechos/meta*100)):0;
-  const atrasadas=act.filter(r=>r.arranco&&r.ritmo<70).length;
-  const sinArrancar=act.filter(r=>!r.arranco).length;
-  const pendTot=act.reduce((a,r)=>a+r.pend,0);
+  const atrasadas=act.filter(r=>r.arranco&&r.ritmo<70).map(r=>r.B.name);
+  const sinArrancar=act.filter(r=>!r.arranco).map(r=>r.B.name);
   const R=48, CIRC=2*Math.PI*R;
   const _det=[
-    atrasadas?`${atrasadas} atrasada${atrasadas>1?'s':''}`:'todas en ritmo',
-    sinArrancar?`${sinArrancar} sin arrancar`:'',
-    pendTot?`${pendTot} videos sin aprobar`:'',
-  ].filter(Boolean).join(' · ');
+    atrasadas.length?`<b>${atrasadas.length} atrasada${atrasadas.length>1?'s':''}:</b> ${atrasadas.join(', ')}`:'Todas van en ritmo',
+    sinArrancar.length?`<b>Sin arrancar:</b> ${sinArrancar.join(', ')}`:'',
+  ].filter(Boolean).join('<br>');
   const hero=document.getElementById('hero');
   hero.style.display=verAro?'':'none';
   hero.innerHTML=`<span class="blob"></span>
@@ -634,8 +634,8 @@ function render(rs){
 
 window.start=async function(){
   try{ await signInAnonymously(getAuth(app)); }catch(e){ console.error(e); }
-  const rs=[];
-  for(const B of BRANDS){ try{ rs.push(await cargarMarca(B)); }catch(e){ console.error(B.id,e); } }
+  // Todas las marcas a la vez (de a una tardaba ~30 segundos); el orden de BRANDS se mantiene
+  const rs=(await Promise.all(BRANDS.map(B=>cargarMarca(B).catch(e=>{ console.error(B.id,e); return null; })))).filter(Boolean);
   render(rs);
 };
 if(sessionStorage.getItem('cima_gen')==='1') window.start();
@@ -644,7 +644,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = 'preview-gen-2';
+const APP_VERSION = 'preview-gen-3';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
