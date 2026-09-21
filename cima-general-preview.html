@@ -107,6 +107,7 @@ body.ordenando .ord{display:flex}
 body.ordenando tbody tr.movible{cursor:grab}
 tr.arrastrando{opacity:.4}
 tr.destino td{box-shadow:inset 0 2px 0 var(--txt)}
+tr.destino-abajo td{box-shadow:inset 0 -2px 0 var(--txt)}
 .aviso-orden{display:none;font-size:12px;color:var(--mut);margin:0 0 12px;background:var(--card);border:1px dashed var(--line2);border-radius:14px;padding:10px 14px}
 body.ordenando .aviso-orden{display:block}
 
@@ -421,20 +422,27 @@ window.toggleOrden=function(){
   activarArrastre();
 };
 // Arrastrar filas (solo con el modo Ordenar prendido)
+let _arr=null;   // la fila que se está arrastrando (en dragover el navegador no deja leer el dato)
 function activarArrastre(){
   const on=document.body.classList.contains('ordenando');
   const tb=document.getElementById('rows'); if(!tb) return;
+  const limpiar=()=>tb.querySelectorAll('.destino,.destino-abajo').forEach(x=>x.classList.remove('destino','destino-abajo'));
   tb.querySelectorAll('tr.movible').forEach(tr=>{
     tr.draggable=on;
-    tr.ondragstart = on ? e=>{ tr.classList.add('arrastrando'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',tr.dataset.id); } : null;
-    tr.ondragend   = on ? ()=>{ tr.classList.remove('arrastrando'); tb.querySelectorAll('.destino').forEach(x=>x.classList.remove('destino')); } : null;
-    tr.ondragover  = on ? e=>{ e.preventDefault(); tb.querySelectorAll('.destino').forEach(x=>x.classList.remove('destino')); tr.classList.add('destino'); } : null;
+    tr.ondragstart = on ? e=>{ _arr=tr.dataset.id; tr.classList.add('arrastrando'); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',_arr); } : null;
+    tr.ondragend   = on ? ()=>{ _arr=null; tr.classList.remove('arrastrando'); limpiar(); } : null;
+    tr.ondragover  = on ? e=>{
+      e.preventDefault(); limpiar();
+      const o=ordenActual();
+      if(_arr && _arr!==tr.dataset.id) tr.classList.add(o.indexOf(_arr)<o.indexOf(tr.dataset.id)?'destino-abajo':'destino');
+    } : null;
     tr.ondrop      = on ? e=>{
-      e.preventDefault();
-      const desde=e.dataTransfer.getData('text/plain'), hasta=tr.dataset.id;
+      e.preventDefault(); limpiar();
+      const desde=_arr||e.dataTransfer.getData('text/plain'), hasta=tr.dataset.id;
       if(!desde||desde===hasta) return;
-      const o=ordenActual().filter(x=>x!==desde);
-      o.splice(o.indexOf(hasta),0,desde);
+      const o=ordenActual(), i=o.indexOf(desde), j=o.indexOf(hasta);
+      if(i<0||j<0) return;
+      o.splice(i,1); o.splice(j,0,desde);   // bajando queda debajo de la fila destino, subiendo queda arriba
       guardarLS(ORD_KEY,o);
       render(window._rs);
     } : null;
@@ -559,9 +567,10 @@ function render(rs){
       <h3>${hechos.toLocaleString('es-AR')} de ${meta.toLocaleString('es-AR')} videos</h3>
       <p>${_det}</p></div>`;
   document.getElementById('top').classList.toggle('solo', !verAro || !kpVisibles.length);
-  const _n=kpVisibles.length;
+  // Grilla pareja: nunca una tarjeta sola colgando en la segunda fila
+  const _n=kpVisibles.length, _max=verAro?4:6;
   document.getElementById('kpis').style.display=_n?'':'none';
-  document.getElementById('kpis').style.setProperty('--kc', _n<=4 ? Math.max(1,_n) : Math.ceil(_n/2));
+  document.getElementById('kpis').style.setProperty('--kc', _n<=_max ? Math.max(1,_n) : Math.ceil(_n/2));
   document.getElementById('kpis').innerHTML=kpVisibles.map(([id,l,v,m,sub,accion])=>
     `<div class="kpi${m?' money':''}${accion?' clickable':''}"${accion?` onclick="${accion}()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')${accion}()"`:''}>`+
     `<div class="l">${l}</div><div class="v">${v}</div>`+
@@ -644,7 +653,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = 'preview-gen-3';
+const APP_VERSION = 'preview-gen-4';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
