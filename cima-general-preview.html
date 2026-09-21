@@ -529,10 +529,11 @@ function render(rs){
     ['sinaprobar','Sin aprobar',TT(r=>r.pend)],
     ['sinsubir','Sin subir hoy',sinSubirHoy],
   ];
-  const porCobrar=act.filter(r=>cobroEstado(r).accion).length;
+  // Cerrar una campaña no es lo mismo que haberla cobrado: cuentan también las cerradas
+  const porCobrar=rs.filter(r=>cobroEstado(r).accion).length;
   const hitosPago=rs.reduce((a,r)=>a+((r.hitos||[]).length),0);
   kp.push(['cuotas','Cuotas por cobrar',porCobrar,0,
-    act.filter(r=>cobroEstado(r).accion).map(r=>r.B.name).join(' · ')]);
+    rs.filter(r=>cobroEstado(r).accion).map(r=>r.B.name).join(' · ')]);
   // Los nombres van en la tarjeta: el número solo no sirve para saber a quién pagarle
   const aPagar=[];
   rs.forEach(r=>(r.hitos||[]).forEach(h=>aPagar.push(h.nombre+' ('+r.B.name+')')));
@@ -653,7 +654,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = 'preview-gen-4';
+const APP_VERSION = 'preview-gen-5';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
