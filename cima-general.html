@@ -126,7 +126,7 @@ const BRANDS=[
  {id:'paperblank',name:'Paperblank',color:'#23262A',pm:'Abril',inicio:'2026-09-01',objetivo:300,salary:500000,min:75,dia:3,creators:{creadora1:'Dani',creadora2:'Georgina',creadora3:'Kari',creadora4:'Rocio'}},
  {id:'cleanpack',name:'Cleanpack',color:'#0F9AA8',pm:'Abril',inicio:'2026-09-18',objetivo:240,salary:400000,min:60,dia:2,creators:{creadora1:'Juani',creadora2:'Cati',creadora3:'Constanza',creadora4:'Fabi'}},
  {id:'menlab',name:'MenLab',color:'#111111',pm:'Abril',inicio:'2026-09-08',objetivo:200,salary:370000,salarios:{creadora1:450000,creadora2:750000,creadora3:450000},min:50,dia:2,creators:{creadora1:'Fernando',creadora2:'Matías',creadora3:'Sebastián',creadora4:'Creador 4'}},
- {id:'purewall',name:'PureWall',color:'#1B6FC4',pm:'Abril',diaUno:'2026-09-14',inicio:'2026-09-01',objetivo:100,salary:375000,min:50,dia:2,creators:{creadora1:'Maru',creadora2:'Ale'}},
+ {id:'purewall',name:'PureWall',color:'#1B6FC4',pm:'Abril',cerrada:true,diaUno:'2026-09-14',inicio:'2026-09-01',objetivo:100,salary:375000,min:50,dia:2,creators:{creadora1:'Maru',creadora2:'Ale'}},
  {id:'silq',name:'SILQ',color:'#191713',pm:'Abril',inicio:'2026-08-29',objetivo:60,salary:400000,min:60,dia:2,creators:{creadora1:'Juani'}},
  {id:'tierrafertil',name:'Tierra Fértil',color:'#4F6B2A',pm:'Abril',cerrada:true,inicio:'2026-08-19',objetivo:9,salary:120000,min:5,dia:1,creators:{creadora1:'Marco Dolce',creadora2:'Sebastián'}},
  {id:'cortizen',name:'Cortizen',color:'#1B3A6B',pm:'Abril',inicio:'2026-08-19',objetivo:52,salary:120000,min:4,dia:1,creators:{creadora1:'Yessica',creadora2:'Marlene',creadora3:'Gabriela',creadora4:'Leandro',creadora5:'Agustina',creadora6:'Laura',creadora7:'Yasmín',creadora8:'Ana',creadora9:'Vanessa',creadora10:'Matías',creadora11:'María',creadora12:'Fabiana',creadora13:'Verónica'}},
@@ -230,7 +230,8 @@ async function cargarMarca(B){
     const mios = vidsMes.filter(v => v.creator === c);
     const n = mios.length;
     const p = Math.round(n / metaCreador * 100);
-    if (p < 50) return;
+    // En una activa se avisa desde el 50%; en una cerrada, siempre que quede plata sin pagar
+    if (p < 50 && !B.cerrada) return;
     const cuotas = _cuotasC[c] || 0;          // cuotas ya cobradas en esta campaña
     const hito = (p >= 100 || B.cerrada) ? 100 : 50;
     if (hito === 50 && cuotas >= 1) return;   // ya cobró la mitad: no molestar
@@ -382,7 +383,9 @@ function render(rs){
     // Hitos de pago a creadores: se avisa una vez y se puede archivar con "ignorar"
     (r.hitos||[]).forEach(h=>{
       const cierre = h.hito===100
-        ? `terminó sus ${r.metaCreador} videos (${h.n})`
+        ? (h.n >= r.metaCreador
+            ? `terminó sus ${r.metaCreador} videos (${h.n})`
+            : `campaña cerrada con ${h.n} de ${r.metaCreador} videos`)
         : `pasó la mitad — ${h.n} de ${r.metaCreador} (${h.pct}%)`;
       const cola = VER_PLATA ? ` — le debés ${fmtP(h.debe)}` : '';
       A.push(['#2a8f5e',`<b>${r.B.name}:</b> ${h.nombre} ${cierre}${cola}`, r.B.id+':pago'+h.hito+':'+h.c,
@@ -440,7 +443,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-09-18-a';
+const APP_VERSION = '2026-09-21-a';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
