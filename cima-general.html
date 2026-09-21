@@ -30,6 +30,17 @@ h1{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
 .btn.g:hover{border-color:var(--line2);opacity:1}
 .btn.on{background:var(--txt);color:#fff;border-color:var(--txt)}
 
+/* ── pestañas UGC / Collabs (solo Nacho) ── */
+.tabs{display:none;gap:4px;background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:4px;width:max-content;margin:-6px 0 18px}
+html.plata .tabs{display:flex}
+.tab{border:0;background:transparent;color:var(--mut);font-weight:600;font-size:13px;padding:8px 16px;border-radius:12px;cursor:pointer}
+.tab.on{background:var(--card);color:var(--txt);box-shadow:0 1px 4px rgba(38,33,30,.08)}
+body.tab-collabs .solo-ugc{display:none}
+.top-list{list-style:none}
+.top-list li{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}
+.top-list li:last-child{border:0}
+.top-list .pos{width:24px;height:24px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-size:11.5px;font-weight:700;flex-shrink:0}
+
 /* ── arriba: aro de avance + tarjetas ── */
 .top{display:grid;grid-template-columns:minmax(300px,390px) minmax(0,1fr);gap:12px;margin-bottom:18px}
 .top.solo{grid-template-columns:minmax(0,1fr)}
@@ -163,11 +174,16 @@ html.plata .kpi.money{display:block !important}
       <div class="sub" id="stamp">cargando…</div>
     </div>
     <div class="hd-actions">
-      <button class="btn g" id="btn-stats" onclick="toggleStats()">Stats</button>
-      <button class="btn g" id="btn-orden" onclick="toggleOrden()">Ordenar</button>
+      <button class="btn g solo-ugc" id="btn-stats" onclick="toggleStats()">Stats</button>
+      <button class="btn g solo-ugc" id="btn-orden" onclick="toggleOrden()">Ordenar</button>
       <button class="btn g" onclick="location.reload()">↻ Actualizar</button>
     </div>
   </div>
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-tab="ugc" onclick="verTab('ugc')">Campañas UGC</button>
+    <button class="tab" data-tab="collabs" onclick="verTab('collabs')">Collabs</button>
+  </div>
+  <div id="v-ugc">
   <div class="picker" id="picker">
     <h3>¿Qué querés ver arriba?</h3>
     <div class="opts" id="picker-opts"></div>
@@ -185,6 +201,8 @@ html.plata .kpi.money{display:block !important}
   </table></div></div>
   <div class="alerts" id="alerts" style="display:none;margin-top:18px"></div>
   <div class="foot">Tocá el nombre de una campaña para abrir su panel. Los datos salen en vivo de la app. "Cobro" = en qué va la facturación a la marca (cuotas y cuándo se gatilla la siguiente). "Faltan" = videos que quedan para el objetivo y en cuántos días se llega al ritmo de los últimos 7.</div>
+  </div>
+  <div id="v-collabs" style="display:none"></div>
 </div>
 
 <script>
@@ -196,6 +214,8 @@ function doLogin(){
     sessionStorage.setItem('cima_gen','1');
     sessionStorage.setItem('cima_gen_rol', p==='cima-2026'?'owner':'team');
     sessionStorage.setItem('cima_gen_quien', {'cima-2026':'Nacho','dani-2026':'Dani','abril-2026':'Abril'}[p]);
+    // la clave de Nacho es la misma que abre los paneles de collab (pestaña Collabs)
+    if(p==='cima-2026') sessionStorage.setItem('cima_gen_clave', p);
     document.documentElement.classList.toggle('plata', p==='cima-2026');
     document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start();
   }
@@ -645,7 +665,119 @@ function render(rs){
   document.getElementById('stamp').textContent=(_quien?'Hola '+_quien+' · ':'')+'Actualizado '+new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · datos en vivo';
 }
 
+// ═══ Pestaña Collabs — el sistema de canje, solo Nacho ═══
+// Lee el Resumen de cada panel de collab (miluz-panel.html?marca=…). Una marca que todavía
+// no está cargada en canje.js responde "marca desconocida" y sale "por armar": se prende
+// sola el día que la den de alta con ese mismo slug.
+const COLLABS=[
+  {id:'miluz',name:'Mi Luz'},
+  {id:'valca',name:'Valca'},
+  {id:'menlab',name:'MenLab'},
+  {id:'uniderma',name:'Uniderma'},
+];
+const CANJE_API='https://us-central1-cleargy-creators.cloudfunctions.net/canje';
+const TAB_KEY='cima_gen_tab';
+const panelCollab=id=>'https://cima-creators.github.io/cleargy.ugc/miluz-panel.html'+(id==='miluz'?'':'?marca='+id);
+async function canje(accion,marca,extra={}){
+  const r=await fetch(CANJE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion,marca,...extra})});
+  let j={}; try{ j=await r.json(); }catch(e){}
+  return {status:r.status,...j};
+}
+let _collabs=null, _collabsCargando=false;
+function pedirClaveCollabs(msg){
+  document.getElementById('v-collabs').innerHTML=`<div class="login" style="margin:24px auto">
+    <h1 style="font-size:20px">Collabs</h1>
+    <div class="sub">${msg||'Poné tu clave una vez más para abrir los paneles de collab.'}</div>
+    <input type="password" id="clave-collabs" placeholder="Tu clave" onkeydown="if(event.key==='Enter')guardarClaveCollabs()">
+    <button class="btn" style="width:100%" onclick="guardarClaveCollabs()">Ver collabs</button></div>`;
+}
+window.guardarClaveCollabs=function(){
+  const v=(document.getElementById('clave-collabs')||{}).value; if(!v||!v.trim()) return;
+  sessionStorage.setItem('cima_gen_clave',v.trim()); cargarCollabs();
+};
+async function cargarCollabs(){
+  const clave=sessionStorage.getItem('cima_gen_clave');
+  if(!clave){ pedirClaveCollabs(); return; }
+  _collabsCargando=true;
+  document.getElementById('v-collabs').innerHTML='<div class="tbl-wrap"><div style="padding:40px;text-align:center" class="muted">Cargando collabs…</div></div>';
+  const res=await Promise.all(COLLABS.map(async C=>{
+    try{
+      const cf=await canje('config',C.id);
+      if(!cf.ok) return cf.error==='marca desconocida' ? {C,porArmar:true} : {C,error:true};
+      const rs=await canje('resumen',C.id,{clave});
+      if(rs.status===403) return {C,cfg:cf.marca,sinClave:true};
+      if(!rs.ok) return {C,cfg:cf.marca,error:true};
+      return {C,cfg:cf.marca,m:rs.mes||{},ranking:rs.ranking||[]};
+    }catch(e){ console.error('collab',C.id,e); return {C,error:true}; }
+  }));
+  _collabsCargando=false;
+  if(res.some(r=>r.sinClave)){ sessionStorage.removeItem('cima_gen_clave'); pedirClaveCollabs('Esa clave no abre los paneles de collab. Probá de nuevo.'); return; }
+  _collabs=res; pintarCollabs();
+}
+function pintarCollabs(){
+  const R=_collabs||[], ok=R.filter(r=>r.m);
+  const S=f=>ok.reduce((a,r)=>a+(Number(f(r.m))||0),0);
+  const aten=m=>(m.vencidas||0)+(m.sinRecibir||0)+(m.vencenEn2Dias||0);
+  const hoy=new Date(), diaMes=hoy.getDate(), diasMes=new Date(hoy.getFullYear(),hoy.getMonth()+1,0).getDate();
+  const mes=hoy.toLocaleDateString('es-AR',{month:'long'});
+  const kp=[
+    ['Collabs publicadas',S(m=>m.publicadas),'en '+mes],
+    ['Views de collabs',fmtV(S(m=>m.views)),'en '+mes],
+    ['Kits en camino',S(m=>m.enTransito),'despachados sin confirmar'],
+    ['Necesitan atención',S(aten),'vencidas, sin recibir o por vencer'],
+  ];
+  const filas=R.map(r=>{
+    const nombre=(r.cfg&&r.cfg.nombre)||r.C.name;
+    const color=(r.cfg&&r.cfg.estilo&&r.cfg.estilo.acento)||'#B5A79F';
+    const cab=`<td><div class="mk"><span class="sq" style="background:${color}"></span><div>`+
+      (r.porArmar?`<span class="mn">${nombre}</span>`
+        :`<a href="${panelCollab(r.C.id)}" target="_blank" rel="noopener" class="mn" style="color:inherit;text-decoration:none" title="Abrir el panel de collabs de ${nombre}">${nombre} <span style="font-size:10px">↗</span></a>`)+
+      `<div class="ms">${r.porArmar?'todavía no está en el sistema de collabs':(r.cfg&&r.cfg.cuentaIg?'@'+r.cfg.cuentaIg:'')}</div></div></div></td>`;
+    if(r.porArmar) return `<tr style="opacity:.65">${cab}<td colspan="7"><span class="pill" style="background:#F3EEEA;color:var(--mut);font-weight:600">por armar</span></td></tr>`;
+    if(r.error) return `<tr>${cab}<td colspan="7" class="ms">no se pudo leer el panel — probá con ↻ Actualizar</td></tr>`;
+    const m=r.m, meta=(r.cfg.economia&&r.cfg.economia.metaMes)||0;
+    const pct=meta?Math.round((m.publicadas||0)/meta*100):null;
+    const esperado=Math.round(diaMes/diasMes*100);                 // cuánto del mes ya pasó
+    const ritmo=pct===null?100:(esperado?pct/esperado*100:100);
+    const colBar=ritmo>=90?'var(--ok)':ritmo>=70?'var(--warn)':'var(--bad)';
+    const cumpl=m.recibidos?Math.round((m.publicadas||0)/m.recibidos*100):null;
+    const pill=(n,txt,tono)=>n?`<span class="pill" style="background:${tono==='bad'?'rgba(193,97,60,.12)':'rgba(176,123,46,.12)'};color:var(--${tono});font-weight:600;margin:2px 4px 2px 0">${n} ${txt}</span>`:'';
+    const pills=pill(m.vencidas,'vencidas','bad')+pill(m.sinRecibir,'sin recibir +10 días','bad')+pill(m.vencenEn2Dias,'vencen en 2 días','warn');
+    return `<tr>${cab}
+      <td><div class="num"><b>${m.publicadas||0}</b>${meta?` <span class="muted">/ ${meta}</span> · ${pct}%`:''}</div>
+        ${meta?`<div class="bar"><i style="width:${Math.min(100,pct)}%;background:${colBar}"></i></div>`:''}</td>
+      <td><span class="big">${fmtV(m.views)}</span>${m.publicadas?`<div class="ms">${fmtV(Math.round(m.views/m.publicadas))} por collab</div>`:''}</td>
+      <td>${cumpl===null?'<span class="ms">—</span>':`<span class="num"><b>${cumpl}%</b></span><div class="ms">${m.publicadas||0} de ${m.recibidos} que recibieron</div>`}</td>
+      <td><span class="num">${m.enviados||0}</span></td>
+      <td><span class="num">${m.enTransito||0}</span></td>
+      <td>${pills||'<span class="ms">—</span>'}</td>
+      <td class="hide-m"><span class="num">${m.ventas||0}</span>${m.facturado?`<div class="ms">${fmtP(m.facturado)}</div>`:''}</td>
+    </tr>`;
+  }).join('');
+  const top=ok.flatMap(r=>(r.ranking||[]).map(x=>({...x,marca:(r.cfg&&r.cfg.nombre)||r.C.name})))
+    .sort((a,b)=>(b.views||0)-(a.views||0)).slice(0,5);
+  const mesCap=mes.charAt(0).toUpperCase()+mes.slice(1);
+  document.getElementById('v-collabs').innerHTML=`
+    <div class="kpis" style="--kc:4;margin-bottom:18px">${kp.map(([l,v,sub])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div>${sub?`<div class="ksub">${sub}</div>`:''}</div>`).join('')}</div>
+    <div class="tbl-wrap"><div class="tbl-scroll"><table>
+      <thead><tr><th>Marca</th><th>Publicadas en ${mes}</th><th>Views</th><th>Cumplimiento</th><th>Kits enviados</th><th>En camino</th><th>Atención</th><th class="hide-m">Ventas con código</th></tr></thead>
+      <tbody>${filas}</tbody></table></div></div>
+    ${top.length?`<div class="alerts" style="margin-top:18px"><h2>🏆 Mejores collabs de ${mes}</h2><ul class="top-list">${top.map((x,i)=>`<li><span class="pos">${i+1}</span><span style="flex:1"><b>${x.nombre||x.ig}</b> <span class="ms">@${x.ig} · ${x.marca}</span></span><span class="big">${fmtV(x.views)}</span></li>`).join('')}</ul></div>`:''}
+    <div class="foot">Sale en vivo del Resumen de cada panel de collab (${mesCap}). Tocá el nombre de una marca para abrir su panel. "Cumplimiento" = cuántas de las que recibieron el kit ya publicaron. "Ventas con código" es el acumulado de la campaña. "Por armar" = la marca todavía no está cargada en el sistema de collabs.</div>`;
+}
+window.verTab=function(t){
+  if(!verPlata()) t='ugc';                     // el equipo solo ve UGC
+  if(t!=='collabs') t='ugc';
+  document.body.classList.toggle('tab-collabs', t==='collabs');
+  document.getElementById('v-ugc').style.display = t==='ugc' ? '' : 'none';
+  document.getElementById('v-collabs').style.display = t==='collabs' ? '' : 'none';
+  document.querySelectorAll('#tabs .tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
+  guardarLS(TAB_KEY,t);
+  if(t==='collabs' && !_collabs && !_collabsCargando) cargarCollabs();
+};
+
 window.start=async function(){
+  verTab(leerLS(TAB_KEY)||'ugc');
   try{ await signInAnonymously(getAuth(app)); }catch(e){ console.error(e); }
   // Todas las marcas a la vez (de a una tardaba ~30 segundos); el orden de BRANDS se mantiene
   const rs=(await Promise.all(BRANDS.map(B=>cargarMarca(B).catch(e=>{ console.error(B.id,e); return null; })))).filter(Boolean);
@@ -657,7 +789,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-09-21-e';
+const APP_VERSION = '2026-09-21-f';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
