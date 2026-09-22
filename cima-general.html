@@ -211,22 +211,22 @@ const PASSES=['cima-2026','abril-2026'];   // Dani salió de CIMA el 21/9/2026
 function doLogin(){
   const p=document.getElementById('pass').value.trim().toLowerCase();  // el celu pone mayúscula o espacio al final
   if(PASSES.includes(p)){
-    sessionStorage.setItem('cima_gen','1');
-    sessionStorage.setItem('cima_gen_rol', p==='cima-2026'?'owner':'team');
-    sessionStorage.setItem('cima_gen_quien', {'cima-2026':'Nacho','abril-2026':'Abril'}[p]);
+    localStorage.setItem('cima_gen','1');
+    localStorage.setItem('cima_gen_rol', p==='cima-2026'?'owner':'team');
+    localStorage.setItem('cima_gen_quien', {'cima-2026':'Nacho','abril-2026':'Abril'}[p]);
     // la clave de Nacho es la misma que abre los paneles de collab (pestaña Collabs)
-    if(p==='cima-2026') sessionStorage.setItem('cima_gen_clave', p);
+    if(p==='cima-2026') localStorage.setItem('cima_gen_clave', p);
     document.documentElement.classList.toggle('plata', p==='cima-2026');
     document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start();
   }
   else document.getElementById('err').style.display='block';
 }
 // Una sesión abierta sin dueño es de antes del 21/9: se corta para que Dani no siga adentro
-if(sessionStorage.getItem('cima_gen')==='1' && !sessionStorage.getItem('cima_gen_quien')){
+if(localStorage.getItem('cima_gen')==='1' && !localStorage.getItem('cima_gen_quien')){
   ['cima_gen','cima_gen_rol','cima_gen_clave'].forEach(k=>sessionStorage.removeItem(k));
 }
-if(sessionStorage.getItem('cima_gen_rol')!=='team') document.documentElement.classList.add('plata');
-if(sessionStorage.getItem('cima_gen')==='1'){ document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; }); }
+if(localStorage.getItem('cima_gen_rol')!=='team') document.documentElement.classList.add('plata');
+if(localStorage.getItem('cima_gen')==='1'){ document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; }); }
 </script>
 
 <script type="module">
@@ -495,7 +495,7 @@ function pintarAlertas(){
   al.innerHTML=h;
 }
 // El rol se resuelve en cada render (el módulo se evalúa antes del login)
-function verPlata(){ return sessionStorage.getItem('cima_gen_rol')!=='team'; }
+function verPlata(){ return localStorage.getItem('cima_gen_rol')!=='team'; }
 function aplicarRol(){ document.documentElement.classList.toggle('plata', verPlata()); }
 
 // ── Cobro a la marca (lo que la marca nos paga a nosotros, no lo de las creadoras)
@@ -665,7 +665,7 @@ function render(rs){
     </tr>`;
   }).join('');
   activarArrastre();
-  const _quien=sessionStorage.getItem('cima_gen_quien');
+  const _quien=localStorage.getItem('cima_gen_quien');
   document.getElementById('stamp').textContent=(_quien?'Hola '+_quien+' · ':'')+'Actualizado '+new Date().toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · datos en vivo';
 }
 
@@ -697,10 +697,10 @@ function pedirClaveCollabs(msg){
 }
 window.guardarClaveCollabs=function(){
   const v=(document.getElementById('clave-collabs')||{}).value; if(!v||!v.trim()) return;
-  sessionStorage.setItem('cima_gen_clave',v.trim().toLowerCase()); cargarCollabs();
+  localStorage.setItem('cima_gen_clave',v.trim().toLowerCase()); cargarCollabs();
 };
 async function cargarCollabs(){
-  const clave=sessionStorage.getItem('cima_gen_clave');
+  const clave=localStorage.getItem('cima_gen_clave');
   if(!clave){ pedirClaveCollabs(); return; }
   _collabsCargando=true;
   document.getElementById('v-collabs').innerHTML='<div class="tbl-wrap"><div style="padding:40px;text-align:center" class="muted">Cargando collabs…</div></div>';
@@ -715,7 +715,7 @@ async function cargarCollabs(){
     }catch(e){ console.error('collab',C.id,e); return {C,error:true}; }
   }));
   _collabsCargando=false;
-  if(res.some(r=>r.sinClave)){ sessionStorage.removeItem('cima_gen_clave'); pedirClaveCollabs('Esa clave no abre los paneles de collab. Es la misma con la que entrás a la Vista General.'); return; }
+  if(res.some(r=>r.sinClave)){ localStorage.removeItem('cima_gen_clave'); pedirClaveCollabs('Esa clave no abre los paneles de collab. Es la misma con la que entrás a la Vista General.'); return; }
   _collabs=res; pintarCollabs();
 }
 function pintarCollabs(){
@@ -787,13 +787,13 @@ window.start=async function(){
   const rs=(await Promise.all(BRANDS.map(B=>cargarMarca(B).catch(e=>{ console.error(B.id,e); return null; })))).filter(Boolean);
   render(rs);
 };
-if(sessionStorage.getItem('cima_gen')==='1') window.start();
+if(localStorage.getItem('cima_gen')==='1') window.start();
 </script>
 
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-09-22-b';
+const APP_VERSION = '2026-09-22-c';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
