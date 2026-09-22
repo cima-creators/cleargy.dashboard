@@ -193,11 +193,11 @@ html.plata .kpi.money{display:block !important}
   <div class="aviso-orden">Arrastrá las campañas desde <b>⋮⋮</b> o usá las flechas. El orden se guarda solo. Tocá <b>Listo</b> cuando termines.</div>
   <div class="tbl-wrap"><div class="tbl-scroll"><table>
     <thead><tr>
-      <th>Campaña</th><th>PM</th><th>Progreso campaña</th><th>Últimos 7 días</th>
+      <th>Campaña</th><th>Progreso campaña</th><th>Últimos 7 días</th>
       <th class="hide-m">Creadoras</th><th>Views mes</th><th class="money hide-m">Ventas</th>
       <th>Pendientes</th><th class="hide-m">Faltan</th><th>Cobro</th>
     </tr></thead>
-    <tbody id="rows"><tr><td colspan="10" style="text-align:center;padding:40px" class="muted">Cargando campañas…</td></tr></tbody>
+    <tbody id="rows"><tr><td colspan="9" style="text-align:center;padding:40px" class="muted">Cargando campañas…</td></tr></tbody>
   </table></div></div>
   <div class="alerts" id="alerts" style="display:none;margin-top:18px"></div>
   <div class="foot">Tocá el nombre de una campaña para abrir su panel. Los datos salen en vivo de la app. "Cobro" = en qué va la facturación a la marca (cuotas y cuándo se gatilla la siguiente). "Faltan" = videos que quedan para el objetivo y en cuántos días se llega al ritmo de los últimos 7.</div>
@@ -231,8 +231,8 @@ import { getFirestore, initializeFirestore, doc, getDoc, collection, getDocs, qu
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const BRANDS=[
- {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Dani',cerrada:true,inicio:'2026-06-01',salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
- {id:'miluz',name:'MiLuz',color:'#111111',pm:'Dani',previos:900,objetivo:300,inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
+ {id:'casaperfecta',name:'Casa Perfecta',color:'#2d4a35',pm:'Abril',cerrada:true,inicio:'2026-06-01',salary:650000,min:150,dia:5,creators:{creadora3:'Luisana',creadora5:'Ailén',creadora10:'Constanza',creadora13:'Aylin',creadora15:'Maru',creadora17:'Rocio'}},
+ {id:'miluz',name:'MiLuz',color:'#111111',pm:'Abril',previos:900,objetivo:300,inicio:'2026-08-16',salary:650000,min:150,dia:5,creators:{creadora8:'Vanessa',creadora11:'Abril'}},
  {id:'skinfinity',name:'Skinfinity',color:'#133327',pm:'Abril',inicio:'2026-07-02',objetivo:500,salary:450000,min:100,dia:3,creators:{creadora2:'Juan Ignacio'}},
  {id:'cleanfy',name:'Cleanfy',color:'#4C9A6D',pm:'Abril',cerrada:true,inicio:'2026-08-01',objetivo:250,salary:500000,min:100,dia:3,creators:{creadora1:'Ailu',creadora2:'Alejandra',creadora3:'Juan León',creadora4:'Mati',creadora6:'Maru'}},
  {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',cerrada:true,cobro:{tipo:'cuotas',pagadas:2,total:2,gatillo:50},inicio:'2026-08-11',objetivo:200,salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
@@ -246,7 +246,7 @@ const BRANDS=[
  {id:'cortizen',name:'Cortizen',color:'#1B3A6B',pm:'Abril',inicio:'2026-08-19',objetivo:52,salary:120000,min:4,dia:1,creators:{creadora1:'Yessica',creadora2:'Marlene',creadora3:'Gabriela',creadora4:'Leandro',creadora5:'Agustina',creadora6:'Laura',creadora7:'Yasmín',creadora8:'Ana',creadora9:'Vanessa',creadora10:'Matías',creadora11:'María',creadora12:'Fabiana',creadora13:'Verónica'}},
  {id:'lagos',name:'Lagos',color:'#5A626A',pm:'Abril',inicio:'2026-08-19',objetivo:195,salary:450000,min:65,dia:2,creators:{creadora1:'Vane',creadora2:'Dani',creadora3:'Georgina'}},
  {id:'mentralabs',name:'Mentra Labs',cerrada:true,color:'#8A6A3B',pm:'Abril',inicio:'2026-08-19',objetivo:200,diarioFijo:9,salary:350000,min:50,dia:3,creators:{creadora1:'Fabiana',creadora2:'María Julia',creadora3:'Fernando',creadora4:'Sebastián'}},
- {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Dani',inicio:'2026-07-02',objetivo:200,diarioFijo:3,salary:500000,min:100,dia:3,creators:{creadora2:'Leandro',creadora3:'Diego'}},
+ {id:'promedics',name:'Promedics',color:'#3d7fa3',pm:'Abril',inicio:'2026-07-02',objetivo:200,diarioFijo:3,salary:500000,min:100,dia:3,creators:{creadora2:'Leandro',creadora3:'Diego'}},
 ];
 const COM=2500;
 const app=initializeApp({apiKey:"AIzaSyCTv4DiRCpbCpGYP6E86TPHlkPvaAZTN3g",authDomain:"cleargy-creators.firebaseapp.com",projectId:"cleargy-creators",storageBucket:"cleargy-creators.firebasestorage.app",messagingSenderId:"313543582398",appId:"1:313543582398:web:99fe78991adeea2e7cb4ef"});
@@ -634,14 +634,13 @@ function render(rs){
   let sep=false;
   document.getElementById('rows').innerHTML=orden.map(r=>{
     let pre='';
-    if(r.B.cerrada && !sep){ sep=true; pre='<tr class="sep-row"><td colspan="10">Campañas cerradas</td></tr>'; }
+    if(r.B.cerrada && !sep){ sep=true; pre='<tr class="sep-row"><td colspan="9">Campañas cerradas</td></tr>'; }
     const col=r.B.cerrada?'var(--mut)':r.ritmo>=90?'var(--ok)':r.ritmo>=70?'var(--warn)':'var(--bad)';
     const _i=_activasOrd.indexOf(r);
     const _ctl = r.B.cerrada ? '' : `<span class="ord"><span class="grip" title="Arrastrar">⋮⋮</span><button class="ob" onclick="mover('${r.B.id}',-1)" ${_i===0?'disabled':''} aria-label="Subir">▲</button><button class="ob" onclick="mover('${r.B.id}',1)" ${_i===_activasOrd.length-1?'disabled':''} aria-label="Bajar">▼</button></span>`;
     return pre+`<tr data-id="${r.B.id}" class="${r.B.cerrada?'':'movible'}"${r.B.cerrada?' style="opacity:.6"':''}>
       <td><div class="mk">${_ctl}<span class="sq" style="background:${r.B.color}"></span><div>
         <a href="https://cima-creators.github.io/cleargy.ugc/cima-admin.html?brand=${r.B.id}" target="_blank" class="mn" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px" title="Abrir el panel de ${r.B.name}">${r.B.name}<span style="font-size:10px;color:var(--acc)">↗</span></a>${r.B.cerrada?' <span class="pill" style="background:#F3EEEA;color:#8A7E77;font-weight:700">cerrada</span>':''}<div class="ms">${r.B.cerrada?r.totalVids.toLocaleString('es-AR')+' videos':r.arranco?'día '+r.diasCamp+' · '+r.totalVids.toLocaleString('es-AR')+' videos':'sin arrancar'}</div></div></div></td>
-      <td><span class="pill" style="background:#F3EEEA;color:#4A423E">${r.B.pm}</span></td>
       <td><div class="num"><b>${r.vidsMes}</b> <span class="muted">/ ${r.objetivoMes}</span> · ${r.pct}%</div>
         <div class="bar"><i style="width:${Math.min(100,r.pct)}%;background:${col}"></i></div></td>
       <td>${r.B.cerrada?`<span class="pill" style="background:#F3EEEA;color:var(--mut);font-weight:700">Finalizada</span>`:`
@@ -790,7 +789,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-09-21-i';
+const APP_VERSION = '2026-09-22-a';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
