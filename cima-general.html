@@ -206,20 +206,24 @@ html.plata .kpi.money{display:block !important}
 </div>
 
 <script>
-const PASSES=['cima-2026','dani-2026','abril-2026'];
-// Solo la clave de Nacho ve ventas y montos a pagar. El equipo (Dani/Abril) ve todo lo demás.
+const PASSES=['cima-2026','abril-2026'];   // Dani salió de CIMA el 21/9/2026
+// Solo la clave de Nacho ve ventas y montos a pagar. El equipo (Abril) ve todo lo demás.
 function doLogin(){
   const p=document.getElementById('pass').value.trim().toLowerCase();  // el celu pone mayúscula o espacio al final
   if(PASSES.includes(p)){
     sessionStorage.setItem('cima_gen','1');
     sessionStorage.setItem('cima_gen_rol', p==='cima-2026'?'owner':'team');
-    sessionStorage.setItem('cima_gen_quien', {'cima-2026':'Nacho','dani-2026':'Dani','abril-2026':'Abril'}[p]);
+    sessionStorage.setItem('cima_gen_quien', {'cima-2026':'Nacho','abril-2026':'Abril'}[p]);
     // la clave de Nacho es la misma que abre los paneles de collab (pestaña Collabs)
     if(p==='cima-2026') sessionStorage.setItem('cima_gen_clave', p);
     document.documentElement.classList.toggle('plata', p==='cima-2026');
     document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start();
   }
   else document.getElementById('err').style.display='block';
+}
+// Una sesión abierta sin dueño es de antes del 21/9: se corta para que Dani no siga adentro
+if(sessionStorage.getItem('cima_gen')==='1' && !sessionStorage.getItem('cima_gen_quien')){
+  ['cima_gen','cima_gen_rol','cima_gen_clave'].forEach(k=>sessionStorage.removeItem(k));
 }
 if(sessionStorage.getItem('cima_gen_rol')!=='team') document.documentElement.classList.add('plata');
 if(sessionStorage.getItem('cima_gen')==='1'){ document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; }); }
@@ -789,7 +793,7 @@ if(sessionStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-09-22-a';
+const APP_VERSION = '2026-09-22-b';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
