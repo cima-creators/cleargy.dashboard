@@ -728,7 +728,7 @@ function pintarCollabs(){
     ['Collabs publicadas',S(m=>m.publicadas),'en '+mes],
     ['Views de collabs',fmtV(S(m=>m.views)),'en '+mes],
     ['Kits en camino',S(m=>m.enTransito),'despachados sin confirmar'],
-    ['Necesitan atención',S(aten),'vencidas, sin recibir o por vencer'],
+    ['Necesitan atención',S(aten),'atrasadas, sin recibir o por vencer'],
   ];
   const filas=R.map(r=>{
     const nombre=(r.cfg&&r.cfg.nombre)||r.C.name;
@@ -746,7 +746,7 @@ function pintarCollabs(){
     const colBar=ritmo>=90?'var(--ok)':ritmo>=70?'var(--warn)':'var(--bad)';
     const cumpl=m.recibidos?Math.round((m.publicadas||0)/m.recibidos*100):null;
     const pill=(n,txt,tono)=>n?`<span class="pill" style="background:${tono==='bad'?'rgba(193,97,60,.12)':'rgba(176,123,46,.12)'};color:var(--${tono});font-weight:600;margin:2px 4px 2px 0">${n} ${txt}</span>`:'';
-    const pills=pill(m.vencidas,'vencidas','bad')+pill(m.sinRecibir,'sin recibir +10 días','bad')+pill(m.vencenEn2Dias,'vencen en 2 días','warn');
+    const pills=pill(m.vencidas,'atrasadas (pueden entregar igual)','bad')+pill(m.sinRecibir,'sin recibir +10 días','bad')+pill(m.vencenEn2Dias,'vencen en 2 días','warn');
     return `<tr>${cab}
       <td><div class="num"><b>${m.publicadas||0}</b>${meta?` <span class="muted">/ ${meta}</span> · ${pct}%`:''}</div>
         ${meta?`<div class="bar"><i style="width:${Math.min(100,pct)}%;background:${colBar}"></i></div>`:''}</td>
@@ -793,7 +793,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-09-22-c';
+const APP_VERSION = '2026-09-26-a';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
