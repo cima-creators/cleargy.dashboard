@@ -338,8 +338,15 @@ async function cargarMarca(B){
   // Con tandas por creadora, el avance suma lo de la tanda en curso de cada una
   const _sd2=st.startDates||{};
   const _hayTandas=_act.some(c=>_sd2[c]);
-  const vidsTanda=_hayTandas
-    ? activos.reduce((a,c)=>a+vidsMes.filter(v=>v.creator===c&&(!_sd2[c]||(v.date&&argDate(v.date)>=_sd2[c]))).length,0)
+  const _prev2=st.previos||{};
+  // Lo de la tanda de cada una: por cantidad entregada antes (previos) o por fecha de arranque
+  const deSuTanda=c=>{
+    const suyos=vidsMes.filter(v=>v.creator===c);
+    if(_prev2[c]!=null) return Math.max(0,suyos.length-_prev2[c]);
+    return suyos.filter(v=>!_sd2[c]||(v.date&&argDate(v.date)>=_sd2[c])).length;
+  };
+  const vidsTanda=(_hayTandas||Object.keys(_prev2).length)
+    ? activos.reduce((a,c)=>a+deSuTanda(c),0)
     : vidsMes.length;
   const vidsCamp=previos?Math.max(0,totalVids-previos):vidsTanda;
   const pct=objetivoMes?Math.round(vidsCamp/objetivoMes*100):0;
@@ -365,9 +372,11 @@ async function cargarMarca(B){
   // En campañas cerradas también se avisa: cerrar no es lo mismo que haber pagado
   if (metaCreador) activos.forEach(c => {
     const _desdeC = (st.startDates || {})[c];   // su tanda, si tiene una propia
-    const mios = vidsMes.filter(v => v.creator === c
-      && (!_desdeC || (v.date && argDate(v.date) >= _desdeC)));
-    const n = mios.length;
+    const _prevC = (st.previos || {})[c];       // videos que ya entregó en tandas anteriores
+    const _suyos = vidsMes.filter(v => v.creator === c);
+    const mios = _prevC != null ? _suyos
+      : _suyos.filter(v => !_desdeC || (v.date && argDate(v.date) >= _desdeC));
+    const n = _prevC != null ? Math.max(0, _suyos.length - _prevC) : mios.length;
     const p = Math.round(n / metaCreador * 100);
     // En una activa se avisa desde el 50%; en una cerrada, siempre que quede plata sin pagar
     if (p < 50 && !B.cerrada) return;
@@ -816,7 +825,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-03-e';
+const APP_VERSION = '2026-10-03-f';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
