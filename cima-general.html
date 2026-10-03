@@ -691,10 +691,12 @@ const COLLABS=[
   {id:'valca',name:'Valca'},
   {id:'menlab',name:'MenLab'},
   {id:'uniderma',name:'Uniderma'},
+  {id:'magnelab',name:'MagneLab'},   // 3/10: cargada en canje.js
+  {id:'lagos',name:'Lagos'},         // 3/10: sale "por armar" hasta que se cargue en canje.js
 ];
 const CANJE_API='https://us-central1-cleargy-creators.cloudfunctions.net/canje';
 const TAB_KEY='cima_gen_tab';
-const panelCollab=id=>'https://cima-creators.github.io/cleargy.ugc/miluz-panel.html'+(id==='miluz'?'':'?marca='+id);
+const panelCollab=id=>'https://cima-creators.github.io/'+id+'/panel';   // 3/10: link corto
 async function canje(accion,marca,extra={}){
   const r=await fetch(CANJE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion,marca,...extra})});
   let j={}; try{ j=await r.json(); }catch(e){}
@@ -765,7 +767,7 @@ function pintarCollabs(){
         ${meta?`<div class="bar"><i style="width:${Math.min(100,pct)}%;background:${colBar}"></i></div>`:''}</td>
       <td><span class="big">${fmtV(m.views)}</span>${m.publicadas?`<div class="ms">${fmtV(Math.round(m.views/m.publicadas))} por collab</div>`:''}</td>
       <td>${cumpl===null?'<span class="ms">—</span>':`<span class="num"><b>${cumpl}%</b></span><div class="ms">${m.publicadas||0} de ${m.recibidos} que recibieron</div>`}</td>
-      <td><span class="num">${m.enviados||0}</span></td>
+      <td><span class="num">${m.enviadosTotal??m.enviados??0}</span></td>
       <td><span class="num">${m.enTransito||0}</span></td>
       <td>${pills||'<span class="ms">—</span>'}</td>
       <td class="hide-m"><span class="num">${m.ventas||0}</span>${m.facturado?`<div class="ms">${fmtP(m.facturado)}</div>`:''}</td>
@@ -806,7 +808,13 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-03-c';
+const APP_VERSION = '2026-10-03-d';
+/* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
+(function(){ try {
+  if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
+  const q = new URLSearchParams(location.search); q.delete('v'); const r = q.toString();
+  history.replaceState(history.state, '', '/vista' + (r ? '?' + r : '') + location.hash);
+} catch (e) {} })();
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
