@@ -31,8 +31,10 @@ h1{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
 .btn.on{background:var(--txt);color:#fff;border-color:var(--txt)}
 
 /* ── pestañas UGC / Collabs (solo Nacho) ── */
-.tabs{display:none;gap:4px;background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:4px;width:max-content;margin:-6px 0 18px}
-html.plata .tabs{display:flex}
+.tabs{display:flex;gap:4px;background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:4px;width:max-content;margin:-6px 0 18px}
+html:not(.plata) .tab.solo-plata{display:none}
+a.tab{text-decoration:none;display:inline-flex;align-items:center}
+.tab.ext{color:var(--mut)}
 .tab{border:0;background:transparent;color:var(--mut);font-weight:600;font-size:13px;padding:8px 16px;border-radius:12px;cursor:pointer}
 .tab.on{background:var(--card);color:var(--txt);box-shadow:0 1px 4px rgba(38,33,30,.08)}
 body.tab-collabs .solo-ugc{display:none}
@@ -181,7 +183,9 @@ html.plata .kpi.money{display:block !important}
   </div>
   <div class="tabs" id="tabs">
     <button class="tab on" data-tab="ugc" onclick="verTab('ugc')">Campañas UGC</button>
-    <button class="tab" data-tab="collabs" onclick="verTab('collabs')">Collabs</button>
+    <button class="tab solo-plata" data-tab="collabs" onclick="verTab('collabs')">Collabs</button>
+    <a class="tab ext" href="/tablero/#tareas">Tareas</a>
+    <a class="tab ext solo-plata" href="/tablero/#marcas">Marcas</a>
   </div>
   <div id="v-ugc">
   <div class="picker" id="picker">
@@ -216,6 +220,7 @@ function doLogin(){
     localStorage.setItem('cima_gen_quien', {'cima-2026':'Nacho','abril-2026':'Abril'}[p]);
     // la clave de Nacho es la misma que abre los paneles de collab (pestaña Collabs)
     if(p==='cima-2026') localStorage.setItem('cima_gen_clave', p);
+    localStorage.setItem('tablero_quien', p==='cima-2026'?'nacho':'abril');   // mismo login que el tablero del equipo (/tablero)
     document.documentElement.classList.toggle('plata', p==='cima-2026');
     document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start();
   }
@@ -224,6 +229,15 @@ function doLogin(){
 // Una sesión abierta sin dueño es de antes del 21/9: se corta para que Dani no siga adentro
 if(localStorage.getItem('cima_gen')==='1' && !localStorage.getItem('cima_gen_quien')){
   ['cima_gen','cima_gen_rol','cima_gen_clave'].forEach(k=>sessionStorage.removeItem(k));
+}
+// Un solo login con el tablero del equipo (/tablero, mismo dominio): si ya entró ahí, entra acá
+if(localStorage.getItem('cima_gen')!=='1'){
+  const tq=localStorage.getItem('tablero_quien');
+  if(tq==='nacho'||tq==='abril'){
+    localStorage.setItem('cima_gen','1'); localStorage.setItem('cima_gen_rol', tq==='nacho'?'owner':'team');
+    localStorage.setItem('cima_gen_quien', tq==='nacho'?'Nacho':'Abril');
+    if(tq==='nacho') localStorage.setItem('cima_gen_clave','cima-2026');
+  }
 }
 if(localStorage.getItem('cima_gen_rol')!=='team') document.documentElement.classList.add('plata');
 if(localStorage.getItem('cima_gen')==='1'){ document.addEventListener('DOMContentLoaded',()=>{ document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; }); }
@@ -780,7 +794,7 @@ window.verTab=function(t){
 };
 
 window.start=async function(){
-  verTab(leerLS(TAB_KEY)||'ugc');
+  verTab(location.hash==='#collabs'||location.hash==='#ugc' ? location.hash.slice(1) : (leerLS(TAB_KEY)||'ugc'));
   try{ await signInAnonymously(getAuth(app)); }catch(e){ console.error(e); }
   // Todas las marcas a la vez (de a una tardaba ~30 segundos); el orden de BRANDS se mantiene
   const rs=(await Promise.all(BRANDS.map(B=>cargarMarca(B).catch(e=>{ console.error(B.id,e); return null; })))).filter(Boolean);
@@ -792,7 +806,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-03-a';
+const APP_VERSION = '2026-10-03-b';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
