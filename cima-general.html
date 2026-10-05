@@ -282,7 +282,9 @@ async function cargarMarca(B){
   let st0={}; try{ st0=JSON.parse(snapState.data().data); }catch(e){}
   const _sd=st0.startDates||{}; const _act=Object.keys(B.creators);
   const _ini=_act.map(c=>_sd[c]).filter(Boolean).sort();
-  const desdeCamp=_ini.length?_ini[0]:(B.inicio||desdeMes);
+  // La más vieja entre las fechas de las creadoras y el inicio de la marca: si se recorta acá,
+  // a las que llevan `previos` se les restarían dos veces los videos de la tanda anterior.
+  const desdeCamp=[..._ini,(B.inicio||desdeMes)].sort()[0];
   const [cAll,cApr,cPen,cRech,mes,ventasSnap]=await Promise.all([
     getCountFromServer(col),
     getCountFromServer(query(col,where('status','==','approved'))),
@@ -825,7 +827,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-05-a';
+const APP_VERSION = '2026-10-05-b';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
