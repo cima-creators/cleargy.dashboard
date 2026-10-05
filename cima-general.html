@@ -787,7 +787,7 @@ function pintarCollabs(){
       <td><span class="big">${fmtV(m.views)}</span>${m.publicadas?`<div class="ms">${fmtV(Math.round(m.views/m.publicadas))} por collab</div>`:''}</td>
       <td>${cumpl===null?'<span class="ms">—</span>':`<span class="num"><b>${cumpl}%</b></span><div class="ms">${m.publicadas||0} de ${m.recibidos} que recibieron</div>`}</td>
       <td><span class="num">${m.enviadosTotal??m.enviados??0}</span></td>
-      <td><span class="num">${m.enTransito||0}</span></td>
+      <td><span class="num">${m.recibidosTotal??m.recibidos??0}</span><div class="ms">${m.enTransito||0} en camino</div></td>
       <td>${pills||'<span class="ms">—</span>'}</td>
       <td class="hide-m"><span class="num">${m.ventas||0}</span>${m.facturado?`<div class="ms">${fmtP(m.facturado)}</div>`:''}</td>
     </tr>`;
@@ -798,7 +798,7 @@ function pintarCollabs(){
   document.getElementById('v-collabs').innerHTML=`
     <div class="kpis" style="--kc:4;margin-bottom:18px">${kp.map(([l,v,sub])=>`<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div>${sub?`<div class="ksub">${sub}</div>`:''}</div>`).join('')}</div>
     <div class="tbl-wrap"><div class="tbl-scroll"><table>
-      <thead><tr><th>Marca</th><th>Publicadas en ${mes}</th><th>Views</th><th>Cumplimiento</th><th>Kits enviados</th><th>En camino</th><th>Atención</th><th class="hide-m">Ventas con código</th></tr></thead>
+      <thead><tr><th>Marca</th><th>Publicadas en ${mes}</th><th>Views</th><th>Cumplimiento</th><th>Kits enviados</th><th>Recibidos</th><th>Atención</th><th class="hide-m">Ventas con código</th></tr></thead>
       <tbody>${filas}</tbody></table></div></div>
     ${top.length?`<div class="alerts" style="margin-top:18px"><h2>🏆 Mejores collabs de ${mes}</h2><ul class="top-list">${top.map((x,i)=>`<li><span class="pos">${i+1}</span><span style="flex:1"><b>${x.nombre||x.ig}</b> <span class="ms">@${x.ig} · ${x.marca}</span></span><span class="big">${fmtV(x.views)}</span></li>`).join('')}</ul></div>`:''}
     <div class="foot">Sale en vivo del Resumen de cada panel de collab (${mesCap}). Tocá el nombre de una marca para abrir su panel. "Cumplimiento" = cuántas de las que recibieron el kit ya publicaron. "Ventas con código" es el acumulado de la campaña. "Por armar" = la marca todavía no está cargada en el sistema de collabs.</div>`;
@@ -827,7 +827,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-05-b';
+const APP_VERSION = '2026-10-05-c';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
