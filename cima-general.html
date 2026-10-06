@@ -314,8 +314,18 @@ async function cargarMarca(B){
     else if(dias>=1) sinSubir.push(B.creators[c]);
   });
   const ventasArr=(ventasSnap.docs||[]).map(d=>d.data());
-  const ventasMes=ventasArr.filter(s=>s.date&&String(s.date).slice(0,10)>=desdeCamp).length;
-  const ventasTot=ventasArr.length;
+  // Una venta es de esta campaña si es de una creadora que SIGUE en la marca y es posterior
+  // al día 1 de SU tanda. Los cupones y los links UTM de las que se fueron siguen vivos:
+  // sin este corte, una venta de la campaña anterior infla la de ahora.
+  const _deEstaCamp=s=>{
+    const c=s&&s.creator;
+    if(!c||!B.creators[c]) return false;
+    const desde=_sd[c]||desdeCamp;
+    return !s.date || String(s.date).slice(0,10)>=desde;
+  };
+  const ventasDeLaCamp=ventasArr.filter(_deEstaCamp);
+  const ventasMes=ventasDeLaCamp.length;
+  const ventasTot=ventasDeLaCamp.length;
   const sumV=Object.values(st.ventas||{}).reduce((a,b)=>a+(b||0),0);
   const sumB=Object.values(st.bonos||{}).reduce((a,b)=>a+(b||0),0);
   const pagado=(st.pagos||[]).reduce((a,p)=>a+(p.monto||0),0);
@@ -829,7 +839,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-06-b';
+const APP_VERSION = '2026-10-06-c';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
