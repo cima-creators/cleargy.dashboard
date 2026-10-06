@@ -314,6 +314,17 @@ async function cargarMarca(B){
     if(dias>=2) frenados.push({n:B.creators[c],d:dias});
     else if(dias>=1) sinSubir.push(B.creators[c]);
   });
+  // Guiones: un creador sin guiones no puede subir videos, así que se avisa antes.
+  // "Grabado" = hay un video de esta campaña con ese código.
+  const _gs=st0.guiones||[];
+  const _hechos=new Set((mes.docs||[]).map(d=>String(d.data().guion||"").trim().toUpperCase()).filter(Boolean));
+  const _diaObj=B.dia||3;
+  const guionesAlerta=_gs.length ? Object.keys(B.creators).map(c=>{
+    const suyos=_gs.filter(g=>!g.creadora||g.creadora===c);
+    const pend=suyos.filter(g=>!_hechos.has(String(g.code||"").trim().toUpperCase())).length;
+    return {c, nombre:String(B.creators[c]).split(" ")[0], total:suyos.length, pend};
+  }).filter(x=>x.total>0 && x.pend<=_diaObj*2) : [];
+
   const ventasArr=(ventasSnap.docs||[]).map(d=>d.data());
   // Una venta es de esta campaña si es de una creadora que SIGUE en la marca y es posterior
   // al día 1 de SU tanda. Los cupones y los links UTM de las que se fueron siguen vivos:
@@ -408,7 +419,7 @@ async function cargarMarca(B){
     hitos.push({ c, nombre: B.creators[c], n, pct: p, hito, debe: debeC, cuotas });
   });
 
-  return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,activos:activos.length};
+  return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,guionesAlerta,activos:activos.length};
 }
 
 const IGN_KEY='cima_gen_ignoradas';
@@ -657,6 +668,16 @@ function render(rs){
     if(r.pend>0) A.push(['#B07B2E',`<b>${r.B.name}:</b> ${r.pend} video${r.pend>1?'s':''} sin aprobar${r.B.cerrada?' (campaña cerrada)':''}`,r.B.id+':pend']);
     const _cb=cobroEstado(r);
     if(_cb.accion) A.push(['#3F8F6B',`<b>${r.B.name}:</b> ${_cb.alerta}`,r.B.id+':cobro']);
+    // Guiones por agotarse: sin guiones el creador no puede subir, hay que cargarle más
+    (r.guionesAlerta||[]).forEach(g=>{
+      const sin = g.pend===0;
+      A.push([sin?'#C1613C':'#b45309',
+        `<b>${r.B.name}:</b> ${g.nombre} ${sin?'se quedó sin guiones y no puede subir':'tiene solo '+g.pend+' guion'+(g.pend===1?'':'es')+' sin grabar'}`,
+        r.B.id+':guiones:'+g.c,
+        `https://cima-creators.github.io/${r.B.id}/admin`,
+        'Cargar guiones']);
+    });
+
     // Hitos de pago a creadores: se avisa una vez y se puede archivar con "ignorar"
     (r.hitos||[]).forEach(h=>{
       const cierre = h.hito===100
@@ -840,7 +861,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-06-l';
+const APP_VERSION = '2026-10-06-m';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
