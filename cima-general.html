@@ -282,6 +282,19 @@ async function cargarMarca(B){
   const desdeMes=hoyART().slice(0,8)+'01';
   const snapState=await getDoc(doc(db,B.id,'main'));
   let st0={}; try{ st0=JSON.parse(snapState.data().data); }catch(e){}
+  // Altas y bajas hechas desde la pestaña Creadoras del panel (doc <marca>/creadoras)
+  try{
+    const sc=await getDoc(doc(db,B.id,'creadoras'));
+    if(sc.exists()){
+      const cfg=JSON.parse(sc.data().data)||{};
+      (cfg.altas||[]).forEach(a=>{ if(a&&a.key&&!B.creators[a.key]) B.creators[a.key]=a.name; });
+      Object.entries(cfg.estado||{}).forEach(([k,e])=>{
+        if(!e) return;
+        if(e.activa===false) delete B.creators[k];
+        else if(e.activa===true && !B.creators[k] && e.nombre) B.creators[k]=e.nombre;
+      });
+    }
+  }catch(e){ console.warn('creadoras '+B.id, e); }
   const _sd=st0.startDates||{}; const _act=Object.keys(B.creators);
   const _ini=_act.map(c=>_sd[c]).filter(Boolean).sort();
   // La más vieja entre las fechas de las creadoras y el inicio de la marca: si se recorta acá,
@@ -861,7 +874,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-07-f';
+const APP_VERSION = '2026-10-07-g';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
