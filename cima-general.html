@@ -337,9 +337,11 @@ async function cargarMarca(B){
     return {total:suyos.length, pend:suyos.filter(g=>!_hechos.has(String(g.code||"").trim().toUpperCase())).length};
   };
   // Menos de 7 sin grabar = hay que escribirle guiones ya (a los 0 no los deja ni subir)
+  // El que tiene CERO es el caso más grave (no puede ni subir), así que entra igual
+  // aunque no tenga ninguno asignado: lo que importa es que la marca ya usa guiones.
   const guionesCortos=_gs.length ? Object.keys(B.creators).map(c=>({
     nombre:String(B.creators[c]).split(" ")[0], ..._pendDe(c)
-  })).filter(x=>x.total>0 && x.pend<7) : [];
+  })).filter(x=>x.pend<7) : [];
 
   const guionesAlerta=_gs.length ? Object.keys(B.creators).map(c=>{
     const suyos=_gs.filter(g=>!g.creadora||g.creadora===c);
@@ -921,7 +923,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-08-a';
+const APP_VERSION = '2026-10-08-b';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
