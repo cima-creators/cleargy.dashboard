@@ -64,6 +64,21 @@ body.tab-collabs .solo-ugc{display:none}
 /* ── tarjetas de KPI ── */
 .kpis{display:grid;grid-template-columns:repeat(var(--kc,4),minmax(0,1fr));gap:11px}
 .kpi{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;min-height:96px;display:flex;flex-direction:column}
+/* Detalle de un KPI: en la tarjeta solo va el número, la lista rompía la grilla */
+.pop-bg{position:fixed;inset:0;background:rgba(28,22,18,.42);backdrop-filter:blur(3px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.pop{background:var(--card);border:1px solid var(--line);border-radius:22px;max-width:460px;width:100%;max-height:78vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.22)}
+.pop-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px 12px;position:sticky;top:0;background:var(--card);border-bottom:1px solid var(--line)}
+.pop-t{font-size:15px;font-weight:700;letter-spacing:-.02em}
+.pop-x{border:0;background:none;font-size:20px;line-height:1;color:var(--mut);cursor:pointer;padding:2px 6px;border-radius:8px}
+.pop-x:hover{background:var(--line)}
+.pop-r{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.pop-r:last-child{border-bottom:0}
+.pop-n{font-size:13.5px;font-weight:600}
+.pop-s{font-size:11.5px;color:var(--mut);margin-top:2px}
+.pop-v{font-family:inherit;font-size:19px;font-weight:700;font-variant-numeric:tabular-nums}
+.pop-v.cero{color:#C1613C}
+.pop-a{font-size:11.5px;font-weight:600;color:var(--mut);text-decoration:none}
+.pop-a:hover{color:var(--tx)}
 .kpi .v{margin-top:auto !important;padding-top:8px}
 .kpi .l{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
 .kpi .v{font-size:30px;font-weight:700;letter-spacing:-.035em;margin-top:6px;line-height:1;font-variant-numeric:tabular-nums}
@@ -332,6 +347,12 @@ async function cargarMarca(B){
   const _gs=st0.guiones||[];
   const _hechos=new Set((mes.docs||[]).map(d=>String(d.data().guion||"").trim().toUpperCase()).filter(Boolean));
   const _diaObj=B.dia||3;
+  // Desde cuándo está esperando el pendiente más viejo: un número sin antigüedad no dice
+  // si es de hoy o de hace tres semanas.
+  const _pendFechas=(mes.docs||[]).filter(d=>d.data().status==='pending').map(d=>String(d.data().date||'')).filter(Boolean).sort();
+  const diasPend=_pendFechas.length
+    ? Math.floor((Date.now()-new Date(_pendFechas[0]).getTime())/86400000) : 0;
+
   const _pendDe=c=>{
     const suyos=_gs.filter(g=>!g.creadora||g.creadora===c);
     return {total:suyos.length, pend:suyos.filter(g=>!_hechos.has(String(g.code||"").trim().toUpperCase())).length};
@@ -443,7 +464,7 @@ async function cargarMarca(B){
     hitos.push({ c, nombre: B.creators[c], n, pct: p, hito, debe: debeC, cuotas });
   });
 
-  return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,guionesAlerta,guionesCortos,activos:activos.length};
+  return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,guionesAlerta,guionesCortos,diasPend,activos:activos.length};
 }
 
 const IGN_KEY='cima_gen_ignoradas';
@@ -491,6 +512,44 @@ window.irAGuiones=function(){
     setTimeout(()=>{ d.style.background=''; }, 2600);
   });
 }
+
+// Popup genérico de detalle: título + filas {nombre, sub, valor, cero, link}
+window.cerrarPop=function(){ const e=document.getElementById('pop'); if(e) e.remove(); };
+function abrirPop(titulo, filas, vacio){
+  cerrarPop();
+  const d=document.createElement('div');
+  d.className='pop-bg'; d.id='pop';
+  d.onclick=e=>{ if(e.target===d) cerrarPop(); };
+  d.innerHTML=`<div class="pop">
+    <div class="pop-h"><div class="pop-t">${titulo}</div><button class="pop-x" onclick="cerrarPop()" aria-label="Cerrar">✕</button></div>
+    ${filas.length ? filas.map(f=>`<div class="pop-r">
+        <div><div class="pop-n">${f.nombre}</div>${f.sub?`<div class="pop-s">${f.sub}</div>`:''}</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span class="pop-v${f.cero?' cero':''}">${f.valor}</span>
+          ${f.link?`<a class="pop-a" href="${f.link}" target="_blank" rel="noopener">abrir ↗</a>`:''}
+        </div>
+      </div>`).join('') : `<div class="pop-r"><div class="pop-n">${vacio||'Nada por acá'}</div></div>`}
+  </div>`;
+  document.body.appendChild(d);
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') cerrarPop(); });
+
+window.verSinAprobar=function(){
+  const f=(window._sinAprobar||[]).map(x=>({
+    nombre:x.marca,
+    sub:x.dias>0?`el más viejo espera hace ${x.dias} día${x.dias===1?'':'s'}`:'llegaron hoy',
+    valor:x.n,
+    link:`https://cima-creators.github.io/${x.id}/admin`}));
+  abrirPop('Videos sin aprobar', f, 'No queda nada sin aprobar');
+};
+
+window.verGuionesCortos=function(){
+  const f=(window._cortosGuiones||[]).map(x=>({
+    nombre:`${x.nombre} · ${x.marca}`,
+    sub:x.pend===0?'no puede subir videos':`de ${x.total} que tiene`,
+    valor:x.pend, cero:x.pend===0}));
+  abrirPop('Les faltan guiones', f, 'Todos tienen guiones de sobra');
+};
 
 window.irAPagos=function(){
   const al=document.getElementById('alerts');
@@ -661,9 +720,8 @@ function render(rs){
     ['videos','Videos de campaña',T(r=>r.vidsMes).toLocaleString('es-AR')],
     ['views','Views del mes',fmtV(T(r=>r.viewsMes))],
     ['creadoras','Creadoras activas',T(r=>r.activos)],
-    ['sinaprobar','Sin aprobar',TT(r=>r.pend),0,
-      rs.filter(r=>r.pend>0).sort((a,b)=>b.pend-a.pend).map(r=>`${r.B.name} ${r.pend}`).join(' · '),
-      TT(r=>r.pend)>0?'irASinAprobar':''],   // los nombres quedan en window._marcasSinAprobar
+    // Solo las ACTIVAS: los pendientes de una campaña cerrada no se van a revisar nunca
+    ['sinaprobar','Sin aprobar',T(r=>r.pend),0,'',T(r=>r.pend)>0?'verSinAprobar':''],
     ['sinsubir','Sin subir hoy',sinSubirHoy],
   ];
   // Cerrar una campaña no es lo mismo que haberla cobrado: cuentan también las cerradas
@@ -673,15 +731,15 @@ function render(rs){
   const _cortos=[];
   rs.forEach(r=>(r.guionesCortos||[]).forEach(g=>_cortos.push({...g, marca:r.B.name})));
   _cortos.sort((a,b)=>a.pend-b.pend);
-  kp.push(['guiones','Faltan guiones',_cortos.length,0,
-    _cortos.map(g=>`${g.nombre} (${g.marca}) ${g.pend===0?'<b>0</b>':g.pend}`).join(' · '),
-    _cortos.length?'irAGuiones':'']);
+  kp.push(['guiones','Faltan guiones',_cortos.length,0,'',_cortos.length?'verGuionesCortos':'']);
   window._cortosGuiones=_cortos;
-  window._marcasSinAprobar=rs.filter(r=>r.pend>0).map(r=>r.B.name);
+  window._sinAprobar=act.filter(r=>r.pend>0).sort((a,b)=>b.pend-a.pend)
+    .map(r=>({marca:r.B.name, n:r.pend, dias:r.diasPend, id:r.B.id}));
   // Los nombres van en la tarjeta: el número solo no sirve para saber a quién pagarle
   const aPagar=[];
   rs.forEach(r=>(r.hitos||[]).forEach(h=>aPagar.push(h.nombre+' ('+r.B.name+')')));
-  kp.push(['apagar','Creadores a pagar',hitosPago,0,aPagar.join(' · '),'irAPagos']);
+  kp.push(['apagar','Creadores a pagar',hitosPago,0,'',hitosPago?'irAPagos':'']);
+  window._aPagar=aPagar;
   // los KPI de plata llevan .money: quedan tapados por CSS aunque el render se haya hecho antes
   // Solo se muestran las stats que elegiste en "Stats" (se guarda en esta compu)
   window._kpiCatalogo = [{id:'resumen',label:'Aro de avance'}, ...kp.map(k=>({id:k[0], label:k[1]}))];
@@ -923,7 +981,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-08-b';
+const APP_VERSION = '2026-10-08-c';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
