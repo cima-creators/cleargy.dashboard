@@ -332,6 +332,15 @@ async function cargarMarca(B){
   const _gs=st0.guiones||[];
   const _hechos=new Set((mes.docs||[]).map(d=>String(d.data().guion||"").trim().toUpperCase()).filter(Boolean));
   const _diaObj=B.dia||3;
+  const _pendDe=c=>{
+    const suyos=_gs.filter(g=>!g.creadora||g.creadora===c);
+    return {total:suyos.length, pend:suyos.filter(g=>!_hechos.has(String(g.code||"").trim().toUpperCase())).length};
+  };
+  // Menos de 7 sin grabar = hay que escribirle guiones ya (a los 0 no los deja ni subir)
+  const guionesCortos=_gs.length ? Object.keys(B.creators).map(c=>({
+    nombre:String(B.creators[c]).split(" ")[0], ..._pendDe(c)
+  })).filter(x=>x.total>0 && x.pend<7) : [];
+
   const guionesAlerta=_gs.length ? Object.keys(B.creators).map(c=>{
     const suyos=_gs.filter(g=>!g.creadora||g.creadora===c);
     const pend=suyos.filter(g=>!_hechos.has(String(g.code||"").trim().toUpperCase())).length;
@@ -432,7 +441,7 @@ async function cargarMarca(B){
     hitos.push({ c, nombre: B.creators[c], n, pct: p, hito, debe: debeC, cuotas });
   });
 
-  return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,guionesAlerta,activos:activos.length};
+  return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,guionesAlerta,guionesCortos,activos:activos.length};
 }
 
 const IGN_KEY='cima_gen_ignoradas';
@@ -453,6 +462,34 @@ window.spOff=function(el){
   if(d&&h){ h.style.display='none'; d.style.visibility=''; }
 };
 // Lleva a los avisos de pago y los resalta un momento
+// Lleva a la tabla y resalta las marcas que tienen videos esperando aprobación
+window.irASinAprobar=function(){
+  const tb=document.getElementById('rows');
+  if(!tb) return;
+  tb.scrollIntoView({behavior:'smooth',block:'center'});
+  const conPend=new Set(window._marcasSinAprobar||[]);
+  [...tb.querySelectorAll('tr')].forEach(tr=>{
+    const nom=(tr.innerText||'').split('\n')[0].trim();
+    if(!conPend.has(nom)) return;
+    tr.style.transition='background .3s';
+    tr.style.background='rgba(193,97,60,.13)';
+    setTimeout(()=>{ tr.style.background=''; }, 2800);
+  });
+}
+
+// Lleva a los avisos de guiones por agotarse
+window.irAGuiones=function(){
+  const al=document.getElementById('alerts');
+  if(!al) return;
+  al.scrollIntoView({behavior:'smooth',block:'start'});
+  [...al.querySelectorAll('.al')].forEach(d=>{
+    if(!/guion/i.test(d.innerText)) return;
+    d.style.transition='background .3s';
+    d.style.background='rgba(176,123,46,.14)';
+    setTimeout(()=>{ d.style.background=''; }, 2600);
+  });
+}
+
 window.irAPagos=function(){
   const al=document.getElementById('alerts');
   if(!al) return;
@@ -622,14 +659,23 @@ function render(rs){
     ['videos','Videos de campaña',T(r=>r.vidsMes).toLocaleString('es-AR')],
     ['views','Views del mes',fmtV(T(r=>r.viewsMes))],
     ['creadoras','Creadoras activas',T(r=>r.activos)],
-    ['sinaprobar','Sin aprobar',TT(r=>r.pend)],
+    ['sinaprobar','Sin aprobar',TT(r=>r.pend),0,
+      rs.filter(r=>r.pend>0).sort((a,b)=>b.pend-a.pend).map(r=>`${r.B.name} ${r.pend}`).join(' · '),
+      TT(r=>r.pend)>0?'irASinAprobar':''],   // los nombres quedan en window._marcasSinAprobar
     ['sinsubir','Sin subir hoy',sinSubirHoy],
   ];
   // Cerrar una campaña no es lo mismo que haberla cobrado: cuentan también las cerradas
   const porCobrar=rs.filter(r=>cobroEstado(r).accion).length;
   const hitosPago=rs.reduce((a,r)=>a+((r.hitos||[]).length),0);
-  kp.push(['cuotas','Cuotas por cobrar',porCobrar,0,
-    rs.filter(r=>cobroEstado(r).accion).map(r=>r.B.name).join(' · ')]);
+  // Faltan guiones: a quién se le están por acabar. Sin guiones no puede subir videos.
+  const _cortos=[];
+  rs.forEach(r=>(r.guionesCortos||[]).forEach(g=>_cortos.push({...g, marca:r.B.name})));
+  _cortos.sort((a,b)=>a.pend-b.pend);
+  kp.push(['guiones','Faltan guiones',_cortos.length,0,
+    _cortos.map(g=>`${g.nombre} (${g.marca}) ${g.pend===0?'<b>0</b>':g.pend}`).join(' · '),
+    _cortos.length?'irAGuiones':'']);
+  window._cortosGuiones=_cortos;
+  window._marcasSinAprobar=rs.filter(r=>r.pend>0).map(r=>r.B.name);
   // Los nombres van en la tarjeta: el número solo no sirve para saber a quién pagarle
   const aPagar=[];
   rs.forEach(r=>(r.hitos||[]).forEach(h=>aPagar.push(h.nombre+' ('+r.B.name+')')));
@@ -875,7 +921,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-07-h';
+const APP_VERSION = '2026-10-08-a';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
