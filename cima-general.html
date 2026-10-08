@@ -758,7 +758,8 @@ const COLLABS=[
   {id:'uniderma',name:'Uniderma'},
   {id:'magnelab',name:'MagneLab'},   // 3/10: cargada en canje.js
   {id:'lagos',name:'Lagos'},         // 3/10: sale "por armar" hasta que se cargue en canje.js
-  {id:'cima',name:'CIMA'},           // 5/10: collab propia (base de creadores, sin kit)
+  {id:'cima',name:'CIMA'},
+  {id:'drenova',name:'Drenová'},     // 7/10: 50 collabs el mes 1           // 5/10: collab propia (base de creadores, sin kit)
 ];
 const CANJE_API='https://us-central1-cleargy-creators.cloudfunctions.net/canje';
 const TAB_KEY='cima_gen_tab';
@@ -874,7 +875,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-07-g';
+const APP_VERSION = '2026-10-07-h';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
