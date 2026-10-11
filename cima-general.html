@@ -295,11 +295,13 @@ const viewsAcum=v=>{const a=Number(v.igViews)||0,b=Number(v.ttViews)||0;return (
 async function cargarMarca(B){
   const col=collection(db,B.id+'_videos');
   const desdeMes=hoyART().slice(0,8)+'01';
-  const snapState=await getDoc(doc(db,B.id,'main'));
+  // Los dos documentos de la marca a la vez (antes iban uno detrás del otro)
+  const [snapState,scP]=await Promise.all([getDoc(doc(db,B.id,'main')), getDoc(doc(db,B.id,'creadoras')).catch(e=>e)]);
   let st0={}; try{ st0=JSON.parse(snapState.data().data); }catch(e){}
   // Altas y bajas hechas desde la pestaña Creadoras del panel (doc <marca>/creadoras)
   try{
-    const sc=await getDoc(doc(db,B.id,'creadoras'));
+    if(scP instanceof Error) throw scP;
+    const sc=scP;
     if(sc.exists()){
       const cfg=JSON.parse(sc.data().data)||{};
       (cfg.altas||[]).forEach(a=>{ if(a&&a.key&&!B.creators[a.key]) B.creators[a.key]=a.name; });
@@ -968,12 +970,26 @@ window.verTab=function(t){
   if(t==='collabs' && !_collabs && !_collabsCargando) cargarCollabs();
 };
 
+// 11/10: la Vista General se pinta AL INSTANTE con los últimos datos guardados en este equipo
+// y se actualiza sola cuando llegan los nuevos (bajar las 19 marcas tarda ~8 s).
+const CACHE_KEY='cima_gen_cache_v1';
+function pintarGuardado(){
+  try{
+    const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+    if(!c||!Array.isArray(c.rs)||!c.rs.length) return;
+    render(c.rs);
+    const hora=new Date(c.t).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    document.getElementById('stamp').textContent=(localStorage.getItem('cima_gen_quien')?'Hola '+localStorage.getItem('cima_gen_quien')+' · ':'')+'Datos del '+hora+' · actualizando…';
+  }catch(e){ console.warn('cache vista', e); }
+}
 window.start=async function(){
   verTab(location.hash==='#collabs'||location.hash==='#ugc' ? location.hash.slice(1) : (leerLS(TAB_KEY)||'ugc'));
+  pintarGuardado();
   try{ await signInAnonymously(getAuth(app)); }catch(e){ console.error(e); }
   // Todas las marcas a la vez (de a una tardaba ~30 segundos); el orden de BRANDS se mantiene
   const rs=(await Promise.all(BRANDS.map(B=>cargarMarca(B).catch(e=>{ console.error(B.id,e); return null; })))).filter(Boolean);
   render(rs);
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), rs})); }catch(e){ console.warn('no se pudo guardar la vista', e); }
 };
 if(localStorage.getItem('cima_gen')==='1') window.start();
 </script>
@@ -981,7 +997,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-09-g';
+const APP_VERSION = '2026-10-11-a';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
