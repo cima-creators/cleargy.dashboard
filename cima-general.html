@@ -271,7 +271,7 @@ const BRANDS=[
  {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',cerrada:true,cobro:{tipo:'cuotas',pagadas:2,total:2,gatillo:50},inicio:'2026-08-11',objetivo:200,salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
  {id:'paperblank',name:'Paperblank',color:'#23262A',pm:'Abril',inicio:'2026-09-01',objetivo:300,salary:500000,min:75,dia:3,creators:{creadora1:'Dani',creadora2:'Georgina',creadora3:'Kari',creadora4:'Rocio'}},
  {id:'cleanpack',name:'Cleanpack',color:'#0F9AA8',cerrada:true,pm:'Abril',inicio:'2026-09-18',objetivo:240,salary:400000,salarios:{creadora4:600000},min:60,dia:2,creators:{creadora1:'Juani',creadora2:'Cati',creadora3:'Constanza',creadora4:'Fabi'}},
- {id:'noxalab',name:'NoxaLab',color:'#0D1B2A',pm:'Abril',inicio:'2026-10-12',objetivo:330,salary:518750,min:83,dia:3,creators:{creadora1:'Creador 1',creadora2:'Creador 2',creadora3:'Creador 3',creadora4:'Creador 4'}},
+ {id:'noxalab',name:'NoxaLab',color:'#0D1B2A',pm:'Abril',inicio:'2026-10-12',objetivo:330,salary:700000,salarios:{creadora4:500000},min:90,mins:{creadora4:60},dia:3,creators:{creadora1:'Creador 1',creadora2:'Creador 2',creadora3:'Creadora 3',creadora4:'Creador 4'}},
  {id:'drenova',name:'Drenová',color:'#2F4A3A',pm:'Abril',inicio:'2026-10-12',objetivo:150,salary:350000,min:50,dia:2,creators:{creadora1:'Ale',creadora2:'Jime',creadora3:'Lore'}},
  {id:'magnelab',name:'MagneLab',color:'#D42130',pm:'Abril',inicio:'2026-10-06',objetivo:270,salary:562500,min:90,dia:3,creators:{creadora1:'Leandro',creadora2:'Sebastián'}},
  {id:'uniderma',name:'Uniderma',color:'#161616',pm:'Abril',inicio:'2026-09-21',objetivo:300,salary:375000,salarios:{creadora1:450000},min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Cate',creadora4:'Mora',creadora5:'Coni',creadora6:'Nani'}},
@@ -390,12 +390,13 @@ async function cargarMarca(B){
   const sumV=Object.values(st.ventas||{}).reduce((a,b)=>a+(b||0),0);
   const sumB=Object.values(st.bonos||{}).reduce((a,b)=>a+(b||0),0);
   const pagado=(st.pagos||[]).reduce((a,p)=>a+(p.monto||0),0);
+  const minC = c => (B.mins||{})[c] || B.min;   // marcas donde no todos hacen la misma cantidad
   const ganado=(B.salarios
     ? activos.reduce((a,c)=>a+Math.round(((B.salarios[c]||B.salary)
-        * vidsMes.filter(v=>v.creator===c&&v.status==='approved').length) / (B.min||1)),0)
+        * vidsMes.filter(v=>v.creator===c&&v.status==='approved').length) / (minC(c)||1)),0)
     : Math.round(B.salary*aprob/B.min)) + sumV*COM + sumB;
   const deuda=Math.max(0,ganado-pagado);
-  const objetivoMes=B.objetivo||B.min*activos.length;
+  const objetivoMes=B.objetivo||activos.reduce((a,c)=>a+minC(c),0);
   const d=new Date(hoy+'T12:00:00'); const diaMes=d.getDate();
   const diasMes=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
   const diarioObj=B.diarioFijo||B.dia*activos.length; // fijo por marca, o videos/dia x creadoras activas
@@ -451,7 +452,8 @@ async function cargarMarca(B){
     const mios = _prevC != null ? _suyos
       : _suyos.filter(v => !_desdeC || (v.date && argDate(v.date) >= _desdeC));
     const n = _prevC != null ? Math.max(0, _suyos.length - _prevC) : mios.length;
-    const p = Math.round(n / metaCreador * 100);
+    const metaC = (B.mins||{})[c] || metaCreador;
+    const p = Math.round(n / metaC * 100);
     // En una activa se avisa desde el 50%; en una cerrada, siempre que quede plata sin pagar
     if (p < 50 && !B.cerrada) return;
     const cuotas = _cuotasC[c] || 0;          // cuotas ya cobradas en esta campaña
@@ -460,7 +462,7 @@ async function cargarMarca(B){
     if (hito === 100 && cuotas >= 2) return;  // ya cobró todo
     const aprobC = mios.filter(v => v.status === 'approved').length;
     const salC = (B.salarios || {})[c] || B.salary;   // marcas con sueldos distintos por creador
-    const ganadoC = Math.round(salC * aprobC / metaCreador)
+    const ganadoC = Math.round(salC * aprobC / metaC)
                   + ((st.bonos || {})[c] || 0)
                   + ((st.ventas || {})[c] || 0) * COM;
     const debeC = Math.max(0, ganadoC - (_pagosC[c] || 0));
@@ -869,8 +871,10 @@ const COLLABS=[
   {id:'magnelab',name:'MagneLab'},   // 3/10: cargada en canje.js
   {id:'lagos',name:'Lagos'},         // 3/10: sale "por armar" hasta que se cargue en canje.js
   {id:'cima',name:'CIMA'},
+  // 7/10: Drenová cerró con 50 collabs el mes 1 · 5/10: CIMA es collab propia (base de creadores, sin kit)
   {id:'drenova',name:'Drenová'},
-  {id:'noxalab',name:'NoxaLab'},   // 12/10: cerró con 50 collabs/mes, falta cargarla en canje.js     // 7/10: 50 collabs el mes 1           // 5/10: collab propia (base de creadores, sin kit)
+  // 12/10: NoxaLab cerró con 50 collabs/mes, falta cargarla en canje.js
+  {id:'noxalab',name:'NoxaLab'},
 ];
 const CANJE_API='https://us-central1-cleargy-creators.cloudfunctions.net/canje';
 const TAB_KEY='cima_gen_tab';
@@ -1000,7 +1004,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-12-f';
+const APP_VERSION = '2026-10-12-g';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
