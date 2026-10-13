@@ -557,17 +557,21 @@ window.verGuionesCortos=function(){
   abrirPop('Les faltan guiones', f, 'Todos tienen guiones de sobra');
 };
 
+// 12/10: popup con el detalle (como el de guiones), en vez de bajar a los avisos
 window.irAPagos=function(){
-  const al=document.getElementById('alerts');
-  if(!al) return;
-  al.scrollIntoView({behavior:'smooth',block:'start'});
-  [...al.querySelectorAll('.al')].forEach(d=>{
-    if(!/debés|pasó la mitad|terminó sus/.test(d.innerText)) return;
-    d.style.transition='background .3s';
-    d.style.background='rgba(63,143,107,.10)';
-    setTimeout(()=>{ d.style.background=''; }, 2400);
-  });
-}
+  const plata=verPlata();
+  const det=(window._pagosDet||[]).slice().sort((a,b)=>(b.debe||0)-(a.debe||0));
+  const f=det.map(h=>({
+    nombre:`${h.nombre} · ${h.marca}`,
+    sub:(h.hito===100
+          ? (h.n>=h.meta ? `terminó: ${h.n} de ${h.meta} videos` : `campaña cerrada: ${h.n} de ${h.meta} videos`)
+          : `pasó la mitad: ${h.n} de ${h.meta} videos (${h.pct}%)`)
+        +` · ${h.hito===100?(h.cuotas>=1?'2da cuota':'pago completo'):'1ra cuota'}`,
+    valor: plata ? fmtP(h.debe) : `${h.n} videos`,
+    link:`https://cima-creators.github.io/${h.id}/admin?ver=finanzas&creador=${h.c}`}));
+  const total=det.reduce((a,h)=>a+(h.debe||0),0);
+  abrirPop('Creadores a pagar'+(plata&&det.length>1?' · total '+fmtP(total):''), f, 'No le debés nada a nadie');
+};
 
 // ═══ Stats elegidas y orden de campañas — preferencias de esta compu ═══
 const KPI_KEY='cima_gen_kpis', ORD_KEY='cima_gen_orden';
@@ -746,6 +750,8 @@ function render(rs){
   rs.forEach(r=>(r.hitos||[]).forEach(h=>aPagar.push(h.nombre+' ('+r.B.name+')')));
   kp.push(['apagar','Creadores a pagar',hitosPago,0,'',hitosPago?'irAPagos':'']);
   window._aPagar=aPagar;
+  // Detalle para el popup de "Creadores a pagar": quién, cuántos videos y cuánto
+  window._pagosDet=rs.flatMap(r=>(r.hitos||[]).map(h=>({...h, marca:r.B.name, id:r.B.id, meta:((r.B.mins||{})[h.c]||r.metaCreador), cerrada:!!r.B.cerrada})));
   // los KPI de plata llevan .money: quedan tapados por CSS aunque el render se haya hecho antes
   // Solo se muestran las stats que elegiste en "Stats" (se guarda en esta compu)
   window._kpiCatalogo = [{id:'resumen',label:'Aro de avance'}, ...kp.map(k=>({id:k[0], label:k[1]}))];
@@ -1004,7 +1010,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-12-g';
+const APP_VERSION = '2026-10-12-h';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
