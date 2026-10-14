@@ -451,7 +451,11 @@ async function cargarMarca(B){
     const _suyos = vidsMes.filter(v => v.creator === c);
     const mios = _prevC != null ? _suyos
       : _suyos.filter(v => !_desdeC || (v.date && argDate(v.date) >= _desdeC));
-    const n = _prevC != null ? Math.max(0, _suyos.length - _prevC) : mios.length;
+    // 14/10: el % se cuenta sobre los APROBADOS, igual que el panel. Antes contaba también
+    // los pendientes, así que las dos pantallas mostraban porcentajes distintos para la misma
+    // creadora (la plata nunca difirió: el monto siempre fue sobre aprobados).
+    const _ok = v => v.status === 'approved';
+    const n = _prevC != null ? Math.max(0, _suyos.filter(_ok).length - _prevC) : mios.filter(_ok).length;
     const metaC = (B.mins||{})[c] || metaCreador;
     const p = Math.round(n / metaC * 100);
     // En una activa se avisa desde el 50%; en una cerrada, siempre que quede plata sin pagar
@@ -460,9 +464,8 @@ async function cargarMarca(B){
     const hito = (p >= 100 || B.cerrada) ? 100 : 50;
     if (hito === 50 && cuotas >= 1) return;   // ya cobró la mitad: no molestar
     if (hito === 100 && cuotas >= 2) return;  // ya cobró todo
-    const aprobC = mios.filter(v => v.status === 'approved').length;
     const salC = (B.salarios || {})[c] || B.salary;   // marcas con sueldos distintos por creador
-    const ganadoC = Math.round(salC * aprobC / metaC)
+    const ganadoC = Math.round(salC * n / metaC)
                   + ((st.bonos || {})[c] || 0)
                   + ((st.ventas || {})[c] || 0) * COM;
     const debeC = Math.max(0, ganadoC - (_pagosC[c] || 0));
@@ -1010,7 +1013,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-14-b';
+const APP_VERSION = '2026-10-14-c';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
