@@ -420,8 +420,11 @@ async function cargarMarca(B){
     if(_prev2[c]!=null) return Math.max(0,suyos.length-_prev2[c]);
     return suyos.filter(v=>!_sd2[c]||(v.date&&argDate(v.date)>=_sd2[c])).length;
   };
+  // 14/10: se suman TODAS las que tienen videos en la campaña, no solo las activas. Antes, en cuanto
+  // una creadora entraba con tanda propia, las que se habían ido (Uniderma: Mora 22) dejaban de contar.
+  const _conVideos=[...new Set([...activos, ...vidsMes.map(v=>v.creator).filter(Boolean)])];
   const vidsTanda=(_hayTandas||Object.keys(_prev2).length)
-    ? activos.reduce((a,c)=>a+deSuTanda(c),0)
+    ? _conVideos.reduce((a,c)=>a+deSuTanda(c),0)
     : vidsMes.length;
   const vidsCamp=previos?Math.max(0,totalVids-previos):vidsTanda;
   const pct=objetivoMes?Math.round(vidsCamp/objetivoMes*100):0;
@@ -1013,7 +1016,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-14-d';
+const APP_VERSION = '2026-10-14-z';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
