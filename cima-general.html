@@ -273,7 +273,7 @@ const BRANDS=[
  {id:'cleanpack',name:'Cleanpack',color:'#0F9AA8',cerrada:true,pm:'Abril',inicio:'2026-09-18',objetivo:240,salary:400000,salarios:{creadora4:600000},min:60,dia:2,creators:{creadora1:'Juani',creadora2:'Cati',creadora3:'Constanza',creadora4:'Fabi'}},
  {id:'noxalab',name:'NoxaLab',color:'#0D1B2A',pm:'Abril',inicio:'2026-10-12',objetivo:330,salary:700000,salarios:{creadora4:500000},min:90,mins:{creadora4:60},dia:3,creators:{creadora1:'Creador 1',creadora2:'Creador 2',creadora3:'Creadora 3',creadora4:'Creador 4'}},
  {id:'drenova',name:'Drenová',color:'#2F4A3A',pm:'Abril',inicio:'2026-10-12',objetivo:150,salary:350000,min:50,dia:2,creators:{creadora1:'Ale',creadora2:'Jime',creadora3:'Lore'}},
- {id:'magnelab',name:'MagneLab',color:'#D42130',pm:'Abril',inicio:'2026-10-06',objetivo:270,salary:800000,min:90,dia:3,creators:{creadora1:'Leandro',creadora2:'Sebastián'}},
+ {id:'magnelab',name:'MagneLab',color:'#D42130',pm:'Abril',inicio:'2026-10-06',objetivo:270,salary:800000,salarios:{creadora3:700000},min:90,dia:3,creators:{creadora1:'Leandro',creadora2:'Sebastián'}},
  {id:'uniderma',name:'Uniderma',color:'#161616',pm:'Abril',inicio:'2026-09-21',objetivo:300,salary:375000,salarios:{creadora1:450000},min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Cate',creadora4:'Mora',creadora5:'Coni',creadora6:'Nani'}},
  {id:'menlab',name:'MenLab',color:'#111111',pm:'Abril',inicio:'2026-09-08',objetivo:200,salary:370000,salarios:{creadora1:450000,creadora2:525000,creadora3:450000,creadora4:450000},min:50,dia:2,creators:{creadora1:'Fernando',creadora2:'Fabi',creadora3:'Sebastián',creadora4:'Víctor'}},
  {id:'purewall',name:'PureWall',color:'#1B6FC4',pm:'Abril',cerrada:true,diaUno:'2026-09-14',inicio:'2026-09-01',objetivo:100,salary:375000,min:50,dia:2,creators:{creadora1:'Maru',creadora2:'Ale'}},
@@ -1002,7 +1002,8 @@ const CACHE_KEY='cima_gen_cache_v1';
 function pintarGuardado(){
   try{
     const c=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
-    if(!c||!Array.isArray(c.rs)||!c.rs.length) return;
+    // 18/10: solo se pinta lo guardado por ESTA versión (si no, mezcla cálculos viejos con el código nuevo)
+    if(!c||!Array.isArray(c.rs)||!c.rs.length||c.v!==APP_VERSION) return;
     render(c.rs);
     const hora=new Date(c.t).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     document.getElementById('stamp').textContent=(localStorage.getItem('cima_gen_quien')?'Hola '+localStorage.getItem('cima_gen_quien')+' · ':'')+'Datos del '+hora+' · actualizando…';
@@ -1015,7 +1016,7 @@ window.start=async function(){
   // Todas las marcas a la vez (de a una tardaba ~30 segundos); el orden de BRANDS se mantiene
   const rs=(await Promise.all(BRANDS.map(B=>cargarMarca(B).catch(e=>{ console.error(B.id,e); return null; })))).filter(Boolean);
   render(rs);
-  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), rs})); }catch(e){ console.warn('no se pudo guardar la vista', e); }
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), v:APP_VERSION, rs})); }catch(e){ console.warn('no se pudo guardar la vista', e); }
 };
 if(localStorage.getItem('cima_gen')==='1') window.start();
 </script>
@@ -1023,7 +1024,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-18-y';
+const APP_VERSION = '2026-10-18-x';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
