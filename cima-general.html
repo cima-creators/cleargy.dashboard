@@ -441,10 +441,11 @@ async function cargarMarca(B){
   const hitos = [];
   // Se paga UNA vez al 50% y UNA vez al 100%. Lo que decide el aviso es
   // cuántas cuotas ya cobró en ESTA campaña, no cuánta deuda acumuló después.
-  const _pagosC = {}, _cuotasC = {};
+  const _pagosC = {}, _cuotasC = {}, _pagosCampC = {};
   (st.pagos || []).forEach(p => {
     if (!p || !p.creator) return;
     _pagosC[p.creator] = (_pagosC[p.creator] || 0) + (p.monto || 0);
+    if (String(p.fecha || '') >= ((st.startDates || {})[p.creator] || desdeCamp)) _pagosCampC[p.creator] = (_pagosCampC[p.creator] || 0) + (p.monto || 0);
     if (String(p.fecha || '') >= desdeCamp) _cuotasC[p.creator] = (_cuotasC[p.creator] || 0) + 1;
   });
   // En campañas cerradas también se avisa: cerrar no es lo mismo que haber pagado
@@ -468,12 +469,16 @@ async function cargarMarca(B){
     if (hito === 50 && cuotas >= 1) return;   // ya cobró la mitad: no molestar
     if (hito === 100 && cuotas >= 2) return;  // ya cobró todo
     const salC = (B.salarios || {})[c] || B.salary;   // marcas con sueldos distintos por creador
-    const ganadoC = Math.round(salC * n / metaC)
-                  + ((st.bonos || {})[c] || 0)
-                  + ((st.ventas || {})[c] || 0) * COM;
-    const debeC = Math.max(0, ganadoC - (_pagosC[c] || 0));
+    // 18/10 (Nacho): la 1ra cuota es el 50% FIJO del sueldo + bonos, aunque ya haya hecho el 60 o 70%
+    // de los videos. Al terminar, el sueldo completo + bonos. Una campaña cerrada sin terminar sigue
+    // pagando el sueldo por video hecho. Se descuenta lo ya pagado en esta campaña.
+    const bonosC = ((st.bonos || {})[c] || 0) + ((st.ventas || {})[c] || 0) * COM;
+    const fijoC = hito === 50 ? Math.round(salC / 2)
+                : (n >= metaC ? salC : Math.round(salC * n / metaC));
+    const pagadoC = _pagosCampC[c] || 0;
+    const debeC = Math.max(0, fijoC + bonosC - pagadoC);
     if (debeC <= 0) return;                   // no le debemos nada
-    hitos.push({ c, nombre: B.creators[c], n, pct: p, hito, debe: debeC, cuotas });
+    hitos.push({ c, nombre: B.creators[c], n, pct: p, hito, debe: debeC, cuotas, fijo: fijoC, bonos: bonosC, pagado: pagadoC });
   });
 
   return {B,totalVids,aprob,pend,frenados,metaCreador,hitos,diasCamp,desdeCamp,arranco,inicioReal,dias7,diarioObj,ayer,prom7,vidsMes:vidsCamp,viewsMes,ventasMes,ventasTot,deuda,objetivoMes,pct,esperado,ritmo,sinSubir,guionesAlerta,guionesCortos,diasPend,activos:activos.length};
@@ -572,7 +577,9 @@ window.irAPagos=function(){
     sub:(h.hito===100
           ? (h.n>=h.meta ? `terminó: ${h.n} de ${h.meta} videos` : `campaña cerrada: ${h.n} de ${h.meta} videos`)
           : `pasó la mitad: ${h.n} de ${h.meta} videos (${h.pct}%)`)
-        +` · ${h.hito===100?(h.cuotas>=1?'2da cuota':'pago completo'):'1ra cuota'}`,
+        +` · ${h.hito===100?(h.cuotas>=1?'2da cuota':'pago completo'):'1ra cuota'}`
+        +(plata ? `<br>${h.hito===50?'50% del fijo':(h.n>=h.meta?'fijo completo':'fijo por videos hechos')} ${fmtP(h.fijo)}`
+                  +` + bonos ${fmtP(h.bonos)}`+(h.pagado?` − ya pagado ${fmtP(h.pagado)}`:'') : ''),
     valor: plata ? fmtP(h.debe) : `${h.n} videos`,
     link:`https://cima-creators.github.io/${h.id}/admin?ver=finanzas&creador=${h.c}`}));
   const total=det.reduce((a,h)=>a+(h.debe||0),0);
@@ -1016,7 +1023,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-17-d';
+const APP_VERSION = '2026-10-18-z';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
