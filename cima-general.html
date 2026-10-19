@@ -900,8 +900,16 @@ const TAB_KEY='cima_gen_tab';
 const panelCollab=id=>'https://cima-creators.github.io/'+id+'/panel';   // 3/10: link corto
 async function canje(accion,marca,extra={}){
   const r=await fetch(CANJE_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion,marca,...extra})});
-  let j={}; try{ j=await r.json(); }catch(e){}
+  let j={}; try{ j=limpiarCampos(await r.json()); }catch(e){}
   return {status:r.status,...j};
+}
+// Seguridad 19/10/2026: nombre/IG vienen del formulario público y se pintan con innerHTML.
+const CAMPOS_LIBRES=/^(nom|nombre|apellido|ig|tt|tiktok|email|mail|tel|telefono|dir|direccion|prov|provincia|ciudad|localidad|nota|notas)$/i;
+function limpiarCampos(o,clave){
+  if(typeof o==='string') return (clave&&CAMPOS_LIBRES.test(clave))?o.replace(/[<>"'`]/g,''):o;
+  if(Array.isArray(o)) return o.map(x=>limpiarCampos(x,clave));
+  if(o&&typeof o==='object'){ for(const k of Object.keys(o)) o[k]=limpiarCampos(o[k],k); }
+  return o;
 }
 let _collabs=null, _collabsCargando=false;
 function pedirClaveCollabs(msg){
@@ -1024,7 +1032,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-18-x';
+const APP_VERSION = '2026-10-19-seg';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
