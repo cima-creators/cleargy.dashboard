@@ -30,7 +30,7 @@ h1{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1}
 .btn.g:hover{border-color:var(--line2);opacity:1}
 .btn.on{background:var(--txt);color:#fff;border-color:var(--txt)}
 
-/* ── pestañas UGC / Collabs (solo Nacho) ── */
+/* ── pestañas UGC / Collabs (Nacho y Abril, 26/10) ── */
 .tabs{display:flex;gap:4px;background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:4px;width:max-content;margin:-6px 0 18px}
 html:not(.plata) .tab.solo-plata{display:none}
 a.tab{text-decoration:none;display:inline-flex;align-items:center}
@@ -198,7 +198,7 @@ html.plata .kpi.money{display:block !important}
   </div>
   <div class="tabs" id="tabs">
     <button class="tab on" data-tab="ugc" onclick="verTab('ugc')">Campañas UGC</button>
-    <button class="tab solo-plata" data-tab="collabs" onclick="verTab('collabs')">Collabs</button>
+    <button class="tab" data-tab="collabs" onclick="verTab('collabs')">Collabs</button>
     <a class="tab ext" href="/tablero/#tareas">Tareas</a>
     <a class="tab ext solo-plata" href="/tablero/#marcas">Marcas</a>
   </div>
@@ -235,6 +235,7 @@ function doLogin(){
     localStorage.setItem('cima_gen_quien', {'cima-2026':'Nacho','abril-2026':'Abril'}[p]);
     // la clave de Nacho es la misma que abre los paneles de collab (pestaña Collabs)
     if(p==='cima-2026') localStorage.setItem('cima_gen_clave', p);
+    if(p==='abril-2026') localStorage.setItem('cima_gen_clave', p);   // 26/10: Abril ve Collabs (clave de solo lectura en el canje)
     localStorage.setItem('tablero_quien', p==='cima-2026'?'nacho':'abril');   // mismo login que el tablero del equipo (/tablero)
     document.documentElement.classList.toggle('plata', p==='cima-2026');
     document.getElementById('login').style.display='none'; document.getElementById('app').style.display='block'; window.start&&window.start();
@@ -927,6 +928,7 @@ window.guardarClaveCollabs=function(){
   localStorage.setItem('cima_gen_clave',v.trim().toLowerCase()); cargarCollabs();
 };
 async function cargarCollabs(){
+  if(!localStorage.getItem('cima_gen_clave') && localStorage.getItem('cima_gen_quien')==='Abril') localStorage.setItem('cima_gen_clave','abril-2026');
   const clave=localStorage.getItem('cima_gen_clave');
   if(!clave){ pedirClaveCollabs(); return; }
   _collabsCargando=true;
@@ -1035,7 +1037,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-24-a';
+const APP_VERSION = '2026-10-26-collabs';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
