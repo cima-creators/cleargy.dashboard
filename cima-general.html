@@ -987,7 +987,7 @@ function pintarCollabs(){
       <td><span class="num">${m.enviadosTotal??m.enviados??0}</span></td>
       <td><span class="num">${m.recibidosTotal??m.recibidos??0}</span><div class="ms">${m.enTransito||0} en camino</div></td>
       <td>${pills||'<span class="ms">—</span>'}</td>
-      <td class="hide-m"><span class="num">${m.ventas||0}</span>${m.facturado?`<div class="ms">${fmtP(m.facturado)}</div>`:''}</td>
+      <td class="hide-m"><span class="num">${m.ventas||0}</span>${m.facturado&&verPlata()?`<div class="ms">${fmtP(m.facturado)}</div>`:''}</td>
     </tr>`;
   }).join('');
   const top=ok.flatMap(r=>(r.ranking||[]).map(x=>({...x,marca:(r.cfg&&r.cfg.nombre)||r.C.name})))
@@ -1002,7 +1002,8 @@ function pintarCollabs(){
     <div class="foot">Sale en vivo del Resumen de cada panel de collab (${mesCap}). Tocá el nombre de una marca para abrir su panel. "Cumplimiento" = cuántas de las que recibieron el kit ya publicaron. "Ventas con código" es el acumulado de la campaña. "Por armar" = la marca todavía no está cargada en el sistema de collabs.</div>`;
 }
 window.verTab=function(t){
-  if(!verPlata()) t='ugc';                     // el equipo solo ve UGC
+  // 28/10: Abril (equipo) también ve Collabs; lo que es plata se esconde con la clase .plata, no con la pestaña
+  if(!verPlata() && localStorage.getItem('cima_gen_quien')!=='Abril') t='ugc';
   if(t!=='collabs') t='ugc';
   document.body.classList.toggle('tab-collabs', t==='collabs');
   document.getElementById('v-ugc').style.display = t==='ugc' ? '' : 'none';
@@ -1040,7 +1041,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-27-pulso-collab';
+const APP_VERSION = '2026-10-28-abril-collabs';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
