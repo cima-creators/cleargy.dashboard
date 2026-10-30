@@ -449,7 +449,10 @@ async function cargarMarca(B){
     if (!p || !p.creator) return;
     _pagosC[p.creator] = (_pagosC[p.creator] || 0) + (p.monto || 0);
     if (String(p.fecha || '') >= ((st.startDates || {})[p.creator] || desdeCamp)) _pagosCampC[p.creator] = (_pagosCampC[p.creator] || 0) + (p.monto || 0);
-    if (String(p.fecha || '') >= desdeCamp) _cuotasC[p.creator] = (_cuotasC[p.creator] || 0) + 1;
+    // 30/10: desde el arranque de ELLA (renovacion), igual que la linea de arriba y que
+    // campaignStartFor del panel. Contandolas desde el arranque de la marca, una creadora que
+    // renovaba arrastraba las cuotas de su tanda anterior y no volvia a figurar en "a pagar".
+    if (String(p.fecha || '') >= ((st.startDates || {})[p.creator] || desdeCamp)) _cuotasC[p.creator] = (_cuotasC[p.creator] || 0) + 1;
   });
   // En campañas cerradas también se avisa: cerrar no es lo mismo que haber pagado
   if (metaCreador) activos.forEach(c => {
@@ -1041,7 +1044,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-10-30-miluz90b';
+const APP_VERSION = '2026-10-30-florenueva';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
