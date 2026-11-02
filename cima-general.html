@@ -272,7 +272,7 @@ const BRANDS=[
  {id:'sofiatarot',name:'Sofía Tarot',color:'#8B4A9C',pm:'Abril',cerrada:true,cobro:{tipo:'cuotas',pagadas:2,total:2,gatillo:50},inicio:'2026-08-11',objetivo:200,salary:400000,min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Abril',creadora3:'Aylu',creadora5:'María Jimena'}},
  {id:'paperblank',name:'Paperblank',color:'#23262A',cerrada:true,pm:'Abril',inicio:'2026-09-01',objetivo:300,salary:500000,min:75,dia:1,creators:{creadora1:'Dani',creadora2:'Georgina',creadora3:'Kari',creadora4:'Rocio'}},
  {id:'cleanpack',name:'Cleanpack',color:'#0F9AA8',cerrada:true,pm:'Abril',inicio:'2026-09-18',objetivo:240,salary:400000,salarios:{creadora4:600000},min:60,dia:2,creators:{creadora1:'Juani',creadora2:'Cati',creadora3:'Constanza',creadora4:'Fabi'}},
- {id:'pulso',name:'Pulso',color:'#B4633A',pm:'Abril',inicio:'2026-10-27',objetivo:90,salary:200000,min:30,dia:1,creators:{creadora1:'Creadora 1',creadora2:'Creadora 2',creadora3:'Creadora 3'}},
+ {id:'pulso',name:'Pulso',color:'#B4633A',pm:'Abril',inicio:'2026-11-22',objetivo:90,salary:200000,min:30,dia:1,creators:{creadora1:'Creadora 1',creadora2:'Creadora 2',creadora3:'Creadora 3'}},   // 2/11 (Nacho): todavía no empieza, faltan ~20 días. Con inicio futuro sale sola de las activas
  {id:'nala',name:'Nala',color:'#1C6CA6',pm:'Abril',inicio:'2026-10-19',objetivo:150,salary:375000,min:50,dia:2,creators:{creadora1:'Florencia',creadora2:'Victoria',creadora3:'Mariana'}},
  {id:'noxalab',name:'NoxaLab',color:'#0D1B2A',pm:'Abril',inicio:'2026-10-12',objetivo:330,salary:700000,salarios:{creadora4:500000},min:90,mins:{creadora4:60},dia:3,creators:{creadora1:'Luis',creadora2:'Gaby',creadora4:'Marcelo'}},
  {id:'drenova',name:'Drenová',color:'#2F4A3A',pm:'Abril',inicio:'2026-10-12',objetivo:150,salary:350000,min:50,dia:2,creators:{creadora1:'Ale',creadora2:'Jime',creadora3:'Lore'}},
@@ -295,6 +295,10 @@ const fmtP=n=>'$'+Math.round(n||0).toLocaleString('es-AR');
 const fmtV=n=>{n=n||0;return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?Math.round(n/1000)+'K':String(n);};
 const argDate=d=>new Date(d).toLocaleDateString('sv',{timeZone:'America/Argentina/Buenos_Aires'});
 const hoyART=()=>new Date().toLocaleDateString('sv',{timeZone:'America/Argentina/Buenos_Aires'});
+// 2/11: campana que todavia no arranco (inicio posterior a hoy). No cuenta como activa: no ensucia
+// los totales ni aparece como atrasada. Vuelve sola a las activas el dia que arranca.
+BRANDS.forEach(B=>{ B.futura = !B.cerrada && String(B.inicio||'') > hoyART(); });
+const fmtDia=f=>{ const d=new Date(f+'T12:00:00'); return d.getDate()+'/'+(d.getMonth()+1); };
 const viewsAcum=v=>{const a=Number(v.igViews)||0,b=Number(v.ttViews)||0;return (a+b)>0?a+b:(Number(v.views)||0);};
 
 async function cargarMarca(B){
@@ -740,7 +744,7 @@ function faltanCell(r){
 function render(rs){
   aplicarRol();
   const VER_PLATA = verPlata();
-  const act=rs.filter(r=>!r.B.cerrada);
+  const act=rs.filter(r=>!r.B.cerrada && !r.B.futura);
   const T=(f)=>act.reduce((a,r)=>a+f(r),0);
   const TT=(f)=>rs.reduce((a,r)=>a+f(r),0);
   const sinSubirHoy=act.reduce((a,r)=>a+(r.arranco?r.sinSubir.length:0),0);
@@ -848,18 +852,20 @@ function render(rs){
   window._alerts=A; pintarAlertas();
 
   window._rs = rs;
-  const _activasOrd = ordenarCampanas(rs.filter(r=>!r.B.cerrada));
-  const orden=[..._activasOrd,...rs.filter(r=>r.B.cerrada)];
-  let sep=false;
+  const _activasOrd = ordenarCampanas(rs.filter(r=>!r.B.cerrada && !r.B.futura));
+  const _futuras = rs.filter(r=>r.B.futura).sort((a,b)=>String(a.B.inicio).localeCompare(String(b.B.inicio)));
+  const orden=[..._activasOrd,..._futuras,...rs.filter(r=>r.B.cerrada)];
+  let sep=false, sepF=false;
   document.getElementById('rows').innerHTML=orden.map(r=>{
     let pre='';
+    if(r.B.futura && !sepF){ sepF=true; pre='<tr class="sep-row"><td colspan="9">Por arrancar</td></tr>'; }
     if(r.B.cerrada && !sep){ sep=true; pre='<tr class="sep-row"><td colspan="9">Campañas cerradas</td></tr>'; }
     const col=r.B.cerrada?'var(--mut)':r.ritmo>=90?'var(--ok)':r.ritmo>=70?'var(--warn)':'var(--bad)';
     const _i=_activasOrd.indexOf(r);
-    const _ctl = r.B.cerrada ? '' : `<span class="ord"><span class="grip" title="Arrastrar">⋮⋮</span><button class="ob" onclick="mover('${r.B.id}',-1)" ${_i===0?'disabled':''} aria-label="Subir">▲</button><button class="ob" onclick="mover('${r.B.id}',1)" ${_i===_activasOrd.length-1?'disabled':''} aria-label="Bajar">▼</button></span>`;
-    return pre+`<tr data-id="${r.B.id}" class="${r.B.cerrada?'':'movible'}"${r.B.cerrada?' style="opacity:.6"':''}>
+    const _ctl = (r.B.cerrada||r.B.futura) ? '' : `<span class="ord"><span class="grip" title="Arrastrar">⋮⋮</span><button class="ob" onclick="mover('${r.B.id}',-1)" ${_i===0?'disabled':''} aria-label="Subir">▲</button><button class="ob" onclick="mover('${r.B.id}',1)" ${_i===_activasOrd.length-1?'disabled':''} aria-label="Bajar">▼</button></span>`;
+    return pre+`<tr data-id="${r.B.id}" class="${(r.B.cerrada||r.B.futura)?'':'movible'}"${(r.B.cerrada||r.B.futura)?' style="opacity:.6"':''}>
       <td><div class="mk">${_ctl}<span class="sq" style="background:${r.B.color}"></span><div>
-        <a href="https://cima-creators.github.io/${r.B.id}/admin" target="_blank" class="mn" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px" title="Abrir el panel de ${r.B.name}">${r.B.name}<span style="font-size:10px;color:var(--acc)">↗</span></a>${r.B.cerrada?' <span class="pill" style="background:#F3EEEA;color:#8A7E77;font-weight:700">cerrada</span>':''}<div class="ms">${r.B.cerrada?r.totalVids.toLocaleString('es-AR')+' videos':r.arranco?'día '+r.diasCamp+' · '+r.totalVids.toLocaleString('es-AR')+' videos':'sin arrancar'}</div></div></div></td>
+        <a href="https://cima-creators.github.io/${r.B.id}/admin" target="_blank" class="mn" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px" title="Abrir el panel de ${r.B.name}">${r.B.name}<span style="font-size:10px;color:var(--acc)">↗</span></a>${r.B.cerrada?' <span class="pill" style="background:#F3EEEA;color:#8A7E77;font-weight:700">cerrada</span>':''}${r.B.futura?' <span class="pill" style="background:#F3EEEA;color:#8A7E77;font-weight:700">arranca '+fmtDia(r.B.inicio)+'</span>':''}<div class="ms">${r.B.cerrada?r.totalVids.toLocaleString('es-AR')+' videos':r.B.futura?'todavía no arrancó':r.arranco?'día '+r.diasCamp+' · '+r.totalVids.toLocaleString('es-AR')+' videos':'sin arrancar'}</div></div></div></td>
       <td><div class="num"><b>${r.vidsMes}</b> <span class="muted">/ ${r.objetivoMes}</span> · ${r.pct}%</div>
         <div class="bar"><i style="width:${Math.min(100,r.pct)}%;background:${col}"></i></div></td>
       <td>${r.B.cerrada?`<span class="pill" style="background:#F3EEEA;color:var(--mut);font-weight:700">Finalizada</span>`:`
@@ -1059,7 +1065,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-11-02-cierres';
+const APP_VERSION = '2026-11-02-porarrancar';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
