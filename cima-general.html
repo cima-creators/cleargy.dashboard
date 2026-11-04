@@ -273,7 +273,7 @@ const BRANDS=[
  {id:'paperblank',name:'Paperblank',color:'#23262A',cerrada:true,pm:'Abril',inicio:'2026-09-01',objetivo:300,salary:500000,min:75,dia:1,creators:{creadora1:'Dani',creadora2:'Georgina',creadora3:'Kari',creadora4:'Rocio'}},
  {id:'cleanpack',name:'Cleanpack',color:'#0F9AA8',cerrada:true,pm:'Abril',inicio:'2026-09-18',objetivo:240,salary:400000,salarios:{creadora4:600000},min:60,dia:2,creators:{creadora1:'Juani',creadora2:'Cati',creadora3:'Constanza',creadora4:'Fabi'}},
  {id:'pulso',name:'Pulso',color:'#B4633A',pm:'Abril',inicio:'2026-11-22',objetivo:90,salary:200000,min:30,dia:1,creators:{creadora1:'Creadora 1',creadora2:'Creadora 2',creadora3:'Creadora 3'}},   // 2/11 (Nacho): todavía no empieza, faltan ~20 días. Con inicio futuro sale sola de las activas
- {id:'nala',name:'Nala',color:'#1C6CA6',pm:'Abril',inicio:'2026-10-19',objetivo:150,salary:375000,min:50,dia:2,creators:{creadora1:'Florencia',creadora2:'Victoria',creadora3:'Mariana'}},
+ {id:'nala',name:'Nala',color:'#1C6CA6',pm:'Abril',inicio:'2026-10-19',objetivo:150,salary:375000,min:50,dia:2,creators:{creadora3:'Mariana'}},   // 3/11: creadora1 y creadora2 borradas (perfiles viejos de Florencia y Victoria). Las activas (Mara, Victoria, Florencia) entran por las altas del panel
  {id:'noxalab',name:'NoxaLab',color:'#0D1B2A',pm:'Abril',inicio:'2026-10-12',objetivo:330,salary:700000,salarios:{creadora4:500000},min:90,mins:{creadora4:60},dia:3,creators:{creadora1:'Luis',creadora2:'Gaby',creadora4:'Marcelo'}},
  {id:'drenova',name:'Drenová',color:'#2F4A3A',pm:'Abril',inicio:'2026-10-12',objetivo:150,salary:350000,min:50,dia:2,creators:{creadora1:'Ale',creadora2:'Jime',creadora3:'Lore'}},
  {id:'magnelab',name:'MagneLab',color:'#D42130',pm:'Abril',inicio:'2026-10-06',objetivo:270,salary:800000,salarios:{creadora3:700000},min:90,dia:3,creators:{creadora1:'Leandro',creadora2:'Sebastián'}},
@@ -1067,7 +1067,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-11-02-pagalamarca';
+const APP_VERSION = '2026-11-03-florencia';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
