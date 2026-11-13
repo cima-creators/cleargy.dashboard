@@ -2041,7 +2041,15 @@ function videoRow(v, compact=false){
     const t = "Abrir el editado" + (f?" · "+f:"") + (e.archivo?" · "+e.archivo:"");
     return `<a href="${escUrl(e.link)}" target="_blank" rel="noopener" title="${esc(t)}" style="padding:3px 10px;border-radius:20px;font-size:10px;font-family:'Poppins';font-weight:800;letter-spacing:.3px;border:1px solid #6d28d9;color:#fff;background:#7c3aed;box-shadow:0 1px 5px rgba(124,58,237,.45);text-decoration:none;white-space:nowrap;">✂ EDITADO</a>`;
   })();
-  const copyBtn = (sinDrive||crudoTag||igBtn||ttBtn||fbBtn) ? [sinDrive,crudoTag,igBtn,ttBtn,fbBtn].filter(Boolean).join(" ") : `<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'Poppins';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`;
+  // ⚖ ORIGINAL: al lado de los chips de plataforma, abre el video de la creadora junto al anuncio que calca
+  // su guion (Nacho, 13/11: "ponémelo al lado de cada video, al lado del Instagram o TikTok").
+  const cmpChip = _refDe(v)
+    ? `<button onclick="abrirComparar('${v.id}')" title="Verlo al lado del anuncio original que calca su guion" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'Poppins';font-weight:700;cursor:pointer;border:1px solid rgba(124,58,237,.45);color:#7c3aed;background:rgba(124,58,237,.1);">⚖ ORIGINAL</button>`
+    : "";
+  const _chips = [sinDrive,crudoTag,igBtn,ttBtn,fbBtn].filter(Boolean);
+  if(!_chips.length) _chips.push(`<button onclick="copyLink('${v.id}',event)" style="padding:2px 8px;border-radius:20px;font-size:9px;font-family:'Poppins';cursor:pointer;border:1px solid var(--border2);color:var(--muted);background:none;">📋 Copiar</button>`);
+  if(cmpChip) _chips.push(cmpChip);
+  const copyBtn = _chips.join(" ");
   const guionTag = v.guion
     ? (v.guion==="OTRO"
       ? `<span style="font-family:'Poppins';font-size:9px;font-weight:700;padding:1px 7px;border-radius:20px;background:rgba(176,123,46,.1);border:1px solid rgba(176,123,46,.3);color:#b45309;" title="La creadora dijo que no es ninguno de sus guiones">sin guion</span>`
@@ -4140,7 +4148,7 @@ loadConfig();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-11-13-comparar2';
+const APP_VERSION = '2026-11-13-comparar3';
 (function(){
   var CLAVE='cima_ver_reload';
   function hayAlguienEscribiendo(){
