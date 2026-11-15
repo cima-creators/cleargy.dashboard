@@ -281,7 +281,9 @@ const BRANDS=[
  {id:'noxalab',name:'NoxaLab',color:'#0D1B2A',pm:'Abril',inicio:'2026-10-12',objetivo:330,salary:700000,salarios:{creadora4:500000},min:90,mins:{creadora4:60},dia:3,creators:{creadora1:'Luis',creadora4:'Marcelo'}},
  {id:'drenova',name:'Drenová',color:'#2F4A3A',pm:'Abril',inicio:'2026-10-12',objetivo:150,salary:350000,min:50,dia:2,creators:{creadora1:'Ale',creadora2:'Jime',creadora3:'Lore'}},
  {id:'magnelab',name:'MagneLab',color:'#D42130',pm:'Abril',inicio:'2026-10-06',objetivo:270,salary:800000,salarios:{creadora3:700000},min:90,dia:3,creators:{creadora1:'Leandro',creadora2:'Sebastián'}},
- {id:'uniderma',name:'Uniderma',color:'#161616',pm:'Abril',inicio:'2026-09-21',objetivo:300,salary:375000,salarios:{creadora1:450000},min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Cate',creadora4:'Mora',creadora5:'Coni',creadora6:'Nani'}},
+ {id:'uniderma',name:'Uniderma',color:'#161616',pm:'Abril',inicio:'2026-09-21',objetivo:300,camp:2,previos:300,diaUno:'2026-11-03',   // 15/11 (Nacho): la campaña 1 cerró con 300 videos (mes 1) y arrancó la 2 — el avance cuenta desde ahí (340 - 300 = 40).
+  //  `inicio` NO se toca: de ahí sale vidsMes, que es lo que usan los hitos de pago; `diaUno` solo mueve el día de campaña. Los videos viejos quedan donde están.
+ salary:375000,salarios:{creadora1:450000},min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Cate',creadora4:'Mora',creadora5:'Coni',creadora6:'Nani'}},
  {id:'menlab',name:'MenLab',color:'#111111',cerrada:true,pm:'Abril',inicio:'2026-09-08',objetivo:200,salary:370000,salarios:{creadora1:450000,creadora2:525000,creadora3:450000,creadora4:600000},mins:{creadora4:40},min:50,dia:2,creators:{creadora1:'Fernando',creadora2:'Fabi',creadora3:'Sebastián',creadora4:'Víctor'}},
  {id:'purewall',name:'PureWall',color:'#1B6FC4',pm:'Abril',cerrada:true,diaUno:'2026-09-14',inicio:'2026-09-01',objetivo:100,salary:375000,min:50,dia:2,creators:{creadora1:'Maru',creadora2:'Ale'}},
  {id:'silq',name:'SILQ',color:'#191713',cerrada:true,pm:'Abril',inicio:'2026-08-29',objetivo:60,salary:400000,min:60,dia:2,creators:{creadora1:'Juani'}},
@@ -899,7 +901,7 @@ function render(rs){
     const _ctl = (r.B.cerrada||r.B.futura) ? '' : `<span class="ord"><span class="grip" title="Arrastrar">⋮⋮</span><button class="ob" onclick="mover('${r.B.id}',-1)" ${_i===0?'disabled':''} aria-label="Subir">▲</button><button class="ob" onclick="mover('${r.B.id}',1)" ${_i===_activasOrd.length-1?'disabled':''} aria-label="Bajar">▼</button></span>`;
     return pre+`<tr data-id="${r.B.id}" class="${(r.B.cerrada||r.B.futura)?'':'movible'}"${(r.B.cerrada||r.B.futura)?' style="opacity:.6"':''}>
       <td><div class="mk">${_ctl}<span class="sq" style="background:${r.B.color}"></span><div>
-        <a href="https://cima-creators.github.io/${r.B.id}/admin" target="_blank" class="mn" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px" title="Abrir el panel de ${r.B.name}">${r.B.name}<span style="font-size:10px;color:var(--acc)">↗</span></a>${r.B.cerrada?' <span class="pill" style="background:#F3EEEA;color:#8A7E77;font-weight:700">cerrada</span>':''}${r.B.futura?' <span class="pill" style="background:#F3EEEA;color:#8A7E77;font-weight:700">arranca '+fmtDia(r.B.inicio)+'</span>':''}<div class="ms">${r.B.cerrada?r.totalVids.toLocaleString('es-AR')+' videos':r.B.futura?'todavía no arrancó':r.arranco?'día '+r.diasCamp+' · '+r.totalVids.toLocaleString('es-AR')+' videos':'sin arrancar'}</div></div></div></td>
+        <a href="https://cima-creators.github.io/${r.B.id}/admin" target="_blank" class="mn" style="color:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px" title="Abrir el panel de ${r.B.name}">${r.B.name}<span style="font-size:10px;color:var(--acc)">↗</span></a>${r.B.cerrada?' <span class="pill" style="background:#F3EEEA;color:#8A7E77;font-weight:700">cerrada</span>':''}${r.B.futura?' <span class="pill" style="background:#F3EEEA;color:#8A7E77;font-weight:700">arranca '+fmtDia(r.B.inicio)+'</span>':''}${r.B.camp?' <span class="pill" style="background:rgba(124,58,237,.1);color:#7c3aed;font-weight:700" title="'+(r.B.previos?'La campaña '+(r.B.camp-1)+' cerró con '+r.B.previos+' videos':'')+'">campaña '+r.B.camp+'</span>':''}<div class="ms">${r.B.cerrada?r.totalVids.toLocaleString('es-AR')+' videos':r.B.futura?'todavía no arrancó':r.arranco?'día '+r.diasCamp+' · '+r.totalVids.toLocaleString('es-AR')+' videos'+(r.B.previos?' en total · la '+((r.B.camp||2)-1)+'ª cerró con '+r.B.previos:''):'sin arrancar'}</div></div></div></td>
       <td><div class="num"><b>${r.vidsMes}</b> <span class="muted">/ ${r.objetivoMes}</span> · ${r.pct}%</div>
         <div class="bar"><i style="width:${Math.min(100,r.pct)}%;background:${col}"></i></div></td>
       <td>${r.B.cerrada?`<span class="pill" style="background:#F3EEEA;color:var(--mut);font-weight:700">Finalizada</span>`:`
@@ -1099,7 +1101,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-11-13-comparar3';
+const APP_VERSION = '2026-11-15-uniderma-c2';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
