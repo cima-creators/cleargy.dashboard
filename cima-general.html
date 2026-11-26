@@ -288,8 +288,8 @@ const BRANDS=[
  diaUno:'2026-11-03',   // 15/11 (Nacho): la campaña 1 cerró con 300 videos (mes 1) y arrancó la 2 — el avance cuenta desde ahí (340 - 300 = 40).
   //  `inicio` NO se toca: de ahí sale vidsMes, que es lo que usan los hitos de pago; `diaUno` solo mueve el día de campaña. Los videos viejos quedan donde están.
  salary:375000,salarios:{creadora1:450000},min:60,dia:2,creators:{creadora1:'Flor',creadora2:'Cate',creadora4:'Mora',creadora5:'Coni',creadora6:'Nani'}},
- {id:'menlab',name:'MenLab',color:'#111111',cerrada:true,saldada:true,   // 16/11 (Nacho): terminada y toda pagada — Víctor cobró el saldo final el 2/11; no avisar más
- pm:'Abril',inicio:'2026-09-08',objetivo:200,salary:370000,salarios:{creadora1:450000,creadora2:525000,creadora3:450000,creadora4:600000},mins:{creadora4:40},min:50,dia:2,creators:{creadora1:'Fernando',creadora2:'Fabi',creadora3:'Sebastián',creadora4:'Víctor'}},
+ {id:'menlab',name:'MenLab',color:'#111111',   // 26/11: MenLab VOLVIÓ (la campaña 1 quedó cerrada y saldada el 16/11). Campaña 2 = solo Seba, 30 videos por $300.000
+ pm:'Abril',inicio:'2026-11-26',objetivo:30,salary:370000,salarios:{creadora1:450000,creadora2:525000,creadora3:300000,creadora4:600000},mins:{creadora4:40,creadora3:30},min:50,dia:2,creators:{creadora1:'Fernando',creadora2:'Fabi',creadora3:'Sebastián',creadora4:'Víctor'}},
  {id:'purewall',name:'PureWall',color:'#1B6FC4',pm:'Abril',cerrada:true,diaUno:'2026-09-14',inicio:'2026-09-01',objetivo:100,salary:375000,min:50,dia:2,creators:{creadora1:'Maru',creadora2:'Ale'}},
  {id:'silq',name:'SILQ',color:'#191713',cerrada:true,pm:'Abril',inicio:'2026-08-29',objetivo:60,salary:400000,min:60,dia:2,creators:{creadora1:'Juani'}},
  {id:'tierrafertil',name:'Tierra Fértil',color:'#4F6B2A',pm:'Abril',cerrada:true,inicio:'2026-08-19',objetivo:9,salary:120000,min:5,dia:1,creators:{creadora1:'Marco Dolce',creadora2:'Sebastián'}},
@@ -1110,7 +1110,7 @@ if(localStorage.getItem('cima_gen')==='1') window.start();
 <!-- Auto-actualización: GitHub Pages cachea el HTML y los celulares lo retienen mucho más.
      Esto compara la versión publicada con la que está corriendo y refresca sola. -->
 <script>
-const APP_VERSION = '2026-11-25-altier';
+const APP_VERSION = '2026-11-26-menlab-seba';
 /* 3/10: en la barra se ve el link corto (cima-creators.github.io/vista), no el largo de cleargy.dashboard */
 (function(){ try {
   if (location.hostname !== 'cima-creators.github.io' || !history.replaceState || !/cima-general\.html/.test(location.pathname)) return;
